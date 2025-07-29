@@ -1,30 +1,36 @@
 import {
     depth_prompt_depth_default,
     depth_prompt_role_default,
+    setCharacterId,
     talkativeness_default
 } from '../../../../../../script.js';
-import { createTagInput } from '../../../../../tags.js';
-import { displayTag } from './tags.js';
-import { getBase64Async, getIdByAvatar, updateTokenCount } from '../utils.js';
+import {createTagInput} from '../../../../../tags.js';
+import {displayTag} from './tags.js';
+import {getBase64Async, getIdByAvatar} from '../utils.js';
 import {
+    callPopup,
     characters,
     getThumbnailUrl,
+    getTokenCountAsync,
+    Popup,
+    POPUP_TYPE,
+    power_user,
+    selectCharacterById,
+    substituteParams,
     tagMap,
     unshallowCharacter,
-    getTokenCountAsync,
-    substituteParams, power_user, Popup, POPUP_TYPE, callPopup, selectCharacterById,
 } from "../constants/context.js";
-import { selectedChar, setMem_avatar } from "../constants/settings.js";
+import {selectedChar, setMem_avatar} from "../constants/settings.js";
 import {
     dupeChar,
     editCharDebounced,
-    exportChar, renameChar,
+    exportChar,
+    renameChar,
     replaceAvatar,
     saveAltGreetings
 } from "../services/characters-service.js";
-import { addAltGreetingsTrigger } from "../events/characters-events.js";
-import { closeDetails } from "./modal.js";
-import { setCharacterId } from '../../../../../../script.js';
+import {addAltGreetingsTrigger} from "../events/characters-events.js";
+import {closeDetails} from "./modal.js";
 
 
 // Function not used at this moment, leaving it here just in case
@@ -96,6 +102,7 @@ export async function fillDetails(avatar) {
     $('#acm_firstMess_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.first_mes))}`);
     $('#acm_firstMess').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
+    $('#acm_creatornotes').val(char.data?.creator_notes || char.creatorcomment);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     displayAltGreetings(char.data.alternate_greetings).then(html => {
