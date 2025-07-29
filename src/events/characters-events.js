@@ -1,16 +1,21 @@
-import { event_types, eventSource } from "../constants/context.js";
+import {event_types, eventSource} from "../constants/context.js";
 import {
-    addAltGreeting, closeCharacterPopup,
-    delAltGreeting, duplicateCharacter, exportCharacter,
-    openCharacterChat, renameCharacter, toggleAdvancedDefinitionsPopup,
+    addAltGreeting,
+    closeCharacterPopup,
+    delAltGreeting,
+    duplicateCharacter,
+    exportCharacter,
+    openCharacterChat,
+    renameCharacter,
+    toggleAdvancedDefinitionsPopup,
     toggleFavoriteStatus,
     update_avatar
 } from "../components/characters.js";
-import { generateTagFilter } from "../components/tags.js";
-import { closeDetails } from "../components/modal.js";
-import { addListenersTagFilter } from "./tags-events.js";
+import {generateTagFilter} from "../components/tags.js";
+import {closeDetails} from "../components/modal.js";
+import {addListenersTagFilter} from "./tags-events.js";
 import {checkApiAvailability, editCharDebounced, saveAltGreetings} from "../services/characters-service.js";
-import { refreshCharListDebounced } from "../components/charactersList.js";
+import {refreshCharListDebounced} from "../components/charactersList.js";
 import {selectedChar} from "../constants/settings.js";
 import {updateTokenCount} from "../utils.js";
 
@@ -18,7 +23,26 @@ export function initializeFieldUpdaters() {
     const elementsToInitialize = {
         '#acm_description': async function () {const descZone=$('#acm_description');const update={avatar:selectedChar,description:String(descZone.val()),data:{description:String(descZone.val()),},};editCharDebounced(update);await updateTokenCount('#acm_description');},
         '#acm_firstMess': async function () {const firstMesZone=$('#acm_firstMess');const update={avatar:selectedChar,first_mes:String(firstMesZone.val()),data:{first_mes:String(firstMesZone.val()),},};editCharDebounced(update);await updateTokenCount('#acm_firstMess');},
-        '#acm_creator_notes_textarea': function () {const creatorNotes=$('#acm_creator_notes_textarea');const update={avatar:selectedChar,creatorcomment:String(creatorNotes.val()),data:{creator_notes:String(creatorNotes.val()),},};editCharDebounced(update);},
+        '#acm_creatornotes': function () {
+            const creatorNotes = $('#acm_creatornotes');
+            $('#acm_creator_notes_textarea').val(String(creatorNotes.val()));
+            const update = {
+                avatar: selectedChar,
+                creatorcomment: String(creatorNotes.val()),
+                data: {creator_notes: String(creatorNotes.val()),},
+            };
+            editCharDebounced(update);
+        },
+        '#acm_creator_notes_textarea': function () {
+            const creatorNotes = $('#acm_creator_notes_textarea');
+            $('#acm_creatornotes').val(String(creatorNotes.val()));
+            const update = {
+                avatar: selectedChar,
+                creatorcomment: String(creatorNotes.val()),
+                data: {creator_notes: String(creatorNotes.val()),},
+            };
+            editCharDebounced(update);
+        },
         '#acm_character_version_textarea': function () { const update = {avatar:selectedChar,data:{character_version:String($('#acm_character_version_textarea').val()),},};editCharDebounced(update);},
         '#acm_system_prompt': async function () {const sysPrompt=$('#acm_system_prompt');const update={avatar:selectedChar,data:{system_prompt:String(sysPrompt.val()),},};editCharDebounced(update);await updateTokenCount('#acm_system_prompt');},
         '#acm_post_history_prompt': async function () {const postHistory=$('#acm_post_history_prompt');const update={avatar:selectedChar,data:{post_history_instructions:String(postHistory.val()),},};editCharDebounced(update);await updateTokenCount('#acm_post_history_prompt');},
