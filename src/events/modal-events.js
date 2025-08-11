@@ -1,4 +1,4 @@
-import { resetScrollHeight } from "../utils.js";
+import {resetScrollHeight} from "../utils.js";
 import {
     closeDetails,
     closeModal,
@@ -6,10 +6,15 @@ import {
     openModal,
     toggleDropdownMenus
 } from "../components/modal.js";
-import { getSetting, updateSetting } from "../services/settings-service.js";
-import { refreshCharListDebounced } from "../components/charactersList.js";
-import { manageCustomCategories, printCategoriesList } from "../components/presets.js";
+import {getSetting, updateSetting} from "../services/settings-service.js";
+import {refreshCharListDebounced} from "../components/charactersList.js";
+import {manageCustomCategories, printCategoriesList} from "../components/presets.js";
 
+export function initializeExtMenuEvents() {
+    $('#acm_open').on('click', function () {
+        openModal();
+    });
+}
 
 export function initializeModalEvents() {
     $('#acm-manager').on('click', function () {

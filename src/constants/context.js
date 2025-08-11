@@ -20,3 +20,4 @@ export const menuType = getContext().menuType;
 export const getRequestHeaders = getContext().getRequestHeaders;
 export const getCharacters = getContext().getCharacters;
 export const createData = getContext().createCharacterData;
+export const renderExtensionTemplateAsync = getContext().renderExtensionTemplateAsync;

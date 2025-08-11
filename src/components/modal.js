@@ -1,16 +1,19 @@
 import {
-    extensionFolderPath,
-    mem_avatar, mem_menu,
-    oldExtensionFolderPath, selectedChar,
+    extensionName,
+    mem_avatar,
+    mem_menu,
+    oldExtensionName,
+    selectedChar,
     setMem_avatar,
-    setMem_menu, setSelectedChar
+    setMem_menu,
+    setSelectedChar,
 } from "../constants/settings.js";
-import { characterId, characters, menuType } from "../constants/context.js";
-import { getSetting } from "../services/settings-service.js";
-import { getIdByAvatar } from "../utils.js";
-import { setCharacterId, setMenuType } from '../../../../../../script.js';
-import { updateDropdownPresetNames } from "./charactersList.js";
-import { updateLayout } from "./characterCreation.js";
+import {characterId, characters, menuType, renderExtensionTemplateAsync} from "../constants/context.js";
+import {getSetting} from "../services/settings-service.js";
+import {getIdByAvatar} from "../utils.js";
+import {setCharacterId, setMenuType} from '../../../../../../script.js';
+import {updateDropdownPresetNames} from "./charactersList.js";
+import {updateLayout} from "./characterCreation.js";
 
 /**
  * Initializes the modal component
@@ -19,16 +22,21 @@ export async function initializeModal() {
     // Load the modal HTML template
     let modalHtml;
     try {
-        modalHtml = await $.get(`${extensionFolderPath}/modal.html`);
+        modalHtml = await renderExtensionTemplateAsync(`third-party/${extensionName}`, 'modal');
     } catch (error) {
-        console.error(`Error fetching modal.html from ${extensionFolderPath}. This is a normal error if you have the old folder name and you don't have to do anything.`);
+        console.error(`Error fetching modal.html. This is a normal error if you have the old folder name and you don't have to do anything.`);
         try {
-            modalHtml = await $.get(`${oldExtensionFolderPath}/modal.html`);
+            modalHtml = await renderExtensionTemplateAsync(`third-party/${oldExtensionName}`, 'modal');
         } catch (secondError) {
-            console.error(`Error fetching modal.html from ${oldExtensionFolderPath}:`, secondError);
+            console.error(`Error fetching modal.html:`, secondError);
             return;
         }
     }
+    // Load the extensionMenu button
+    const buttonHtml = await renderExtensionTemplateAsync('third-party/SillyTavern-AnotherCharManager', 'button');
+
+    // Add the extensionMenu button to the extensionsMenu
+    $('#extensionsMenu').append(buttonHtml);
 
     // Add the modal HTML to the page
     $('#background_template').after(modalHtml);

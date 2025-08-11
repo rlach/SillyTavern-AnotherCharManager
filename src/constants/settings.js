@@ -1,8 +1,6 @@
 // Default settings for the extension
-const extensionName = 'SillyTavern-AnotherCharManager';
-const oldExtensionName = 'SillyTavern-AnotherTagManager';
-export const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
-export const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
+export const extensionName = 'SillyTavern-AnotherCharManager';
+export const oldExtensionName = 'SillyTavern-AnotherTagManager';
 
 export let selectedChar;
 export const setSelectedChar = (value) => {
