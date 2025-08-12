@@ -1,4 +1,4 @@
-import { getSetting, updateSetting} from "./settings-service.js";
+import {getSetting, updateSetting} from "./settings-service.js";
 
 /**
  * Gets a specific preset by index

@@ -1,16 +1,21 @@
-import { event_types, eventSource } from "../constants/context.js";
+import {event_types, eventSource} from "../constants/context.js";
 import {
-    addAltGreeting, closeCharacterPopup,
-    delAltGreeting, duplicateCharacter, exportCharacter,
-    openCharacterChat, renameCharacter, toggleAdvancedDefinitionsPopup,
+    addAltGreeting,
+    closeCharacterPopup,
+    delAltGreeting,
+    duplicateCharacter,
+    exportCharacter,
+    openCharacterChat,
+    renameCharacter,
+    toggleAdvancedDefinitionsPopup,
     toggleFavoriteStatus,
     update_avatar
 } from "../components/characters.js";
-import { generateTagFilter } from "../components/tags.js";
-import { closeDetails } from "../components/modal.js";
-import { addListenersTagFilter } from "./tags-events.js";
+import {generateTagFilter} from "../components/tags.js";
+import {closeDetails} from "../components/modal.js";
+import {addListenersTagFilter} from "./tags-events.js";
 import {checkApiAvailability, editCharDebounced, saveAltGreetings} from "../services/characters-service.js";
-import { refreshCharListDebounced } from "../components/charactersList.js";
+import {refreshCharListDebounced} from "../components/charactersList.js";
 import {selectedChar} from "../constants/settings.js";
 import {updateTokenCount} from "../utils.js";
 
