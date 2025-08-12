@@ -36,6 +36,8 @@ The extension will add a new button just before the Group button.
 
 But also in the extension menu next to the chat.
 
+<img width="327" height="116" alt="image" src="https://github.com/user-attachments/assets/12f77921-d702-457b-a7c6-d78220f626f1" />
+
 Clicking on these buttons will open a pop-up window showing your characters and the number of tags they currently have.
 
 ![02](https://github.com/user-attachments/assets/c4ebd6be-8b87-4e17-9f15-942a8dfd3c3c)
@@ -53,10 +55,17 @@ You can also rename, export, duplicate, delete the selected character among othe
 
 A secondary UI is available, allowing you to display your characters groups by custom categories.
 
+<img width="430" height="201" alt="image" src="https://github.com/user-attachments/assets/31bfac4c-5903-47fc-a9fe-225f9701689d" />
+
 * Two defined presets: By Tags and by Author
 * Up to five custom presets
 
+<img width="494" height="315" alt="image" src="https://github.com/user-attachments/assets/66be41c2-b0bd-4d4b-a599-df44daf73967" />
+
 You can also resize the window, useful if you have a widescreen monitor.
+
+<img width="221" height="60" alt="image" src="https://github.com/user-attachments/assets/2d9b2b1b-2ce1-4dcb-8c5c-815b56f0add4" />
+
 
 ## Support and Contributions
 
