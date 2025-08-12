@@ -43,22 +43,22 @@ export function initializeModalEvents() {
         closeDetails();
     });
 
-    const slider = document.getElementById('acm_widthSlider');
-    const popup = document.getElementById('acm_popup');
-    const preview = document.getElementById('acm_popup_preview');
+    const $slider = $('#acm_widthSlider');
+    const $popup = $('#acm_popup');
+    const $preview = $('#acm_popup_preview');
 
-
-    slider.addEventListener('input', () => {
-        preview.style.display = 'block';
-        preview.style.width = slider.value + '%';
-        preview.style.height = popup.offsetHeight + 'px';
+    $slider.on('input', function () {
+        $preview.show().css({
+            'width': $(this).val() + '%',
+            'height': $popup.outerHeight() + 'px'
+        });
+    }).on('change', function () {
+        const newWidth = $(this).val();
+        $popup.css('width', newWidth + '%');
+        $preview.hide();
+        updateSetting('popupWidth', newWidth);
     });
 
-    slider.addEventListener('change', () => {
-        popup.style.width = slider.value + '%';
-        preview.style.display = 'none';
-        updateSetting('popupWidth', slider.value);
-    });
 
 }
 
