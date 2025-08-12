@@ -42,6 +42,24 @@ export function initializeModalEvents() {
     $(document).on('click', '#char-sep', function () {
         closeDetails();
     });
+
+    const slider = document.getElementById('acm_widthSlider');
+    const popup = document.getElementById('acm_popup');
+    const preview = document.getElementById('acm_popup_preview');
+
+
+    slider.addEventListener('input', () => {
+        preview.style.display = 'block';
+        preview.style.width = slider.value + '%';
+        preview.style.height = popup.offsetHeight + 'px';
+    });
+
+    slider.addEventListener('change', () => {
+        popup.style.width = slider.value + '%';
+        preview.style.display = 'none';
+        updateSetting('popupWidth', slider.value);
+    });
+
 }
 
 export function initializeUIMenuEvents() {

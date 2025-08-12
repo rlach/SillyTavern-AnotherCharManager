@@ -14,8 +14,6 @@
 }
 
 #acm_popup {
-    width: 500px;
-    max-width: 90svw;
     position: absolute;
     z-index: 9999;
     margin-left: auto;
@@ -34,6 +32,27 @@
     display: flex;
     flex-direction: column;
     overflow-y: hidden;
+}
+
+#acm_popup_preview {
+    max-width: 90svw;
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 2px solid var(--SmartThemeBorderColor);
+    border-radius: 12px;
+    /*background-color: var(--customThemeColor);*/
+    background-color: var(--SmartThemeBorderColor);
+    box-shadow: 0 4px 12px rgba(255, 127, 80, 0.3);
+    pointer-events: none;
+    z-index: 9998; /* juste derrière la popup */
+    display: none;
+    transition: all 0.3s ease;
+    opacity: 0.7;
 }
 
 #acm_popup_holder {
@@ -110,6 +129,32 @@
     -webkit-backdrop-filter: blur(var(--SmartThemeBlurStrength));
     width: 110px;
     text-align: center;
+}
+
+.acm-popup-controls {
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.acm-popup-controls > div {
+    flex: 0 0 auto;
+}
+
+.acm-popup-controls > div:first-child {
+    text-align: left;
+}
+
+.acm-popup-controls > div:nth-child(2) {
+    text-align: center;
+}
+
+.acm-popup-controls > div:last-child {
+    text-align: right;
+}
+
+#acm_widthSlider {
+    width: 100px;
 }
 
 /* Export format popup */

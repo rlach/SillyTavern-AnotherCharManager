@@ -23,6 +23,7 @@ export const setMem_avatar = (value) => {
 export const tagFilterstates = new Map();
 
 export const defaultSettings = {
+    popupWidth: 50,
     sortingField: "name",
     sortingOrder: "asc",
     favOnly: false,

@@ -41,6 +41,11 @@ export async function initializeModal() {
     // Add the modal HTML to the page
     $('#background_template').after(modalHtml);
 
+    const initialWidth = getSetting('popupWidth');
+    $('#acm_popup').css('width', initialWidth + '%');
+    $('#acm_widthSlider').val(initialWidth);
+
+
     // Put the button before rm_button_group_chats in the form_character_search_form
     // on hover, should say: "Open Char Manager"
     $('#rm_button_group_chats').before('<button id="acm-manager" class="menu_button fa-solid fa-users faSmallFontSquareFix" title="Open Char Manager"></button>');
