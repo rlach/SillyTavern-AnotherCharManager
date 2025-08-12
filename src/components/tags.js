@@ -1,9 +1,9 @@
-import { tags } from "../../../../../tags.js";
-import { tagFilterstates } from "../constants/settings.js";
-import { tagList } from "../constants/context.js";
-import { refreshCharListDebounced } from "./charactersList.js";
-import { findTag } from "../services/tags-service.js";
-import { equalsIgnoreCaseAndAccents } from "../utils.js";
+import {tags} from "../../../../../tags.js";
+import {tagFilterstates} from "../constants/settings.js";
+import {tagList} from "../constants/context.js";
+import {refreshCharListDebounced} from "./charactersList.js";
+import {findTag} from "../services/tags-service.js";
+import {equalsIgnoreCaseAndAccents} from "../utils.js";
 import {addTagToCategory} from "../services/presets-service.js";
 
 /**

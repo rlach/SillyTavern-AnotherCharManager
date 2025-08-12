@@ -163,12 +163,17 @@
                     <hr>
                 </div>
             </div>
-            <div class="popup-controls">
+            <div class="popup-controls acm-popup-controls">
                 <div id="acm_switch_ui" class="menu_button">Switch UI</div>
                 <div id="acm_popup_close" class="menu_button popup-button-ok">Close</div>
+                <div id="acm_popup_width">
+                    <label for="acm_widthSlider">Width: </label>
+                    <input id="acm_widthSlider" max="90" min="50" type="range" value="50">
+                </div>
             </div>
         </div>
     </div>
+    <div id="acm_popup_preview"></div>
 </div>
 <div id="acm_export_format_popup" class="list-group" style="position: absolute; inset: 0 0 auto auto; margin: 0; transform: translate(-1920px);" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="left">
     <div class="acm_export_format list-group-item" data-format="png">PNG</div>
