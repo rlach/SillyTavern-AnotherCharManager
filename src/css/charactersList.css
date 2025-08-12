@@ -17,6 +17,7 @@
     gap: 5px;
     flex-direction: row;
     height: 100%;
+    padding-top: 5px;
 }
 
 .character_item {
@@ -73,6 +74,13 @@
     background-color: rgb(0, 0, 0);
 }
 
+.fav {
+    outline: 2px solid var(--golden);
+}
+
+.fav .char_name_block {
+    color: var(--golden);
+}
 /* ===== SEARCH AND FILTER COMPONENTS ===== */
 .sortAndFilter {
     display: flex;
