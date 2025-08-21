@@ -1,28 +1,24 @@
+import {getPastCharacterChats, setCharacterId, system_message_types} from '../../../../../../script.js';
+import {ensureImageFormatSupported, getCharaFilename} from '../../../../../utils.js';
+import {renameGroupMember} from '../../../../../group-chats.js';
+import {world_info} from '../../../../../world-info.js';
 import {
-    getPastCharacterChats,
-    setCharacterId,
-    system_message_types
-} from '../../../../../../script.js';
-import { ensureImageFormatSupported, getCharaFilename } from '../../../../../utils.js';
-import { renameGroupMember } from '../../../../../group-chats.js';
-import { world_info } from '../../../../../world-info.js';
-import {
+    callPopup,
+    characterId,
+    characters,
     event_types,
     eventSource,
-    getRequestHeaders,
-    characters,
-    callPopup,
-    POPUP_TYPE,
-    characterId,
-    getThumbnailUrl,
-    saveSettingsDebounced,
     extensionSettings,
     getCharacters,
+    getRequestHeaders,
+    getThumbnailUrl,
     getTokenCountAsync,
+    POPUP_TYPE,
+    saveSettingsDebounced,
     substituteParams
 } from "../constants/context.js";
-import { debounce, delay } from '../utils.js';
-import { renameTagKey } from './tags-service.js';
+import {debounce, delay} from '../utils.js';
+import {renameTagKey} from './tags-service.js';
 import {selectedChar, setSelectedChar} from "../constants/settings.js";
 
 /**

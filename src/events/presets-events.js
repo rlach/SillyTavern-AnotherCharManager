@@ -1,12 +1,12 @@
-import { callPopup, POPUP_TYPE } from "../constants/context.js";
+import {callPopup, POPUP_TYPE} from "../constants/context.js";
 import {
     addCategory,
+    displayPresetName,
     printCategoriesList,
     removeCategory,
     renameCategory,
     renamePreset,
-    toggleTagButton,
-    displayPresetName
+    toggleTagButton
 } from "../components/presets.js";
 import {getCategory, removeTagFromCategory} from "../services/presets-service.js";
 

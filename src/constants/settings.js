@@ -1,8 +1,6 @@
 // Default settings for the extension
-const extensionName = 'SillyTavern-AnotherCharManager';
-const oldExtensionName = 'SillyTavern-AnotherTagManager';
-export const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
-export const oldExtensionFolderPath = `scripts/extensions/third-party/${oldExtensionName}`;
+export const extensionName = 'SillyTavern-AnotherCharManager';
+export const oldExtensionName = 'SillyTavern-AnotherTagManager';
 
 export let selectedChar;
 export const setSelectedChar = (value) => {
@@ -25,6 +23,7 @@ export const setMem_avatar = (value) => {
 export const tagFilterstates = new Map();
 
 export const defaultSettings = {
+    popupWidth: 50,
     sortingField: "name",
     sortingOrder: "asc",
     favOnly: false,
