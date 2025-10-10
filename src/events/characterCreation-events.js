@@ -48,8 +48,9 @@ export function initializeCharacterCreationEvents() {
     });
 
     // Add the avatar
-    $('#acm_add_avatar_button').on('change', async function () {
-        await loadAvatar(this);
+    $('#acm_add_avatar_button').on('change', function () {
+        // await loadAvatar(this);
+        loadAvatar(this);
     });
 }
 

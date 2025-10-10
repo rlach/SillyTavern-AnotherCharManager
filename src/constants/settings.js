@@ -20,6 +20,11 @@ export const setMem_avatar = (value) => {
     mem_avatar = value;
 };
 
+export let acm_crop_data;
+export const setCrop_data = (value) => {
+    acm_crop_data = value;
+};
+
 export const tagFilterstates = new Map();
 
 export const defaultSettings = {
