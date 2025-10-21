@@ -1,6 +1,6 @@
 import { getBase64Async, updateTokenCount } from "../utils.js";
-import { createData, Popup, POPUP_TYPE, power_user } from "../constants/context.js";
-import { setCrop_data } from "../constants/settings.js";
+import { Popup, POPUP_TYPE, power_user } from "../constants/context.js";
+import { resetCreateData, setCrop_data, updateCreateData } from "../constants/settings.js";
 
 const FIELD_CONFIGURATIONS = {
     'name': '#acm_create_name',
@@ -41,12 +41,7 @@ export function closeCreationPopup() {
         easing: 'ease-in-out',
     });
     setTimeout(function () { $('#acm_create_popup').css('display', 'none'); }, 125);
-    $('#acm_create_popup').find('input, textarea').each(function() {
-        $(this).val('');
-    });
-    $('#acm_depth_prompt_depth2').val('4');
-    $('#acm_depth_prompt_role2').val('system');
-    $('#acm_talkativeness_slider2').val('0.5');
+    resetCreateData();
     Object.values(FIELD_CONFIGURATIONS).forEach(selector => {
         updateTokenCount(`${selector}`);
     });
@@ -55,33 +50,9 @@ export function closeCreationPopup() {
     }
 }
 
-// export function loadAvatar(input){
-//     return new Promise((resolve) => {
-//         if (input.files && input.files[0]) {
-//             const reader = new FileReader();
-//
-//             reader.onload = function (e) {
-//                 // Stocker le fichier dans une variable pour un usage ultérieur
-//                 window.selectedAvatar = input.files[0];
-//
-//                 // Afficher la miniature dans l'élément avec l'ID acm_create_avatar
-//                 $('#acm_create_avatar').attr('src', e.target.result);
-//
-//                 resolve();
-//             };
-//
-//             // Lire le fichier comme une URL de données
-//             reader.readAsDataURL(input.files[0]);
-//         } else {
-//             resolve();
-//         }
-//     });
-// }
-
-
 export async function loadAvatar(input){
     if (input.files && input.files[0]) {
-        createData.avatar = input.files;
+        updateCreateData('avatar', input.files);
 
         setCrop_data(undefined);
         const file = input.files[0];
