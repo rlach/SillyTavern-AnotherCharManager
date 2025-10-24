@@ -1,5 +1,5 @@
 import { getSetting } from "../services/settings-service.js";
-import { callPopup, POPUP_TYPE } from "../constants/context.js";
+import { Popup, POPUP_TYPE } from "../constants/context.js";
 import { createTagInputCat, displayTag } from "./tags.js";
 import { updateDropdownPresetNames } from "./charactersList.js";
 import {
@@ -51,7 +51,7 @@ export async function manageCustomCategories(){
      </div>
 
     `);
-    await callPopup(html, POPUP_TYPE.TEXT, null, {okButton: "Close", allowVerticalScrolling: true });
+    await Popup(html, POPUP_TYPE.TEXT, null, {okButton: "Close", allowVerticalScrolling: true });
 }
 
 /**

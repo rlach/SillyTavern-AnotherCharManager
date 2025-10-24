@@ -76,3 +76,10 @@ function compareTagsForSort(a, b) {
         return defaultSort;
     }
 }
+
+
+export function createTagMap(listElement, key) {
+    const tagIds = [...($(listElement).find('.tag').map((_, el) => $(el).attr('id')))];
+    tagMap[key] = tagIds;
+    saveSettingsDebounced();
+}

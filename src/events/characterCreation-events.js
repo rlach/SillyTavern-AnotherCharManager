@@ -1,7 +1,7 @@
 import {
     closeCreationPopup,
     updateLayout,
-    loadAvatar
+    loadAvatar, initiateCharacterCreation
 } from "../components/characterCreation.js";
 import { updateTokenCount } from "../utils.js";
 import { updateCreateData} from "../constants/settings.js";
@@ -31,6 +31,11 @@ export function initializeCharacterCreationEvents() {
         $(id).on('input', function () {
             elementsToInitialize[id]();
         });
+    });
+
+    // Create the character
+    $('#acm_create_popup_create').on("click", function () {
+        initiateCharacterCreation();
     });
 
     // Close character creation popup

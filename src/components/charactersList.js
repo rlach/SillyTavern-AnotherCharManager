@@ -6,7 +6,6 @@ import {fillAdvancedDefinitions, fillDetails} from "./characters.js";
 import {searchAndFilter, sortCharAR} from "../services/charactersList-service.js";
 import {getSetting, updateSetting} from "../services/settings-service.js";
 import {getPreset} from "../services/presets-service.js";
-import {createTagInput} from '../../../../../tags.js';
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
@@ -327,26 +326,6 @@ export function toggleTagsList() {
     }
 
     tagsList.classList.toggle('open');
-}
-
-export function toggleCharacterCreationPopup() {
-    const $popup = $('#acm_create_popup');
-
-    if ($popup.css('display') === 'none') {
-
-        createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
-        // Affichage du popup
-        $popup.css({ 'display': 'flex', 'opacity': 0.0 })
-            .addClass('open')
-            .transition({
-                opacity: 1.0,
-                duration: 125,
-                easing: 'ease-in-out',
-            });
-    } else {
-        // Masquage du popup
-        $popup.css('display', 'none').removeClass('open');
-    }
 }
 
 export function updateSortOrder(selectedOption) {

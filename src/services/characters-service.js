@@ -3,7 +3,7 @@ import {ensureImageFormatSupported, getCharaFilename} from '../../../../../utils
 import {renameGroupMember} from '../../../../../group-chats.js';
 import {world_info} from '../../../../../world-info.js';
 import {
-    callPopup,
+    Popup,
     characterId,
     characters,
     event_types,
@@ -18,8 +18,9 @@ import {
     substituteParams
 } from "../constants/context.js";
 import {debounce, delay} from '../utils.js';
-import {renameTagKey} from './tags-service.js';
-import {selectedChar, setSelectedChar} from "../constants/settings.js";
+import {renameTagKey, createTagMap} from './tags-service.js';
+import {acm_crop_data, selectedChar, setSelectedChar} from "../constants/settings.js";
+
 
 /**
  * Checks the availability of the AvatarEdit API by making a POST request to the probe endpoint.
@@ -209,7 +210,7 @@ export async function renameChar(oldAvatar, charID, newName) {
 
                     // Also rename as a group member
                     await renameGroupMember(oldAvatar, newAvatar, newName);
-                    const renamePastChatsConfirm = await callPopup(`<h3>Character renamed!</h3>
+                    const renamePastChatsConfirm = await Popup(`<h3>Character renamed!</h3>
                     <p>Past chats will still contain the old character name. Would you like to update the character name in previous chats as well?</p>
                     <i><b>Sprites folder (if any) should be renamed manually.</b></i>`, POPUP_TYPE.CONFIRM);
 
@@ -228,7 +229,7 @@ export async function renameChar(oldAvatar, charID, newName) {
         }
         catch {
             // Reloading to prevent data corruption
-            await callPopup('Something went wrong. The page will be reloaded.', POPUP_TYPE.TEXT);
+            await Popup('Something went wrong. The page will be reloaded.', POPUP_TYPE.TEXT);
             location.reload();
         }
     }
@@ -365,4 +366,41 @@ export async function saveAltGreetings(event = null){
 
     // Edit the Alt Greetings number on the main drawer
     $('#altGreetings_number').html(`Numbers: ${greetings.length}`);
+}
+
+export async function createCharacter(formData) {
+    try {
+
+
+        let url = '/api/characters/create';
+        const headers = getRequestHeaders({ omitContentType: true });
+        if (acm_crop_data != undefined) {
+            url += `?crop=${encodeURIComponent(JSON.stringify(acm_crop_data))}`;
+        }
+        const rawFile = formData.get('avatar');
+        if (rawFile instanceof File) {
+            const convertedFile = await ensureImageFormatSupported(rawFile);
+            formData.set('avatar', convertedFile);
+        }
+        const fetchResult = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: formData,
+            cache: 'no-cache',
+        });
+
+        if (!fetchResult.ok) {
+            throw new Error('Fetch result is not ok');
+        }
+
+        const avatarId = await fetchResult.text();
+
+        createTagMap('#tagList', avatarId);
+        await getCharacters();
+
+    }
+    catch {
+        console.log('Error')
+    }
+
 }
