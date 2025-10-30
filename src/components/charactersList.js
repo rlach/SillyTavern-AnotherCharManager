@@ -20,7 +20,7 @@ function getCharBlock(avatar) {
 
 
     return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
-                    <div class="avatar">
+                    <div class="avatar acm_avatarList">
                         <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
                     </div>
                     <div class="char_name">
@@ -46,7 +46,7 @@ function createCharacterElementNative(avatar) {
     div.setAttribute('data-avatar', avatar);
 
     div.innerHTML = `
-        <div class="avatar">
+        <div class="avatar acm_avatarList">
             <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
         </div>
         <div class="char_name">
