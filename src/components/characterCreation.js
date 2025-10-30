@@ -97,6 +97,7 @@ export function closeCreationPopup() {
     Object.values(FIELD_CONFIGURATIONS).forEach(selector => {
         updateTokenCount(`${selector}`);
     });
+    $('#acmTagList').empty();
     if ($('#acm_left_panel').hasClass('panel-hidden')){
         updateLayout(false);
     }
@@ -162,7 +163,6 @@ export async function initiateCharacterCreation(){
     formData.append('last_mes', '');
     formData.append('avatar_url', '');
 
-    // Gérer l'avatar (fichier)
     if (create_data.avatar) {
         if (create_data.avatar instanceof FileList) {
             formData.append('avatar', create_data.avatar[0]);
@@ -170,11 +170,14 @@ export async function initiateCharacterCreation(){
             formData.append('avatar', create_data.avatar);
         }
     }
-    formData.append('alternate_greetings', JSON.stringify(create_data.alternate_greetings));
+    // formData.append('alternate_greetings', JSON.stringify(create_data.alternate_greetings));
+    for (const value of create_data.alternate_greetings) {
+        formData.append('alternate_greetings', value);
+    }
     formData.append('extra_books', JSON.stringify(create_data.extra_books));
     formData.append('extensions', JSON.stringify(create_data.extensions));
 
-    createCharacter(formData);
+    await createCharacter(formData);
 
-
+    closeCreationPopup();
 }

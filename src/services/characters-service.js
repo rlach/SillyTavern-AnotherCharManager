@@ -2,6 +2,7 @@ import {getPastCharacterChats, setCharacterId, system_message_types} from '../..
 import {ensureImageFormatSupported, getCharaFilename} from '../../../../../utils.js';
 import {renameGroupMember} from '../../../../../group-chats.js';
 import {world_info} from '../../../../../world-info.js';
+import {createTagMapFromList} from '../../../../../tags.js';
 import {
     Popup,
     characterId,
@@ -15,11 +16,11 @@ import {
     getTokenCountAsync,
     POPUP_TYPE,
     saveSettingsDebounced,
-    substituteParams
+    substituteParams, t
 } from "../constants/context.js";
 import {debounce, delay} from '../utils.js';
-import {renameTagKey, createTagMap} from './tags-service.js';
-import {acm_crop_data, selectedChar, setSelectedChar} from "../constants/settings.js";
+import {renameTagKey} from './tags-service.js';
+import {acm_crop_data, selectedChar, setCrop_data, setSelectedChar} from '../constants/settings.js';
 
 
 /**
@@ -370,8 +371,6 @@ export async function saveAltGreetings(event = null){
 
 export async function createCharacter(formData) {
     try {
-
-
         let url = '/api/characters/create';
         const headers = getRequestHeaders({ omitContentType: true });
         if (acm_crop_data != undefined) {
@@ -395,12 +394,14 @@ export async function createCharacter(formData) {
 
         const avatarId = await fetchResult.text();
 
-        createTagMap('#tagList', avatarId);
+        // createTagMap('#tagList', avatarId);
+        createTagMapFromList('#acmTagList', avatarId);
         await getCharacters();
-
+        setCrop_data(undefined);
     }
-    catch {
-        console.log('Error')
+    catch (error) {
+        console.error('Error creating character', error);
+        toastr.error(t`Failed to create character`);
     }
 
 }
