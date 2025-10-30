@@ -21,10 +21,18 @@
                                 <option data-field="date_added" data-order="desc">Oldest</option>
                             </select>
                             <label for="char_search_bar" title="Search for specific tags or characters.">
-                                <input id="char_search_bar" class="text_pole width100p" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
+                                <div class="search-with-dropdown">
+                                    <select id="search_filter_dropdown" class="search-dropdown-select">
+                                        <option value="name">Name</option>
+                                        <option value="creator">Creator</option>
+                                        <option value="creator_notes">Creator's Notes</option>
+                                        <option value="tags">Tags</option>
+                                    </select>
+                                    <input id="char_search_bar" class="text_pole width100p search-with-dropdown-input" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
+                                </div>
                             </label>
                             <label class="acm_checkbox">
-                                <span>Only Favs</span>
+                                <span>Favs</span>
                                 <input id="favOnly_checkbox" type="checkbox">
                             </label>
                         </form>

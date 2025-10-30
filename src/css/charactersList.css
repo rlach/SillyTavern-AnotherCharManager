@@ -111,6 +111,10 @@
     margin: 5px 0;
     flex: 1;
     height: auto;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-right: none;
+    background-color: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
 }
 
 .acm_checkbox {
@@ -126,4 +130,25 @@
     padding: 7px 2px;
     min-width: fit-content;
     margin: 7px;
+}
+
+
+.search-with-dropdown {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.search-dropdown-select {
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-right: none;
+    background-color: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    margin-top: 5px;
+    min-width: 130px;
+}
+
+.search-with-dropdown-input {
+    border-radius: 0 5px 5px 0 !important;
+    flex: 1;
 }

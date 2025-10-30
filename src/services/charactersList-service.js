@@ -38,22 +38,27 @@ export function searchAndFilter(){
 
     if (searchValue !== '') {
         const searchValueLower = searchValue.trim().toLowerCase();
+        const searchField = $('#search_filter_dropdown').val();
 
-        // Find matching tag IDs based on searchValue
-        const matchingTagIds = tagList
-            .filter(tag => tag.name.toLowerCase().includes(searchValueLower))
-            .map(tag => tag.id);
-
-        // Filter characters by description, name, creator comment, or tag
-        filteredChars = tagfilteredChars.filter(item => {
-            const matchesText = item.description?.toLowerCase().includes(searchValueLower) ||
-                item.name?.toLowerCase().includes(searchValueLower) ||
-                item.creatorcomment?.toLowerCase().includes(searchValueLower);
-
-            const matchesTag = (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
-
-            return matchesText || matchesTag;
-        });
+        switch (searchField) {
+            case 'name':
+                filteredChars = tagfilteredChars.filter(item => item.data.name.toLowerCase().includes(searchValueLower));
+                break;
+            case 'creator':
+                filteredChars = tagfilteredChars.filter(item => item.data.creator?.toLowerCase().includes(searchValueLower));
+                break;
+            case 'creator_notes':
+                filteredChars = tagfilteredChars.filter(item => item.data.creator_notes?.toLowerCase().includes(searchValueLower));
+                break;
+            case 'tags':
+                filteredChars = tagfilteredChars.filter(item => {
+                    const matchingTagIds = tagList
+                        .filter(tag => tag.name.toLowerCase().includes(searchValueLower))
+                        .map(tag => tag.id);
+                    return (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
+                });
+                break;
+        }
         return filteredChars;
     }
     else {
