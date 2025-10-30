@@ -1,12 +1,11 @@
 import {setCharacterId, setMenuType} from '../../../../../../script.js';
 import {debounce, getIdByAvatar} from "../utils.js";
-import {characters, getThumbnailUrl, tagList, tagMap} from "../constants/context.js";
+import {characters, eventSource, getThumbnailUrl, tagList, tagMap} from "../constants/context.js";
 import {selectedChar, setSearchValue, setSelectedChar} from "../constants/settings.js";
 import {fillAdvancedDefinitions, fillDetails} from "./characters.js";
 import {searchAndFilter, sortCharAR} from "../services/charactersList-service.js";
 import {getSetting, updateSetting} from "../services/settings-service.js";
 import {getPreset} from "../services/presets-service.js";
-import {createTagInput} from '../../../../../tags.js';
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
@@ -21,7 +20,7 @@ function getCharBlock(avatar) {
 
 
     return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
-                    <div class="avatar">
+                    <div class="avatar acm_avatarList">
                         <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
                     </div>
                     <div class="char_name">
@@ -47,7 +46,7 @@ function createCharacterElementNative(avatar) {
     div.setAttribute('data-avatar', avatar);
 
     div.innerHTML = `
-        <div class="avatar">
+        <div class="avatar acm_avatarList">
             <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
         </div>
         <div class="char_name">
@@ -166,6 +165,7 @@ function refreshCharList() {
         }
     }
     $('#charNumber').empty().append(`Total characters : ${characters.length}`);
+    eventSource.emit('character_list_refreshed');
 }
 
 /**
@@ -327,26 +327,6 @@ export function toggleTagsList() {
     }
 
     tagsList.classList.toggle('open');
-}
-
-export function toggleCharacterCreationPopup() {
-    const $popup = $('#acm_create_popup');
-
-    if ($popup.css('display') === 'none') {
-
-        createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
-        // Affichage du popup
-        $popup.css({ 'display': 'flex', 'opacity': 0.0 })
-            .addClass('open')
-            .transition({
-                opacity: 1.0,
-                duration: 125,
-                easing: 'ease-in-out',
-            });
-    } else {
-        // Masquage du popup
-        $popup.css('display', 'none').removeClass('open');
-    }
 }
 
 export function updateSortOrder(selectedOption) {
