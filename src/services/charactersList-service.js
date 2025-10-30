@@ -84,6 +84,9 @@ export function sortCharAR(chars, sort_data, sort_order) {
             case 'date_added':
                 comparison = b[sort_data] - a[sort_data];
                 break;
+            case 'data_size':
+                comparison = a[sort_data] - b[sort_data];
+                break;
         }
         return sort_order === 'desc' ? comparison * -1 : comparison;
     });
