@@ -3,6 +3,7 @@ import {Popup, POPUP_TYPE, power_user, t} from "../constants/context.js";
 import {create_data, resetCreateData, setCrop_data, updateCreateData} from "../constants/settings.js";
 import {createTagInput} from '../../../../../tags.js';
 import {createCharacter} from "../services/characters-service.js";
+import {selectAndDisplay} from "./charactersList.js";
 
 const FIELD_CONFIGURATIONS = {
     'name': '#acm_create_name',
@@ -129,7 +130,7 @@ export async function loadAvatar(input){
 
 export async function initiateCharacterCreation(){
     const result = JSON.stringify(create_data, null, 2);
-    console.log(result);
+    // console.log(result);
 
     if (String($('#acm_create_name').val()).length === 0) {
         toastr.error(t`Name is required`);
@@ -170,7 +171,7 @@ export async function initiateCharacterCreation(){
             formData.append('avatar', create_data.avatar);
         }
     }
-    // formData.append('alternate_greetings', JSON.stringify(create_data.alternate_greetings));
+
     for (const value of create_data.alternate_greetings) {
         formData.append('alternate_greetings', value);
     }

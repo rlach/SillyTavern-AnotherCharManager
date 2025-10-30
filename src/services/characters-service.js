@@ -21,6 +21,7 @@ import {
 import {debounce, delay} from '../utils.js';
 import {renameTagKey} from './tags-service.js';
 import {acm_crop_data, selectedChar, setCrop_data, setSelectedChar} from '../constants/settings.js';
+import {selectAndDisplay} from "../components/charactersList.js";
 
 
 /**
@@ -394,10 +395,14 @@ export async function createCharacter(formData) {
 
         const avatarId = await fetchResult.text();
 
-        // createTagMap('#tagList', avatarId);
         createTagMapFromList('#acmTagList', avatarId);
-        await getCharacters();
+        await new Promise((resolve) => {
+            eventSource.once('character_list_refreshed', resolve);
+            getCharacters();
+        });
         setCrop_data(undefined);
+        await delay(500);
+        selectAndDisplay(avatarId);
     }
     catch (error) {
         console.error('Error creating character', error);

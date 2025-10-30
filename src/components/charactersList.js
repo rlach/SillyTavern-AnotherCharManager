@@ -1,6 +1,6 @@
 import {setCharacterId, setMenuType} from '../../../../../../script.js';
 import {debounce, getIdByAvatar} from "../utils.js";
-import {characters, getThumbnailUrl, tagList, tagMap} from "../constants/context.js";
+import {characters, eventSource, getThumbnailUrl, tagList, tagMap} from "../constants/context.js";
 import {selectedChar, setSearchValue, setSelectedChar} from "../constants/settings.js";
 import {fillAdvancedDefinitions, fillDetails} from "./characters.js";
 import {searchAndFilter, sortCharAR} from "../services/charactersList-service.js";
@@ -165,6 +165,7 @@ function refreshCharList() {
         }
     }
     $('#charNumber').empty().append(`Total characters : ${characters.length}`);
+    eventSource.emit('character_list_refreshed');
 }
 
 /**
