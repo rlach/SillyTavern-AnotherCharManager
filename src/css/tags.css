@@ -41,3 +41,25 @@
 .tag-searchbar {
     width: 50%;
 }
+
+.acm_tagQuery_container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+}
+
+.acm_tagQuery_row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acm_tagQuery_label {
+    white-space: nowrap;
+}
+
+.acm_tagQuery_input {
+    flex: 1;
+    min-width: 0;
+}
