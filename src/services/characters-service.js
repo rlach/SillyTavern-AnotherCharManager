@@ -20,8 +20,15 @@ import {
 } from "../constants/context.js";
 import {debounce, delay} from '../utils.js';
 import {renameTagKey} from './tags-service.js';
-import {acm_crop_data, selectedChar, setCrop_data, setSelectedChar} from '../constants/settings.js';
+import {
+    acm_crop_data,
+    selectedChar,
+    setCrop_data,
+    setSelectedChar,
+    setShouldCharacterPageReload
+} from '../constants/settings.js';
 import {selectAndDisplay} from "../components/charactersList.js";
+import {closeCreationPopup} from "../components/characterCreation.js";
 
 
 /**
@@ -396,12 +403,14 @@ export async function createCharacter(formData) {
         const avatarId = await fetchResult.text();
 
         createTagMapFromList('#acmTagList', avatarId);
+        setShouldCharacterPageReload(true);
         await new Promise((resolve) => {
             eventSource.once('character_list_refreshed', resolve);
             getCharacters();
         });
         setCrop_data(undefined);
         await delay(500);
+        closeCreationPopup();
         selectAndDisplay(avatarId);
     }
     catch (error) {

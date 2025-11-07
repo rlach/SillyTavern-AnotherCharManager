@@ -16,7 +16,7 @@ import {closeDetails} from "../components/modal.js";
 import {addListenersTagFilter} from "./tags-events.js";
 import {checkApiAvailability, editCharDebounced, saveAltGreetings} from "../services/characters-service.js";
 import {refreshCharListDebounced} from "../components/charactersList.js";
-import {selectedChar} from "../constants/settings.js";
+import {selectedChar, shouldCharacterPageReload} from "../constants/settings.js";
 import {updateTokenCount} from "../utils.js";
 
 export function initializeFieldUpdaters() {
@@ -80,9 +80,11 @@ export function initializeCharactersEvents() {
 
     // Load the character list in the background when ST launch
     eventSource.on('character_page_loaded', function () {
-        generateTagFilter();
-        addListenersTagFilter();
-        refreshCharListDebounced();
+        if(shouldCharacterPageReload) {
+            generateTagFilter();
+            addListenersTagFilter();
+            refreshCharListDebounced();
+        }
     });
 
     // Adding textarea trigger on input
