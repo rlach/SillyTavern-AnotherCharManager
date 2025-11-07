@@ -1,3 +1,4 @@
+import { Fuse } from '/lib.js';
 import { getSetting } from "./settings-service.js";
 import { characters, tagList, tagMap } from "../constants/context.js";
 import { searchValue, tagFilterstates } from "../constants/settings.js";
@@ -37,28 +38,54 @@ export function searchAndFilter(){
     });
 
     if (searchValue !== '') {
-        const searchValueLower = searchValue.trim().toLowerCase();
+        const searchValueTrimmed = searchValue.trim();
         const searchField = $('#search_filter_dropdown').val();
+
+        let fuseOptions;
 
         switch (searchField) {
             case 'name':
-                filteredChars = tagfilteredChars.filter(item => item.data.name.toLowerCase().includes(searchValueLower));
+                fuseOptions = {
+                    keys: ['data.name'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
                 break;
             case 'creator':
-                filteredChars = tagfilteredChars.filter(item => item.data.creator?.toLowerCase().includes(searchValueLower));
+                fuseOptions = {
+                    keys: ['data.creator'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
                 break;
             case 'creator_notes':
-                filteredChars = tagfilteredChars.filter(item => item.data.creator_notes?.toLowerCase().includes(searchValueLower));
+                fuseOptions = {
+                    keys: ['data.creator_notes'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
                 break;
             case 'tags':
+                // For tags, we'll search tag names first, then filter characters
+                const tagFuseOptions = {
+                    keys: ['name'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                const tagFuse = new Fuse(tagList, tagFuseOptions);
+                const matchingTags = tagFuse.search(searchValueTrimmed);
+                const matchingTagIds = matchingTags.map(result => result.item.id);
+
                 filteredChars = tagfilteredChars.filter(item => {
-                    const matchingTagIds = tagList
-                        .filter(tag => tag.name.toLowerCase().includes(searchValueLower))
-                        .map(tag => tag.id);
                     return (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
                 });
-                break;
+                return filteredChars;
         }
+
+        const fuse = new Fuse(tagfilteredChars, fuseOptions);
+        const results = fuse.search(searchValueTrimmed);
+        filteredChars = results.map(result => result.item);
+
         return filteredChars;
     }
     else {
