@@ -1,3 +1,4 @@
+import { Fuse } from '/lib.js';
 import { getSetting } from "./settings-service.js";
 import { characters, tagList, tagMap } from "../constants/context.js";
 import { searchValue, tagFilterstates } from "../constants/settings.js";
@@ -37,23 +38,54 @@ export function searchAndFilter(){
     });
 
     if (searchValue !== '') {
-        const searchValueLower = searchValue.trim().toLowerCase();
+        const searchValueTrimmed = searchValue.trim();
+        const searchField = $('#search_filter_dropdown').val();
 
-        // Find matching tag IDs based on searchValue
-        const matchingTagIds = tagList
-            .filter(tag => tag.name.toLowerCase().includes(searchValueLower))
-            .map(tag => tag.id);
+        let fuseOptions;
 
-        // Filter characters by description, name, creator comment, or tag
-        filteredChars = tagfilteredChars.filter(item => {
-            const matchesText = item.description?.toLowerCase().includes(searchValueLower) ||
-                item.name?.toLowerCase().includes(searchValueLower) ||
-                item.creatorcomment?.toLowerCase().includes(searchValueLower);
+        switch (searchField) {
+            case 'name':
+                fuseOptions = {
+                    keys: ['data.name'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                break;
+            case 'creator':
+                fuseOptions = {
+                    keys: ['data.creator'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                break;
+            case 'creator_notes':
+                fuseOptions = {
+                    keys: ['data.creator_notes'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                break;
+            case 'tags':
+                // For tags, we'll search tag names first, then filter characters
+                const tagFuseOptions = {
+                    keys: ['name'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                const tagFuse = new Fuse(tagList, tagFuseOptions);
+                const matchingTags = tagFuse.search(searchValueTrimmed);
+                const matchingTagIds = matchingTags.map(result => result.item.id);
 
-            const matchesTag = (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
+                filteredChars = tagfilteredChars.filter(item => {
+                    return (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
+                });
+                return filteredChars;
+        }
 
-            return matchesText || matchesTag;
-        });
+        const fuse = new Fuse(tagfilteredChars, fuseOptions);
+        const results = fuse.search(searchValueTrimmed);
+        filteredChars = results.map(result => result.item);
+
         return filteredChars;
     }
     else {
@@ -78,6 +110,9 @@ export function sortCharAR(chars, sort_data, sort_order) {
                 break;
             case 'date_added':
                 comparison = b[sort_data] - a[sort_data];
+                break;
+            case 'data_size':
+                comparison = a[sort_data] - b[sort_data];
                 break;
         }
         return sort_order === 'desc' ? comparison * -1 : comparison;

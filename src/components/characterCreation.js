@@ -1,9 +1,14 @@
 import { getBase64Async, updateTokenCount } from "../utils.js";
 import {Popup, POPUP_TYPE, power_user, t} from "../constants/context.js";
-import {create_data, resetCreateData, setCrop_data, updateCreateData} from "../constants/settings.js";
+import {
+    create_data,
+    resetCreateData,
+    setCrop_data,
+    setShouldCharacterPageReload,
+    updateCreateData
+} from "../constants/settings.js";
 import {createTagInput} from '../../../../../tags.js';
 import {createCharacter} from "../services/characters-service.js";
-import {selectAndDisplay} from "./charactersList.js";
 
 const FIELD_CONFIGURATIONS = {
     'name': '#acm_create_name',
@@ -52,6 +57,7 @@ export function toggleCharacterCreationPopup() {
         // Avatar handling
         $('#acm_create_avatar').attr('src', 'img/ai4.png');
 
+        setShouldCharacterPageReload(false);
         createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
         // Affichage du popup
         $popup.css({ 'display': 'flex', 'opacity': 0.0 })
@@ -179,6 +185,4 @@ export async function initiateCharacterCreation(){
     formData.append('extensions', JSON.stringify(create_data.extensions));
 
     await createCharacter(formData);
-
-    closeCreationPopup();
 }
