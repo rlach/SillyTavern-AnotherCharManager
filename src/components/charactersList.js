@@ -10,28 +10,28 @@ import {getPreset} from "../services/presets-service.js";
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
 // Function to generate the HTML block for a character
-function getCharBlock(avatar) {
-    const id = getIdByAvatar(avatar);
-    const avatarThumb = getThumbnailUrl('avatar', avatar);
+// function getCharBlock(avatar) {
+//     const id = getIdByAvatar(avatar);
+//     const avatarThumb = getThumbnailUrl('avatar', avatar);
+//
+//     const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
+//     const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
+//     const isFav = (characters[id].fav || characters[id].data.extensions.fav) ? 'fav' : '';
+//
+//
+//     return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
+//                     <div class="avatar acm_avatarList">
+//                         <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
+//                     </div>
+//                     <div class="char_name">
+//                         <div class="char_name_block">
+//                             <span>${characters[id].name} : ${tagMap[avatar].length}</span>
+//                         </div>
+//                     </div>
+//                 </div>`;
+// }
 
-    const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
-    const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
-    const isFav = (characters[id].fav || characters[id].data.extensions.fav) ? 'fav' : '';
-
-
-    return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
-                    <div class="avatar acm_avatarList">
-                        <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
-                    </div>
-                    <div class="char_name">
-                        <div class="char_name_block">
-                            <span>${characters[id].name} : ${tagMap[avatar].length}</span>
-                        </div>
-                    </div>
-                </div>`;
-}
-
-function createCharacterElementNative(avatar) {
+function createCharacterBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
 
@@ -59,7 +59,7 @@ function createCharacterElementNative(avatar) {
     return div;
 }
 
-function renderCharactersIndividually(sortedList) {
+function renderCharactersListHTML(sortedList) {
     const container = $('#character-list')[0]; // Obtenir l'élément DOM natif
     container.innerHTML = ''; // Vider le container
 
@@ -77,7 +77,7 @@ function renderCharactersIndividually(sortedList) {
         (performance.now() - startTime) < 12) {
 
             const item = sortedList[currentIndex];
-            const charElement = createCharacterElementNative(item.avatar);
+            const charElement = createCharacterBlock(item.avatar);
             fragment.appendChild(charElement);
 
             currentIndex++;
@@ -119,6 +119,15 @@ export function selectAndDisplay(avatar) {
 
 }
 
+
+function initializeDropdownToggles() {
+    document.querySelectorAll('.dropdown-container').forEach(container => {
+        container.querySelector('.dropdown-title').addEventListener('click', () => {
+            container.classList.toggle('open');
+        });
+    });
+}
+
 // Function to refresh the character list based on search and sorting parameters
 function refreshCharList() {
     const filteredChars = searchAndFilter();
@@ -133,36 +142,44 @@ function refreshCharList() {
         const dropdownMode = getSetting('dropdownMode');
         const sortedList = sortCharAR(filteredChars, sortingField, sortingOrder);
 
-        if(dropdownUI && dropdownMode === "allTags"){
-            $('#character-list').html(dropdownAllTags(sortedList));
 
-            document.querySelectorAll('.dropdown-container').forEach(container => {
-                container.querySelector('.dropdown-title').addEventListener('click', () => {
-                    container.classList.toggle('open');
-                });
-            });
+        if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
+            $('#character-list').html(generateDropdown(sortedList, dropdownMode));
+            initializeDropdownToggles();
+        } else {
+            renderCharactersListHTML(sortedList);
         }
-        else if(dropdownUI && dropdownMode === "custom"){
-            $('#character-list').html(dropdownCustom(sortedList));
 
-            document.querySelectorAll('.dropdown-container').forEach(container => {
-                container.querySelector('.dropdown-title').addEventListener('click', () => {
-                    container.classList.toggle('open');
-                });
-            });
-        }
-        else if(dropdownUI && dropdownMode === "creators"){
-            $('#character-list').html(dropdownCreators(sortedList));
-
-            document.querySelectorAll('.dropdown-container').forEach(container => {
-                container.querySelector('.dropdown-title').addEventListener('click', () => {
-                    container.classList.toggle('open');
-                });
-            });
-        }
-        else {
-            renderCharactersIndividually(sortedList);
-        }
+        // if(dropdownUI && dropdownMode === "allTags"){
+        //     $('#character-list').html(dropdownAllTags(sortedList));
+        //
+        //     document.querySelectorAll('.dropdown-container').forEach(container => {
+        //         container.querySelector('.dropdown-title').addEventListener('click', () => {
+        //             container.classList.toggle('open');
+        //         });
+        //     });
+        // }
+        // else if(dropdownUI && dropdownMode === "custom"){
+        //     $('#character-list').html(dropdownCustom(sortedList));
+        //
+        //     document.querySelectorAll('.dropdown-container').forEach(container => {
+        //         container.querySelector('.dropdown-title').addEventListener('click', () => {
+        //             container.classList.toggle('open');
+        //         });
+        //     });
+        // }
+        // else if(dropdownUI && dropdownMode === "creators"){
+        //     $('#character-list').html(dropdownCreators(sortedList));
+        //
+        //     document.querySelectorAll('.dropdown-container').forEach(container => {
+        //         container.querySelector('.dropdown-title').addEventListener('click', () => {
+        //             container.classList.toggle('open');
+        //         });
+        //     });
+        // }
+        // else {
+        //     renderCharactersListHTML(sortedList);
+        // }
     }
     $('#charNumber').empty().append(`Total characters : ${characters.length}`);
     eventSource.emit('character_list_refreshed');
@@ -185,7 +202,7 @@ function dropdownAllTags(sortedList){
             return '';
         }
 
-        const characterBlocks = charactersForTag.map(character => getCharBlock(character)).join('');
+        const characterBlocks = charactersForTag.map(character => createCharacterBlock(character)).join('');
 
         return `<div class="dropdown-container">
                             <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${tag.name} (${charactersForTag.length})</div>
@@ -203,7 +220,7 @@ function dropdownAllTags(sortedList){
         ? `<div class="dropdown-container">
                         <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">No Tags (${noTagsCharacters.length})</div>
                         <div class="dropdown-content character-list">
-                            ${noTagsCharacters.map(character => getCharBlock(character)).join('')}
+                            ${noTagsCharacters.map(character => createCharacterBlock(character)).join('')}
                         </div>
                     </div>`
         : '';
@@ -233,7 +250,7 @@ function dropdownCustom(sortedList){
             return '';
         }
 
-        const characterBlocks = charactersForCat.map(character => getCharBlock(character)).join('');
+        const characterBlocks = charactersForCat.map(character => createCharacterBlock(character)).join('');
 
         return `<div class="dropdown-container">
                             <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${category.name} (${charactersForCat.length})</div>
@@ -280,7 +297,7 @@ function dropdownCreators(sortedList){
                 return '';
             }
 
-            const characterBlocks = avatars.map(character => getCharBlock(character)).join('');
+            const characterBlocks = avatars.map(character => createCharacterBlock(character)).join('');
             const creatorName = creator === 'No Creator' ? "No Creators" : creator;
 
             return `<div class="dropdown-container">
@@ -290,6 +307,103 @@ function dropdownCreators(sortedList){
                 </div>
             </div>`;
         }).join('');
+}
+
+function generateDropdown(sortedList, type) {
+    const generators = {
+        allTags: () => {
+            const tagDropdowns = tagList.map(tag => {
+                const charactersForTag = sortedList
+                    .filter(item => tagMap[item.avatar]?.includes(tag.id))
+                    .map(item => item.avatar);
+
+                if (charactersForTag.length === 0) return '';
+
+                return createDropdownContainer(
+                    tag.name,
+                    charactersForTag.length,
+                    'tag',
+                    tag.id
+                );
+            }).join('');
+
+            const noTagsCharacters = sortedList
+                .filter(item => !tagMap[item.avatar] || tagMap[item.avatar].length === 0)
+                .map(item => item.avatar);
+
+            const noTagsDropdown = noTagsCharacters.length > 0
+                ? createDropdownContainer('No Tags', noTagsCharacters.length, 'tag', 'no-tags')
+                : '';
+
+            return tagDropdowns + noTagsDropdown;
+        },
+
+        custom: () => {
+            const preset = getSetting('presetId');
+            const categories = getPreset(preset).categories;
+
+            if (categories.length === 0) {
+                return "Looks like our categories went on vacation! 🏖️ Check back when they're done sunbathing!";
+            }
+
+            return categories.map(category => {
+                const members = category.tags;
+                const charactersForCat = sortedList
+                    .filter(item => members.every(memberId => tagMap[item.avatar]?.includes(String(memberId))))
+                    .map(item => item.avatar);
+
+                if (charactersForCat.length === 0) return '';
+
+                return createDropdownContainer(
+                    category.name,
+                    charactersForCat.length,
+                    'custom',
+                    category.tags.join(',')
+                );
+            }).join('');
+        },
+
+        creators: () => {
+            const groupedByCreator = sortedList.reduce((groups, item) => {
+                const creator = item.data.creator || 'No Creator';
+                if (!groups[creator]) {
+                    groups[creator] = [];
+                }
+                groups[creator].push(item.avatar);
+                return groups;
+            }, {});
+
+            return Object.entries(groupedByCreator)
+                .sort(([creatorA], [creatorB]) => {
+                    if (creatorA === 'No Creator') return 1;
+                    if (creatorB === 'No Creator') return -1;
+                    return creatorA.localeCompare(creatorB);
+                })
+                .map(([creator, avatars]) => {
+                    if (avatars.length === 0) return '';
+
+                    const creatorName = creator === 'No Creator' ? 'No Creators' : creator;
+                    return createDropdownContainer(
+                        creatorName,
+                        avatars.length,
+                        'creator',
+                        creator
+                    );
+                }).join('');
+        }
+    };
+
+    return generators[type]?.() || '';
+}
+
+function createDropdownContainer(title, count, dataType, dataContent) {
+    return `<div class="dropdown-container" data-type="${dataType}" data-content="${dataContent}">
+        <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">
+            ${title} (${count})
+        </div>
+        <div class="dropdown-content character-list">
+        </div>
+    </div>`;
 }
 
 /**
