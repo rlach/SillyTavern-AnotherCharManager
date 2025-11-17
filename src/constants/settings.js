@@ -31,8 +31,6 @@ export const setCrop_data = (value) => {
     acm_crop_data = value;
 };
 
-export const tagFilterstates = new Map();
-
 export const defaultSettings = {
     popupWidth: 50,
     sortingField: "name",

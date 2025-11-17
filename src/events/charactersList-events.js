@@ -1,5 +1,5 @@
 import {
-    selectAndDisplay, toggleFavoritesOnly, toggleTagsList,
+    selectAndDisplay, toggleFavoritesOnly, toggleTagQueries,
     updateSearchFilter,
     updateSortOrder
 } from "../components/charactersList.js";
@@ -14,7 +14,7 @@ export function initializeCharactersListEvents() {
 
 export function initializeToolbarEvents() {
 
-    $(document).on('click', '#acm_tags_filter', toggleTagsList);
+    $(document).on('click', '#acm_tags_filter', toggleTagQueries);
 
     // Tri des personnages
     $(document).on('change', '#char_sort_order', function () {

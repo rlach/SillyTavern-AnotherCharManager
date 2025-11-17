@@ -1,7 +1,7 @@
 import { Fuse } from '/lib.js';
 import { getSetting } from "./settings-service.js";
 import { characters, tagList, tagMap } from "../constants/context.js";
-import { searchValue, tagFilterstates } from "../constants/settings.js";
+import { searchValue } from "../constants/settings.js";
 
 export function searchAndFilter(){
     let filteredChars = [];
@@ -9,32 +9,33 @@ export function searchAndFilter(){
         ? [...characters].filter(character => character.fav === true || character.data.extensions.fav === true)
         : [...characters];
 
-    // Get tags states
-    const tagStates = [...tagFilterstates.entries()];
+    const excludedTags = $('#acm_excludedTags > span').map(function() { return this.id; }).get().filter(id => id);
+    const mandatoryTags = $('#acm_mandatoryTags > span').map(function() { return this.id; }).get().filter(id => id);
+    const facultativeTags = $('#acm_facultativeTags > span').map(function() { return this.id; }).get().filter(id => id);
 
-    // Split included and excluded tags
-    const includedTagIds = tagList
-        .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 2))
-        .map(tag => tag.id);
-
-    const excludedTagIds = tagList
-        .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 3))
-        .map(tag => tag.id);
-
-    // Filtering based on tags states
+    // Filtering based on tags
     let tagfilteredChars = charactersCopy.filter(item => {
         const characterTags = tagMap[item.avatar] || [];
 
-        // Check if there are included tags
-        const hasIncludedTag = includedTagIds.length === 0 || characterTags.some(tagId => includedTagIds.includes(tagId));
+        // First: Exclude characters with any excluded tags
+        if (excludedTags.length > 0) {
+            const hasExcludedTag = characterTags.some(tagId => excludedTags.includes(tagId));
+            if (hasExcludedTag) return false;
+        }
 
-        // Check if there are excluded tags
-        const hasExcludedTag = characterTags.some(tagId => excludedTagIds.includes(tagId));
+        // Second: Filter out characters that don't have ALL mandatory tags
+        if (mandatoryTags.length > 0) {
+            const hasAllMandatoryTags = mandatoryTags.every(tagId => characterTags.includes(tagId));
+            if (!hasAllMandatoryTags) return false;
+        }
 
-        // Return true if:
-        // 1. There are no excluded tags
-        // 2. There are at least one included tags
-        return hasIncludedTag && !hasExcludedTag;
+        // Third: Filter out characters that don't have at least ONE facultative tag
+        if (facultativeTags.length > 0) {
+            const hasAtLeastOneFacultativeTag = facultativeTags.some(tagId => characterTags.includes(tagId));
+            if (!hasAtLeastOneFacultativeTag) return false;
+        }
+
+        return true;
     });
 
     if (searchValue !== '') {

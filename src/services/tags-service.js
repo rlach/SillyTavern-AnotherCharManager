@@ -1,5 +1,4 @@
 import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from '../utils.js';
-import { tagFilterstates } from "../constants/settings.js";
 import {
     tagList,
     tagMap,
@@ -16,15 +15,6 @@ export function initilizeTagInput() {
     acmCreateTagInput('#acm_mandatoryInput', '#acm_mandatoryTags', { tagOptions: { removable: true } });
     acmCreateTagInput('#acm_facultativeInput', '#acm_facultativeTags', { tagOptions: { removable: true } });
     acmCreateTagInput('#acm_excludedInput', '#acm_excludedTags', { tagOptions: { removable: true } });
-}
-
-/**
- * Initializes tag filter states
- */
-export function initializeTagFilterStates() {
-    tagList.forEach(tag => {
-        tagFilterstates.set(tag.id, 1);
-    });
 }
 
 /**
