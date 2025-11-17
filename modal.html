@@ -44,18 +44,24 @@
                     <div id="acm_tagQuery" class="acm_tagQuery_container">
                         <div class="acm_tagQuery_row">
                             <span class="acm_tagQuery_label">Mandatory tags:</span>
-                            <input type="text" class="text_pole acm_tagQuery_input">
-                            <div id="acm_mandatoryTags"></div>
+                            <label for="acm_mandatoryInput" title="Mandatory Tags">
+                                <input id="acm_mandatoryInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                            </label>
+                            <div id="acm_mandatoryTags" class="tags"></div>
                         </div>
                         <div class="acm_tagQuery_row">
                             <span class="acm_tagQuery_label">At least one tag:</span>
-                            <input type="text" class="text_pole acm_tagQuery_input">
-                            <div id="acm_facultativeTags"></div>
+                            <label for="acm_facultativeInput" title="Facultative Tags">
+                                <input id="acm_facultativeInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                            </label>
+                            <div id="acm_facultativeTags" class="tags"></div>
                         </div>
                         <div class="acm_tagQuery_row">
                             <span class="acm_tagQuery_label">Excluded tags:</span>
-                            <input type="text" class="text_pole acm_tagQuery_input">
-                            <div id="acm_excludedTags"></div>
+                            <label for="acm_excludedInput" title="Excluded Tags">
+                                <input id="acm_excludedInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                            </label>
+                            <div id="acm_excludedTags" class="tags"></div>
                         </div>
                     </div>
                     <div id="character-list"> </div>
@@ -72,7 +78,6 @@
                                         </span>
                                     </label>
                                 </div>
-
                                 <div class="char-details-summary-desc">
                                     <span id="ch_name_details"></span>
                                     <hr>

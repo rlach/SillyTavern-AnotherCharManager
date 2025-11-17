@@ -1,6 +1,6 @@
 import { getSetting } from "../services/settings-service.js";
 import { Popup, POPUP_TYPE } from "../constants/context.js";
-import { createTagInputCat, displayTag } from "./tags.js";
+import { acmCreateTagInput, displayTag } from "./tags.js";
 import { updateDropdownPresetNames } from "./charactersList.js";
 import {
     addPresetCategory,
@@ -98,7 +98,7 @@ export function printCategoriesList(presetID, init = false){
             catTagList.append(`<i class="fa-solid fa-plus tag addCatTag"></i>`);
             catContainer.append(catElement);
             $('#acm_custom_categories').append(catContainer);
-            createTagInputCat(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } });
+            acmCreateTagInput(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } }, true);
         });
         makeCategoryDraggable("#catContainer");
     }
