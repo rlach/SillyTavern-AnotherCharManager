@@ -44,6 +44,10 @@
     font-size: 1.1rem;
 }
 
+#acm_create_name {
+    max-width: 300px;
+}
+
 #acmTagInput {
     height: 26px;
     margin-bottom: 0;
