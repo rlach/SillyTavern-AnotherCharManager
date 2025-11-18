@@ -9,7 +9,7 @@ import {createTagInput} from '../../../../../tags.js';
 import {acmCreateTagInput} from "../components/tags.js";
 
 
-export function initilizeTagInput() {
+export function initializeTagInput() {
     createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     acmCreateTagInput('#acm_mandatoryInput', '#acm_mandatoryTags', { tagOptions: { removable: true } });
