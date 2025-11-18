@@ -1,5 +1,5 @@
 import { getBase64Async, updateTokenCount } from "../utils.js";
-import { Popup, POPUP_TYPE, power_user, t } from "../constants/context.js";
+import { callGenericPopup, POPUP_TYPE, power_user, t } from "../constants/context.js";
 import {
     create_data,
     resetCreateData,
@@ -152,7 +152,7 @@ export async function loadAvatar(input) {
         // Check if the user has disabled avatar resizing
         if (!power_user.never_resize_avatars) {
             // Display a cropping dialog for the avatar image
-            const dlg = new Popup('Set the crop position of the avatar image', POPUP_TYPE.CROP, '', { cropImage: fileData });
+            const dlg = callGenericPopup('Set the crop position of the avatar image', POPUP_TYPE.CROP, '', { cropImage: fileData });
             const croppedImage = await dlg.show();
             // If the user cancels the cropping, exit the function
             if (!croppedImage) {

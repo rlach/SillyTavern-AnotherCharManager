@@ -1,4 +1,4 @@
-import { Popup, POPUP_TYPE } from "../constants/context.js";
+import { callGenericPopup, POPUP_TYPE } from "../constants/context.js";
 import {
     addCategory,
     displayPresetName,

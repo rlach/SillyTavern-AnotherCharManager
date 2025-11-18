@@ -1,5 +1,5 @@
 import { getSetting } from "../services/settings-service.js";
-import { Popup, POPUP_TYPE } from "../constants/context.js";
+import { callGenericPopup, POPUP_TYPE } from "../constants/context.js";
 import { acmCreateTagInput, displayTag } from "./tags.js";
 import { updateDropdownPresetNames } from "./charactersList.js";
 import {
@@ -51,7 +51,7 @@ export async function manageCustomCategories(){
      </div>
 
     `);
-    await new Popup(html, POPUP_TYPE.TEXT, '', {okButton: "Close", allowVerticalScrolling: true });
+    await callGenericPopup(html, POPUP_TYPE.TEXT, '', {okButton: "Close", allowVerticalScrolling: true });
 }
 
 /**

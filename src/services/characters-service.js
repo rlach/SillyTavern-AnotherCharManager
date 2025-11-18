@@ -4,7 +4,7 @@ import { renameGroupMember } from '/scripts/group-chats.js';
 import { world_info } from '/scripts/world-info.js';
 import { createTagMapFromList } from '/scripts/tags.js';
 import {
-    Popup,
+    callGenericPopup,
     characterId,
     characters,
     event_types,
@@ -218,7 +218,7 @@ export async function renameChar(oldAvatar, charID, newName) {
 
                     // Also rename as a group member
                     await renameGroupMember(oldAvatar, newAvatar, newName);
-                    const renamePastChatsConfirm = await Popup(`<h3>Character renamed!</h3>
+                    const renamePastChatsConfirm = await callGenericPopup(`<h3>Character renamed!</h3>
                     <p>Past chats will still contain the old character name. Would you like to update the character name in previous chats as well?</p>
                     <i><b>Sprites folder (if any) should be renamed manually.</b></i>`, POPUP_TYPE.CONFIRM);
 
@@ -237,7 +237,7 @@ export async function renameChar(oldAvatar, charID, newName) {
         }
         catch {
             // Reloading to prevent data corruption
-            await Popup('Something went wrong. The page will be reloaded.', POPUP_TYPE.TEXT);
+            await callGenericPopup('Something went wrong. The page will be reloaded.', POPUP_TYPE.TEXT);
             location.reload();
         }
     }

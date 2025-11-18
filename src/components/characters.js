@@ -7,7 +7,7 @@ import {
 import { displayTag } from './tags.js';
 import { getBase64Async, getIdByAvatar } from '../utils.js';
 import {
-    Popup,
+    callGenericPopup,
     characters,
     getThumbnailUrl,
     getTokenCountAsync,
@@ -206,7 +206,7 @@ export async function showDuplicateConfirmation() {
     const confirmMessage = `
         <h3>Are you sure you want to duplicate this character?</h3>
         <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
-    return await new Popup(confirmMessage, POPUP_TYPE.CONFIRM);
+    return await callGenericPopup(confirmMessage, POPUP_TYPE.CONFIRM);
 }
 
 /**
@@ -220,7 +220,7 @@ export async function showDuplicateConfirmation() {
  */
 export async function showRenameDialog(characterAvatar) {
     const charID = getIdByAvatar(characterAvatar);
-    return await new Popup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
+    return await callGenericPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
 }
 
 /**
@@ -322,7 +322,7 @@ export async function update_avatar(input){
 
         if (!power_user.never_resize_avatars) {
             // Display a cropping dialog to the user
-            const dlg = new Popup('Set the crop position of the avatar image', POPUP_TYPE.CROP, '', { cropImage: fileData });
+            const dlg = callGenericPopup('Set the crop position of the avatar image', POPUP_TYPE.CROP, '', { cropImage: fileData });
             const croppedImage = await dlg.show();
 
             if (!croppedImage) {
