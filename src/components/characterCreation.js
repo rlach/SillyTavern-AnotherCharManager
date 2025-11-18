@@ -9,6 +9,11 @@ import {
 } from "../constants/settings.js";
 import { createCharacter } from "../services/characters-service.js";
 
+/**
+ * A mapping of field names to their corresponding CSS selectors.
+ * This object is used to associate form fields in the character creation popup
+ * with their respective DOM elements for easier manipulation and data binding.
+ */
 const FIELD_CONFIGURATIONS = {
     'name': '#acm_create_name',
     'description': '#acm_create_desc',
@@ -21,11 +26,16 @@ const FIELD_CONFIGURATIONS = {
     'messageExample': '#acm_create_mes_example'
 };
 
+/**
+ * Toggles the visibility of the character creation popup.
+ * This function handles the initialization of form fields with existing data,
+ * updates token counts, and manages the display state of the popup.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function toggleCharacterCreationPopup() {
     const $popup = $('#acm_create_popup');
-
     if ($popup.css('display') === 'none') {
-
         // Initialize all form fields with create_data values
         $('#acm_create_name').val(create_data.name);
         $('#acm_create_desc').val(create_data.description);
@@ -36,13 +46,11 @@ export function toggleCharacterCreationPopup() {
         $('#acm_create_scenario').val(create_data.scenario);
         $('#acm_create_depth_prompt').val(create_data.depth_prompt_prompt);
         $('#acm_create_mes_example').val(create_data.mes_example);
-
         // Metadata fields
         $('#acm_creator_textarea2').val(create_data.creator);
         $('#acm_character_version_textarea2').val(create_data.character_version);
         $('#acm_creator_notes_textarea2').val(create_data.creator_notes);
         $('#acm_tags_textarea2').val(create_data.tags);
-
         // Numeric/select fields
         $('#acm_depth_prompt_depth2').val(create_data.depth_prompt_depth);
         $('#acm_depth_prompt_role2').val(create_data.depth_prompt_role);
@@ -52,13 +60,10 @@ export function toggleCharacterCreationPopup() {
         Object.values(FIELD_CONFIGURATIONS).forEach(selector => {
             updateTokenCount(`${selector}`);
         });
-
         // Avatar handling
         $('#acm_create_avatar').attr('src', 'img/ai4.png');
-
         setShouldCharacterPageReload(false);
-
-        // Affichage du popup
+        // Display the popup
         $popup.css({ 'display': 'flex', 'opacity': 0.0 })
             .addClass('open')
             .transition({
@@ -67,84 +72,121 @@ export function toggleCharacterCreationPopup() {
                 easing: 'ease-in-out',
             });
     } else {
-        // Masquage du popup
+        // Hide the popup
         $popup.css('display', 'none').removeClass('open');
     }
 }
 
 /**
- * Toggles the visibility of left and right panels and updates the label text accordingly.
+ * Updates the layout of the character creation interface by toggling
+ * the visibility of the left and right panels based on the provided parameter.
  *
- * @param {boolean} showAdvanced - Indicates whether to display the advanced panel.
- * If true, the advanced panel is shown and the main panel is hidden.
- * If false, the main panel is shown and the advanced panel is hidden.
+ * @param {boolean} showAdvanced - A flag indicating whether to show the advanced panel.
  * @return {void} This function does not return a value.
  */
 export function updateLayout(showAdvanced) {
     if (!showAdvanced) {
+        // Show the main panel and hide the advanced panel
         $('#acm_left_panel').removeClass('panel-hidden');
         $('#acm_right_panel').addClass('panel-hidden');
         $('#separator-label').text('Advanced Definitions');
     } else {
+        // Show the advanced panel and hide the main panel
         $('#acm_right_panel').removeClass('panel-hidden');
         $('#acm_left_panel').addClass('panel-hidden');
         $('#separator-label').text('Main Definitions');
     }
 }
 
+/**
+ * Closes the character creation popup and resets its state.
+ * This function handles the transition effect for hiding the popup,
+ * resets the character creation data, updates token counts for all fields,
+ * clears the tag list, and ensures the layout is updated to show the main panel
+ * if the advanced panel is currently visible.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function closeCreationPopup() {
+    // Apply a transition effect to fade out the popup
     $('acm_create_popup').transition({
         opacity: 0,
         duration: 125,
         easing: 'ease-in-out',
     });
+    // Hide the popup after the transition is complete
     setTimeout(function () { $('#acm_create_popup').css('display', 'none'); }, 125);
+    // Reset the character creation data to its default state
     resetCreateData();
+    // Update token counts for all fields in the form
     Object.values(FIELD_CONFIGURATIONS).forEach(selector => {
         updateTokenCount(`${selector}`);
     });
+    // Clear the tag list in the popup
     $('#acmTagList').empty();
+    // Ensure the layout is updated to show the main panel if the advanced panel is hidden
     if ($('#acm_left_panel').hasClass('panel-hidden')){
         updateLayout(false);
     }
 }
 
-export async function loadAvatar(input){
+/**
+ * Loads and processes an avatar image file.
+ * This function handles the selection of an avatar image file, converts it to a Base64 string,
+ * and optionally allows the user to crop the image before setting it as the avatar.
+ *
+ * @async
+ * @param {HTMLInputElement} input - The file input element containing the selected avatar file.
+ *                                   The `files` property should contain the uploaded file.
+ *
+ * @return {Promise<void>} This function does not return a value.
+ */
+export async function loadAvatar(input) {
     if (input.files && input.files[0]) {
+        // Update the avatar data in the creation settings
         updateCreateData('avatar', input.files);
-
+        // Reset the crop data
         setCrop_data(undefined);
         const file = input.files[0];
         const fileData = await getBase64Async(file);
-
+        // Check if the user has disabled avatar resizing
         if (!power_user.never_resize_avatars) {
+            // Display a cropping dialog for the avatar image
             const dlg = new Popup('Set the crop position of the avatar image', POPUP_TYPE.CROP, '', { cropImage: fileData });
             const croppedImage = await dlg.show();
-
+            // If the user cancels the cropping, exit the function
             if (!croppedImage) {
                 return;
             }
-
+            // Save the crop data and set the cropped image as the avatar
             setCrop_data(dlg.cropData);
             $('#acm_create_avatar').attr('src', String(croppedImage));
         } else {
+            // Directly set the Base64 image as the avatar
             $('#acm_create_avatar').attr('src', fileData);
         }
     }
 }
 
-export async function initiateCharacterCreation(){
-    const result = JSON.stringify(create_data, null, 2);
-    // console.log(result);
 
+/**
+ * Initiates the character creation process by validating the input fields,
+ * preparing the form data, and sending it to the server.
+ * This function collects all the necessary data from the character creation form,
+ * including text fields, numeric fields, and file uploads, and submits it
+ * using the `createCharacter` service.
+ *
+ * @async
+ * @return {Promise<void>} This function does not return a value.
+ */
+export async function initiateCharacterCreation(){
+    // Validate that the character name is not empty
     if (String($('#acm_create_name').val()).length === 0) {
         toastr.error(t`Name is required`);
         return;
     }
-
     const formData = new FormData();
-
-    // Ajouter les champs simples (string, number)
+    // Add simple fields (string, number) to the form data
     formData.append('ch_name', create_data.name || '');
     formData.append('description', create_data.description || '');
     formData.append('creator_notes', create_data.creator_notes || '');
@@ -168,7 +210,7 @@ export async function initiateCharacterCreation(){
     formData.append('create_date', '');
     formData.append('last_mes', '');
     formData.append('avatar_url', '');
-
+    // Add avatar file if it exists
     if (create_data.avatar) {
         if (create_data.avatar instanceof FileList) {
             formData.append('avatar', create_data.avatar[0]);
@@ -176,12 +218,14 @@ export async function initiateCharacterCreation(){
             formData.append('avatar', create_data.avatar);
         }
     }
-
+    // Add alternate greetings to the form data
     for (const value of create_data.alternate_greetings) {
         formData.append('alternate_greetings', value);
     }
+    // Add extra books and extensions as JSON strings
     formData.append('extra_books', JSON.stringify(create_data.extra_books));
     formData.append('extensions', JSON.stringify(create_data.extensions));
-
+    // Submit the form data to create the character
     await createCharacter(formData);
 }
+

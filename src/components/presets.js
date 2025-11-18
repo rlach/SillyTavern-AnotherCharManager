@@ -186,6 +186,14 @@ export function renameCategory(preset, category, newName) {
     printCategoriesList(preset);
 }
 
+/**
+ * Toggles the state of a tag button between "add" and "cancel" styles
+ * and shows or hides the associated category tag input field.
+ *
+ * @param {object} button The button element to be toggled.
+ * @param {string} selectedCat The identifier for the selected category.
+ * @return {string} The identifier of the toggled category.
+ */
 export function toggleTagButton(button, selectedCat) {
     if (button.hasClass('addCatTag')) {
         button
@@ -204,6 +212,12 @@ export function toggleTagButton(button, selectedCat) {
     }
 }
 
+/**
+ * Updates the content of the preset name element with the name of the specified preset.
+ *
+ * @param {string} newPreset - The identifier for the new preset whose name is to be displayed.
+ * @return {void} This function does not return a value.
+ */
 export function displayPresetName(newPreset) {
     $('#preset_name').html(getPreset(newPreset).name);
 }

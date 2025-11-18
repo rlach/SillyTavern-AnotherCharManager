@@ -9,6 +9,14 @@ import { getPreset } from "../services/presets-service.js";
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
+/**
+ * Creates and returns a character block element based on the provided avatar.
+ * The block includes styling and details such as the avatar image, name, and associated tags.
+ *
+ * @param {string} avatar - The identifier for the character avatar used to create the block.
+ * @return {HTMLDivElement} Returns a `div` element representing the character block, containing
+ *         character information and a thumbnail of the avatar.
+ */
 function createCharacterBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
@@ -37,6 +45,15 @@ function createCharacterBlock(avatar) {
     return div;
 }
 
+/**
+ * Renders a batch-processed list of character elements into the HTML container element.
+ * The method ensures the rendering process does not block the UI thread by processing elements
+ * in smaller chunks using requestAnimationFrame.
+ *
+ * @param {Array} sortedList - The array of character data objects to be rendered. Each object should
+ *                             contain properties like `avatar` used for creating character blocks.
+ * @return {void} - Does not return a value. The method directly manipulates the DOM to render content.
+ */
 function renderCharactersListHTML(sortedList) {
     const container = $('#character-list')[0]; // Obtenir l'élément DOM natif
     container.innerHTML = ''; // Vider le container
@@ -49,7 +66,6 @@ function renderCharactersListHTML(sortedList) {
         const fragment = document.createDocumentFragment();
         let batchCount = 0;
 
-        // Traiter un batch avec limite sur le nombre ET le temps
         while (currentIndex < sortedList.length &&
         batchCount < BATCH_SIZE &&
         (performance.now() - startTime) < 12) {
@@ -62,22 +78,23 @@ function renderCharactersListHTML(sortedList) {
             batchCount++;
         }
 
-        // Ajouter le fragment au DOM (une seule opération)
         container.appendChild(fragment);
 
-        // Continuer s'il reste des personnages
         if (currentIndex < sortedList.length) {
             requestAnimationFrame(processBatch);
         }
     }
-
     requestAnimationFrame(processBatch);
 }
 
-
-// Function to display the selected character
+/**
+ * Selects a character based on the provided avatar identifier and updates the UI to display the character's details.
+ * Ensures that any previously selected character is deselected before selecting the new one.
+ *
+ * @param {string} avatar - The identifier for the avatar to be selected and displayed.
+ * @return {void} This function does not return a value.
+ */
 export function selectAndDisplay(avatar) {
-
     // Check if a visible character is already selected
     if(typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null){
         document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
@@ -85,7 +102,6 @@ export function selectAndDisplay(avatar) {
     setMenuType('character_edit');
     setSelectedChar(avatar);
     setCharacterId(getIdByAvatar(avatar));
-
     $('#acm_export_format_popup').hide();
 
     fillDetails(avatar);
@@ -94,11 +110,15 @@ export function selectAndDisplay(avatar) {
     document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
     document.getElementById('char-details').style.removeProperty('display');
-
 }
 
-
-// Function to refresh the character list based on search and sorting parameters
+/**
+ * Refreshes the character list by filtering, sorting, and updating the UI based on settings.
+ * The method also handles dropdown UI interactions if configured, or it directly renders the character list.
+ * An event is emitted after the list is refreshed.
+ *
+ * @return {void} This method does not return a value but updates the user interface and state variables.
+ */
 function refreshCharList() {
     const filteredChars = searchAndFilter();
 
@@ -112,23 +132,18 @@ function refreshCharList() {
         const dropdownMode = getSetting('dropdownMode');
         const sortedList = sortCharAR(filteredChars, sortingField, sortingOrder);
 
-
         if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
             $('#character-list').html(generateDropdown(sortedList, dropdownMode));
             const list = document.querySelector('#character-list');
-
             list.querySelectorAll('.dropdown-container').forEach(container => {
                 const title = container.querySelector('.dropdown-title');
                 const content = container.querySelector('.dropdown-content');
                 title.addEventListener('click', () => {
                     const isOpen = container.classList.toggle('open');
-
                     if (isOpen) {
-                        // actions quand ça s’ouvre
                         const data = container.dataset;
                         content.appendChild(generateDropdownContent(sortedList, data.type, data.content));
                     } else {
-                        // actions quand ça se ferme
                         content.innerText = '';
                     }
                 });
@@ -141,6 +156,19 @@ function refreshCharList() {
     eventSource.emit('character_list_refreshed');
 }
 
+/**
+ * Generates a dropdown menu based on the provided sorted list and type.
+ * Different generation logic is applied depending on the type specified.
+ *
+ * @param {Array} sortedList - An array of objects representing items to populate in the dropdown.
+ * Each item should include an `avatar` property and optionally other relevant properties for categorization.
+ * @param {string} type - The type of dropdown to generate. Supported types include:
+ * 'allTags' for dropdowns categorized by tags,
+ * 'custom' for dropdowns based on preset categories,
+ * and 'creators' for dropdowns grouped by creators.
+ *
+ * @return {string} A string of HTML content for the dropdown menu or an empty string if no content is generated.
+ */
 function generateDropdown(sortedList, type) {
     const generators = {
         allTags: () => {
@@ -148,9 +176,7 @@ function generateDropdown(sortedList, type) {
                 const charactersForTag = sortedList
                     .filter(item => tagMap[item.avatar]?.includes(tag.id))
                     .map(item => item.avatar);
-
                 if (charactersForTag.length === 0) return '';
-
                 return createDropdownContainer(
                     tag.name,
                     charactersForTag.length,
@@ -158,34 +184,26 @@ function generateDropdown(sortedList, type) {
                     tag.id
                 );
             }).join('');
-
             const noTagsCharacters = sortedList
                 .filter(item => !tagMap[item.avatar] || tagMap[item.avatar].length === 0)
                 .map(item => item.avatar);
-
             const noTagsDropdown = noTagsCharacters.length > 0
                 ? createDropdownContainer('No Tags', noTagsCharacters.length, 'tag', 'no-tags')
                 : '';
-
             return tagDropdowns + noTagsDropdown;
         },
-
         custom: () => {
             const preset = getSetting('presetId');
             const categories = getPreset(preset).categories;
-
             if (categories.length === 0) {
                 return "Looks like our categories went on vacation! 🏖️ Check back when they're done sunbathing!";
             }
-
             return categories.map(category => {
                 const members = category.tags;
                 const charactersForCat = sortedList
                     .filter(item => members.every(memberId => tagMap[item.avatar]?.includes(String(memberId))))
                     .map(item => item.avatar);
-
                 if (charactersForCat.length === 0) return '';
-
                 return createDropdownContainer(
                     category.name,
                     charactersForCat.length,
@@ -194,7 +212,6 @@ function generateDropdown(sortedList, type) {
                 );
             }).join('');
         },
-
         creators: () => {
             const groupedByCreator = sortedList.reduce((groups, item) => {
                 const creator = item.data.creator || 'No Creator';
@@ -204,7 +221,6 @@ function generateDropdown(sortedList, type) {
                 groups[creator].push(item.avatar);
                 return groups;
             }, {});
-
             return Object.entries(groupedByCreator)
                 .sort(([creatorA], [creatorB]) => {
                     if (creatorA === 'No Creator') return 1;
@@ -213,7 +229,6 @@ function generateDropdown(sortedList, type) {
                 })
                 .map(([creator, avatars]) => {
                     if (avatars.length === 0) return '';
-
                     const creatorName = creator === 'No Creator' ? 'No Creators' : creator;
                     return createDropdownContainer(
                         creatorName,
@@ -224,10 +239,18 @@ function generateDropdown(sortedList, type) {
                 }).join('');
         }
     };
-
     return generators[type]?.() || '';
 }
 
+/**
+ * Creates a dropdown container element as a string of HTML.
+ *
+ * @param {string} title - The title of the dropdown container.
+ * @param {number} count - The count to be displayed next to the title.
+ * @param {string} type - The type of the dropdown container, used as a data attribute.
+ * @param {string} content - The content identifier for the dropdown, used as a data attribute.
+ * @return {string} The HTML string representing the dropdown container.
+ */
 function createDropdownContainer(title, count, type, content) {
     return `<div class="dropdown-container" data-type="${type}" data-content="${content}">
         <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">
@@ -238,18 +261,25 @@ function createDropdownContainer(title, count, type, content) {
     </div>`;
 }
 
+/**
+ * Generates and returns the content for a dropdown based on the specified type and content parameters.
+ * Filters and processes items from the provided sorted list and builds the dropdown's content dynamically.
+ *
+ * @param {Array<Object>} sortedList - A list of items to sort and filter. Each item contains character data.
+ * @param {string} type - Specifies the type of dropdown content to generate. Possible values include 'allTags', 'custom', or 'creator'.
+ * @param {string} content - The filtering criteria, such as a tag string, custom tags, or creator name.
+ * @return {DocumentFragment|string} The generated dropdown content in the form of a DocumentFragment or an empty string if the type is invalid or not matched.
+ */
 function generateDropdownContent(sortedList, type, content){
     const dropdownContent ={
         allTags: () => {
             const filteredCharacters = sortedList
                 .filter(item => tagMap[item.avatar]?.includes(content));
             const container = document.createDocumentFragment();
-
             filteredCharacters.forEach(character => {
                 const block = createCharacterBlock(character.avatar);
                 container.appendChild(block);
             });
-
             return container;
         },
         custom: () => {
@@ -257,33 +287,27 @@ function generateDropdownContent(sortedList, type, content){
                 .split(',')
                 .map(t => t.trim())
                 .filter(t => t.length > 0);
-
             const filteredCharacters = sortedList.filter(item => {
                 const charTags = tagMap[item.avatar] || [];
                 return tags.every(tag => charTags.includes(tag));
             });
             const container = document.createDocumentFragment();
-
             filteredCharacters.forEach(character => {
                 const block = createCharacterBlock(character.avatar);
                 container.appendChild(block);
             });
-
             return container;
         },
         creator: () => {
             const filteredCharacters = sortedList.filter(item => item.data.creator === content);
             const container = document.createDocumentFragment();
-
             filteredCharacters.forEach(character => {
                 const block = createCharacterBlock(character.avatar);
                 container.appendChild(block);
             });
-
             return container;
         }
     };
-
     return dropdownContent[type]?.() || '';
 }
 
@@ -297,48 +321,65 @@ export function updateDropdownPresetNames() {
     $('#preset-submenu .dropdown-ui-item').each(function () {
         const presetIndex = $(this).data('preset');
         const newName = getPreset(presetIndex).name;
-        if (newName) {
-            $(this).text(newName);
-        }
+        if (newName) { $(this).text(newName); }
     });
 }
 
+/**
+ * Toggles the visibility of the tag query list by manipulating CSS classes and styles.
+ * Expands or collapses the list with a smooth animation and adjusts its height and overflow properties.
+ *
+ * @return {void} Does not return any value.
+ */
 export function toggleTagQueries() {
     const tagsList = document.getElementById('acm_tagQuery');
-
     if (tagsList.classList.contains('open')) {
-        // Fermeture de la liste
         tagsList.style.overflow = 'hidden';
         tagsList.style.minHeight = '0';
         tagsList.style.height = '0';
     } else {
-        // Ouverture de la liste
         const calculatedHeight = tagsList.scrollHeight > 80 ? '80px' : (tagsList.scrollHeight + 5) + 'px';
         tagsList.style.minHeight = calculatedHeight;
         tagsList.style.height = calculatedHeight;
-
-        // Allow overflow only after animation completes
         setTimeout(() => {
             if (tagsList.classList.contains('open')) {
                 tagsList.style.overflow = 'visible';
             }
         }, 300); // Match the transition duration (0.3s = 300ms)
     }
-
     tagsList.classList.toggle('open');
 }
 
+/**
+ * Updates the sort order of a list based on the selected option.
+ *
+ * @param {Object} selectedOption - The selected option containing sorting information.
+ * @param {function} selectedOption.data - A function that retrieves specific data from the selected option.
+ * @return {void} This function does not return a value.
+ */
 export function updateSortOrder(selectedOption) {
     updateSetting('sortingField', selectedOption.data('field'));
     updateSetting('sortingOrder', selectedOption.data('order'));
     refreshCharListDebounced();
 }
 
+/**
+ * Updates the search filter by setting a normalized search value and triggering a refresh of the character list.
+ *
+ * @param {string} searchText - The text input used to update the search filter. It is converted to lowercase before being processed.
+ * @return {void} This method does not return a value.
+ */
 export function updateSearchFilter(searchText) {
     setSearchValue(String(searchText).toLowerCase());
     refreshCharListDebounced();
 }
 
+/**
+ * Toggles the display setting for favorites only.
+ *
+ * @param {boolean} isChecked - Indicates whether the favorites-only filter is enabled.
+ * @return {void} This function does not return any value.
+ */
 export function toggleFavoritesOnly(isChecked) {
     updateSetting('favOnly', isChecked);
     refreshCharListDebounced();

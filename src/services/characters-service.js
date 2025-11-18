@@ -30,6 +30,8 @@ import {
 import { selectAndDisplay } from "../components/charactersList.js";
 import { closeCreationPopup } from "../components/characterCreation.js";
 
+// Create a debounced version of editChar
+export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
 
 /**
  * Checks the availability of the AvatarEdit API by making a POST request to the probe endpoint.
@@ -70,9 +72,6 @@ async function editChar(update) {
         console.log('Error!');
     }
 }
-
-// Create a debounced version of editChar
-export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
 
 /**
  * Replaces a character's avatar with a new one, with optional cropping.
@@ -377,6 +376,15 @@ export async function saveAltGreetings(event = null){
     $('#altGreetings_number').html(`Numbers: ${greetings.length}`);
 }
 
+/**
+ * Creates a new character using the provided form data.
+ * Sends a POST request to the server to create the character and handles associated processes such as avatar format conversion,
+ * refreshing character lists, and updating the UI after successful creation.
+ *
+ * @param {FormData} formData The form data containing the character details and avatar file to be uploaded.
+ * @return {Promise<void>} Resolves when the character creation process is successfully completed,
+ * or handles errors if the creation fails.
+ */
 export async function createCharacter(formData) {
     try {
         let url = '/api/characters/create';
@@ -401,7 +409,6 @@ export async function createCharacter(formData) {
         }
 
         const avatarId = await fetchResult.text();
-
         createTagMapFromList('#acmTagList', avatarId);
         setShouldCharacterPageReload(true);
         await new Promise((resolve) => {
@@ -417,5 +424,4 @@ export async function createCharacter(formData) {
         console.error('Error creating character', error);
         toastr.error(t`Failed to create character`);
     }
-
 }

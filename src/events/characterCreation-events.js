@@ -6,6 +6,11 @@ import {
 import { updateTokenCount } from "../utils.js";
 import { updateCreateData} from "../constants/settings.js";
 
+/**
+ * Initializes event listeners for the character creation interface. Binds input events to update relevant character creation data and adds functionality for character creation operations such as creating a character, closing the popup, toggling the layout, and adding an avatar.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function initializeCharacterCreationEvents() {
 
     const elementsToInitialize = {

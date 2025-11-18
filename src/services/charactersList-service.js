@@ -3,6 +3,19 @@ import { getSetting } from "./settings-service.js";
 import { characters, tagList, tagMap } from "../constants/context.js";
 import { searchValue } from "../constants/settings.js";
 
+/**
+ * Filters and searches through a list of characters based on user-defined criteria such as tags, favorites,
+ * and a search query. The method utilizes settings, tag filters, and fuzzy search to return a filtered list
+ * of characters that satisfy the specified conditions.
+ *
+ * The filtering process includes:
+ * - Excluding characters with specified excluded tags
+ * - Including only characters with all mandatory tags
+ * - Optionally including characters with at least one facultative tag
+ * - Searching by fields like name, creator, creator notes, or tags using a fuzzy search algorithm
+ *
+ * @return {Array} The filtered and potentially searched list of character objects that meet the filter criteria.
+ */
 export function searchAndFilter(){
     let filteredChars = [];
     const charactersCopy = getSetting('favOnly')
@@ -94,7 +107,14 @@ export function searchAndFilter(){
     }
 }
 
-// Function to sort the character array based on specified property and order
+/**
+ * Sorts an array of character objects based on a specified property and order.
+ *
+ * @param {Array<Object>} chars - The array of character objects to be sorted.
+ * @param {string} sort_data - The property of the character objects to sort by (e.g., 'name', 'tags', 'date_last_chat', 'date_added', 'data_size').
+ * @param {string} sort_order - The order of sorting, either 'asc' for ascending or 'desc' for descending.
+ * @return {Array<Object>} The sorted array of character objects.
+ */
 export function sortCharAR(chars, sort_data, sort_order) {
     return chars.sort((a, b) => {
         let comparison = 0;

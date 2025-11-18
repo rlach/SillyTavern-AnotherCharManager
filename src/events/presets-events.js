@@ -10,6 +10,16 @@ import {
 } from "../components/presets.js";
 import { getCategory, getPreset, removeTagFromCategory } from "../services/presets-service.js";
 
+/**
+ * Initializes event listeners for managing preset configurations, including
+ * selecting presets, renaming presets, adding categories, renaming categories,
+ * deleting categories, and managing tags within categories.
+ *
+ * This method binds various event handlers to DOM elements for executing
+ * operations related to presets and their associated categories or tags.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function initializePresetsEvents() {
     $(document).on('change', '#preset_selector', function () {
         const newPreset = $(this).find(':selected').data('preset');

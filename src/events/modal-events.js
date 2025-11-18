@@ -10,12 +10,28 @@ import { getSetting, updateSetting } from "../services/settings-service.js";
 import { refreshCharListDebounced } from "../components/charactersList.js";
 import { manageCustomCategories, printCategoriesList } from "../components/presets.js";
 
+/**
+ * Initializes external menu events by attaching event listeners to specified menu elements.
+ * This method binds a click event to the menu element with the ID 'acm_open',
+ * triggering the `openModal` function when the element is clicked.
+ *
+ * @return {void} This function does not return any value.
+ */
 export function initializeExtMenuEvents() {
     $('#acm_open').on('click', function () {
         openModal();
     });
 }
 
+/**
+ * Initializes modal-related events for interactive elements within the application.
+ *
+ * This method sets up event listeners for modal opening, closing, drawer interactions,
+ * and dynamic resizing of modal components. It ties specific UI actions to their
+ * corresponding functionalities, enhancing user interactivity with the modal.
+ *
+ * @return {void} Does not return a value.
+ */
 export function initializeModalEvents() {
     $('#acm-manager').on('click', function () {
         openModal();
@@ -58,21 +74,22 @@ export function initializeModalEvents() {
         $preview.hide();
         updateSetting('popupWidth', newWidth);
     });
-
-
 }
 
+/**
+ * Initializes UI menu events by binding click event handlers to various elements.
+ * The method manages dropdown menu toggles, updates settings, refreshes lists, and manages custom categories.
+ * Event handlers are dynamically assigned based on specific selectors.
+ *
+ * @return {void} This method does not return a value.
+ */
 export function initializeUIMenuEvents() {
     $('#acm_switch_ui').on("click", () => {
         toggleDropdownMenus({ menuToToggle: 'main' });
     });
-
-    // Sous-menu
     $('#acm_dropdown_sub').on("click", () => {
         toggleDropdownMenus({ menuToToggle: 'sub' });
     });
-
-    // Menu des catégories
     $('#acm_dropdown_cat').on("click", () => {
         toggleDropdownMenus({ menuToToggle: 'preset' });
     });
@@ -126,7 +143,5 @@ export function initializeUIMenuEvents() {
         });
     });
 
-    // Gestionnaire de clic extérieur
     document.addEventListener('click', initializeDropdownClickOutside());
-
 }

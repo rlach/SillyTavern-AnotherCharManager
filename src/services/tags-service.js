@@ -9,6 +9,12 @@ import { createTagInput } from '/scripts/tags.js';
 import { acmCreateTagInput } from "../components/tags.js";
 
 
+/**
+ * Initializes multiple tag input components on specified elements with provided configurations.
+ * This method sets up tag input fields where tags can be added, managed, and removed.
+ *
+ * @return {void} Does not return a value.
+ */
 export function initializeTagInput() {
     createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
     createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
@@ -50,7 +56,6 @@ export function findTag(request, resolve, listSelector) {
     if (request.term && !hasExactMatch) {
         result.unshift(request.term);
     }
-
     resolve(result);
 }
 

@@ -34,6 +34,16 @@ export function displayTag( tagId, isFromCat = false ){
     else { return ''; }
 }
 
+/**
+ * Handles the initialization of a tag input field with autocomplete functionality.
+ * The method sets up an input field to suggest tags and allows users to select from a predefined list.
+ *
+ * @param {string} inputSelector - CSS selector for the input element where the tag input feature is applied.
+ * @param {string} listSelector - CSS selector for the container or list element where the selected tags will be displayed.
+ * @param {Object} [tagListOptions={}] - Optional configuration options for the tag list.
+ * @param {boolean} [isForCat=false] - Indicates whether the tags being created are specific to categories.
+ * @return {void} - This method does not return any value.
+ */
 export function acmCreateTagInput(inputSelector, listSelector, tagListOptions = {}, isForCat = false) {
     $(inputSelector)
         // @ts-ignore
@@ -57,6 +67,19 @@ function onTagInputFocus() {
     $(this).autocomplete('search', $(this).val());
 }
 
+/**
+ * Handles the selection of a tag from an autocomplete interface, processes the selected tag,
+ * and appends it to the appropriate list or category. This method also manages input clearing
+ * and error handling if the selected tag is invalid.
+ *
+ * @param {Object} event - The event object representing the user action.
+ * @param {Object} ui - The UI object containing details of the selected item.
+ * @param {string} listSelector - A selector string to identify the target list where the tag will be appended.
+ * @param {Object} [options] - Optional configuration object.
+ * @param {Object} [options.tagListOptions] - Additional options for processing the tag list (default: {}).
+ * @param {boolean} isForCat - A boolean flag indicating whether the tag is to be added to a category or a generic list.
+ * @return {boolean} Returns `false` to prevent default input handling and ensure the input remains clear.
+ */
 function acmSelectTag(event, ui, listSelector, { tagListOptions = {} } = {}, isForCat) {
     let tagName = ui.item.value;
     let tag = tagList.find(t => equalsIgnoreCaseAndAccents(t.name, tagName));

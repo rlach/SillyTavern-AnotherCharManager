@@ -58,7 +58,6 @@ export function updatePresetCategories(presetIndex, categories) {
     if (!Array.isArray(categories)) {
         throw new Error('Categories must be an array');
     }
-
     if (!categories.every(category =>
         typeof category === 'object' &&
         typeof category.name === 'string' &&
@@ -66,7 +65,6 @@ export function updatePresetCategories(presetIndex, categories) {
     )) {
         throw new Error('Invalid category format. Each category must have a name (string) and tags (array)');
     }
-
     const updatedPresets = [...getSetting('dropdownPresets')];
     updatedPresets[presetIndex] = {
         ...updatedPresets[presetIndex],
@@ -106,7 +104,6 @@ export function updateCategoryName(presetIndex, categoryIndex, name) {
     if (typeof name !== 'string' || name.trim() === '') {
         throw new Error('Category name must be a non-empty string');
     }
-
     const updatedPresets = [...getSetting('dropdownPresets')];
     updatedPresets[presetIndex].categories[categoryIndex] = {
         ...updatedPresets[presetIndex].categories[categoryIndex],
@@ -125,7 +122,6 @@ export function removePresetCategory(presetIndex, categoryIndex) {
     if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
         throw new Error('Invalid category index');
     }
-
     const updatedPresets = [...getSetting('dropdownPresets')];
     updatedPresets[presetIndex].categories = updatedPresets[presetIndex].categories
         .filter((_, index) => index !== categoryIndex);
@@ -143,7 +139,6 @@ export function addTagToCategory(presetIndex, categoryIndex, tagId) {
     if (category.tags.includes(tagId)) {
         return; // Tag already exists in category
     }
-
     const updatedPresets = [...getSetting('dropdownPresets')];
     updatedPresets[presetIndex].categories[categoryIndex].tags.push(tagId);
     updateSetting('dropdownPresets', updatedPresets);

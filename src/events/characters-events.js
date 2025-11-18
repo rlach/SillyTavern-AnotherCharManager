@@ -17,6 +17,15 @@ import { refreshCharListDebounced } from "../components/charactersList.js";
 import { selectedChar, shouldCharacterPageReload } from "../constants/settings.js";
 import { updateTokenCount } from "../utils.js";
 
+/**
+ * Initializes a set of field updaters for designated DOM elements, enabling dynamic updates
+ * whenever the user interacts with specific input fields. Each field is tied to its respective
+ * handler to apply changes to associated data structures or perform side effects such as
+ * token count updates and debounced edits.
+ *
+ * @return {void} This function does not return a value, but sets up event listeners for
+ * specified DOM elements to automatically trigger update behaviors upon user input.
+ */
 export function initializeFieldUpdaters() {
     const elementsToInitialize = {
         '#acm_description': async function () {const descZone=$('#acm_description');const update={avatar:selectedChar,description:String(descZone.val()),data:{description:String(descZone.val()),},};editCharDebounced(update);await updateTokenCount('#acm_description');},
@@ -60,6 +69,12 @@ export function initializeFieldUpdaters() {
     });
 }
 
+/**
+ * Initializes event listeners and functionality related to character operations, such as editing, deleting, duplicating, exporting, and updating UI elements associated with characters.
+ * This method sets up all necessary triggers and handlers to ensure the character module operates as expected.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function initializeCharactersEvents() {
     // Add listener to refresh the display on characters edit
     eventSource.on('character_edited', function () {
