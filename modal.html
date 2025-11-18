@@ -414,13 +414,16 @@
         <form id="acm_form_create" action="javascript:voidnull;" method="post" enctype="multipart/form-data" style="display:flex;flex:1;">
             <div id="acm_left_panel" class="panel-transition">
                 <div class="avatar-and-name-block">
-                    <div class="flex-container flexFlowColumn expander flexNoGap">
-                        <div class="avatar_div buttons_block alignitemsflexstart justifySpaceBetween flexnowrap" style="display: flex;">
-                            <label class="add_avatar avatar" for="acm_add_avatar_button" title="Click to select a new avatar for this character">
-                                <img id="acm_create_avatar" src="img/ai4.png" alt="avatar">
-                                <input hidden="" type="file" id="acm_add_avatar_button" name="avatar" accept="image/*">
-                            </label>
-                        </div>
+                    <div class="acm_avatar" id="acm_create_avatar_wrapper">
+                        <img id="acm_create_avatar" class="char-details-img" src="img/ai4.png" alt="Character Avatar" draggable="false">
+                        <label for="acm_add_avatar_button" title="Click to select a new avatar for this character">
+                            <span id="acm_create_edit_icon">
+                                <i class="fas fa-edit"></i>
+                                <input id="acm_add_avatar_button" hidden="" type="file" name="avatar" accept="image/*">
+                            </span>
+                        </label>
+                    </div>
+                    <div class="char-details-summary-desc">
                         <label for="acm_create_name" title="Name this character">
                             <input id="acm_create_name" name="ch_name" class="text_pole" placeholder="Name this character" value="" autocomplete="off">
                         </label>

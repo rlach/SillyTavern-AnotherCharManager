@@ -5,9 +5,43 @@
 }
 
 .avatar-and-name-block {
-    justify-content: space-between;
     display: flex;
-    flex-wrap: wrap;
+    gap: 10px;
+    padding: 5px;
+}
+
+#acm_create_avatar_wrapper {
+    position: relative;
+}
+
+#acm_create_edit_icon {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    border-radius: 50%;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease;
+}
+
+#acm_create_avatar_wrapper:hover #acm_create_edit_icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+#acm_create_edit_icon:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+#acm_create_edit_icon i {
+    font-size: 1.1rem;
 }
 
 #acmTagInput {
