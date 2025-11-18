@@ -51,7 +51,7 @@ export async function manageCustomCategories(){
      </div>
 
     `);
-    await Popup(html, POPUP_TYPE.TEXT, null, {okButton: "Close", allowVerticalScrolling: true });
+    await new Popup(html, POPUP_TYPE.TEXT, '', {okButton: "Close", allowVerticalScrolling: true });
 }
 
 /**

@@ -9,28 +9,6 @@ import {getPreset} from "../services/presets-service.js";
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
-// Function to generate the HTML block for a character
-// function getCharBlock(avatar) {
-//     const id = getIdByAvatar(avatar);
-//     const avatarThumb = getThumbnailUrl('avatar', avatar);
-//
-//     const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
-//     const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
-//     const isFav = (characters[id].fav || characters[id].data.extensions.fav) ? 'fav' : '';
-//
-//
-//     return `<div class="character_item ${charClass} ${isFav}" title="[${characters[id].name} - Tags: ${tagMap[avatar].length}]" data-avatar="${avatar}">
-//                     <div class="avatar acm_avatarList">
-//                         <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
-//                     </div>
-//                     <div class="char_name">
-//                         <div class="char_name_block">
-//                             <span>${characters[id].name} : ${tagMap[avatar].length}</span>
-//                         </div>
-//                     </div>
-//                 </div>`;
-// }
-
 function createCharacterBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
@@ -120,14 +98,6 @@ export function selectAndDisplay(avatar) {
 }
 
 
-function initializeDropdownToggles() {
-    document.querySelectorAll('.dropdown-container').forEach(container => {
-        container.querySelector('.dropdown-title').addEventListener('click', () => {
-            container.classList.toggle('open');
-        });
-    });
-}
-
 // Function to refresh the character list based on search and sorting parameters
 function refreshCharList() {
     const filteredChars = searchAndFilter();
@@ -145,168 +115,30 @@ function refreshCharList() {
 
         if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
             $('#character-list').html(generateDropdown(sortedList, dropdownMode));
-            initializeDropdownToggles();
+            const list = document.querySelector('#character-list');
+
+            list.querySelectorAll('.dropdown-container').forEach(container => {
+                const title = container.querySelector('.dropdown-title');
+                const content = container.querySelector('.dropdown-content');
+                title.addEventListener('click', () => {
+                    const isOpen = container.classList.toggle('open');
+
+                    if (isOpen) {
+                        // actions quand ça s’ouvre
+                        const data = container.dataset;
+                        content.appendChild(generateDropdownContent(sortedList, data.type, data.content));
+                    } else {
+                        // actions quand ça se ferme
+                        content.innerText = '';
+                    }
+                });
+            });
         } else {
             renderCharactersListHTML(sortedList);
         }
-
-        // if(dropdownUI && dropdownMode === "allTags"){
-        //     $('#character-list').html(dropdownAllTags(sortedList));
-        //
-        //     document.querySelectorAll('.dropdown-container').forEach(container => {
-        //         container.querySelector('.dropdown-title').addEventListener('click', () => {
-        //             container.classList.toggle('open');
-        //         });
-        //     });
-        // }
-        // else if(dropdownUI && dropdownMode === "custom"){
-        //     $('#character-list').html(dropdownCustom(sortedList));
-        //
-        //     document.querySelectorAll('.dropdown-container').forEach(container => {
-        //         container.querySelector('.dropdown-title').addEventListener('click', () => {
-        //             container.classList.toggle('open');
-        //         });
-        //     });
-        // }
-        // else if(dropdownUI && dropdownMode === "creators"){
-        //     $('#character-list').html(dropdownCreators(sortedList));
-        //
-        //     document.querySelectorAll('.dropdown-container').forEach(container => {
-        //         container.querySelector('.dropdown-title').addEventListener('click', () => {
-        //             container.classList.toggle('open');
-        //         });
-        //     });
-        // }
-        // else {
-        //     renderCharactersListHTML(sortedList);
-        // }
     }
     $('#charNumber').empty().append(`Total characters : ${characters.length}`);
     eventSource.emit('character_list_refreshed');
-}
-
-/**
- * Generates a dropdown HTML structure categorizing items based on tags
- * and includes a section for items without any associated tags.
- *
- * @param {Array} sortedList A sorted array of objects representing the items with `avatar` property to associate with tags.
- * @return {string} The HTML string containing the dropdown containers for each tag and a section for untagged items.
- */
-function dropdownAllTags(sortedList){
-    const html = tagList.map(tag => {
-        const charactersForTag = sortedList
-            .filter(item => tagMap[item.avatar]?.includes(tag.id))
-            .map(item => item.avatar);
-
-        if (charactersForTag.length === 0) {
-            return '';
-        }
-
-        const characterBlocks = charactersForTag.map(character => createCharacterBlock(character)).join('');
-
-        return `<div class="dropdown-container">
-                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${tag.name} (${charactersForTag.length})</div>
-                            <div class="dropdown-content character-list">
-                                ${characterBlocks}
-                            </div>
-                        </div>`;
-    }).join('');
-
-    const noTagsCharacters = sortedList
-        .filter(item => !tagMap[item.avatar] || tagMap[item.avatar].length === 0)
-        .map(item => item.avatar);
-
-    const noTagsHtml = noTagsCharacters.length > 0
-        ? `<div class="dropdown-container">
-                        <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">No Tags (${noTagsCharacters.length})</div>
-                        <div class="dropdown-content character-list">
-                            ${noTagsCharacters.map(character => createCharacterBlock(character)).join('')}
-                        </div>
-                    </div>`
-        : '';
-
-    return html + noTagsHtml;
-}
-
-/**
- * Generates a custom dropdown structure based on a sorted list and predefined categories.
- *
- * @param {Array} sortedList - An array of objects representing sorted items, where each item contains an `avatar` property.
- * @return {string} A string containing HTML elements for categorized dropdowns.
- */
-function dropdownCustom(sortedList){
-    const preset = getSetting('presetId');
-    const categories = getPreset(preset).categories;
-    if (categories.length === 0) {
-        return "Looks like our categories went on vacation! 🏖️ Check back when they're done sunbathing!";
-    }
-    return categories.map(category => {
-        const members = category.tags;
-        const charactersForCat = sortedList
-            .filter(item => members.every(memberId => tagMap[item.avatar]?.includes(String(memberId))))
-            .map(item => item.avatar);
-
-        if (charactersForCat.length === 0) {
-            return '';
-        }
-
-        const characterBlocks = charactersForCat.map(character => createCharacterBlock(character)).join('');
-
-        return `<div class="dropdown-container">
-                            <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${category.name} (${charactersForCat.length})</div>
-                            <div class="dropdown-content character-list">
-                                ${characterBlocks}
-                            </div>
-                        </div>`;
-    }).join('');
-}
-
-/**
- * Generates dropdown HTML elements grouped by creator names for the provided sorted list of items.
- *
- * @param {Array} sortedList - An array of objects representing sorted items, where each item contains an `avatar` property.
- * @return {string} A concatenated string of HTML dropdowns, where each dropdown represents a creator
- * and their associated avatars. Includes a special case for items with no creator.
- */
-function dropdownCreators(sortedList){
-    return Object.entries(
-        sortedList.reduce((groups, item) => {
-            const creator = item.data.creator;
-
-            if (creator) {
-                if (!groups[creator]) {
-                    groups[creator] = [];
-                }
-                groups[creator].push(item.avatar);
-            } else {
-                if (!groups['No Creator']) {
-                    groups['No Creator'] = [];
-                }
-                groups['No Creator'].push(item.avatar);
-            }
-
-            return groups;
-        }, {})
-    ).sort(([creatorA], [creatorB]) => {
-        if (creatorA === 'No Creator') return 1;
-        if (creatorB === 'No Creator') return -1;
-        return creatorA.localeCompare(creatorB);
-    })
-        .map(([creator, avatars]) => {
-            if (avatars.length === 0) {
-                return '';
-            }
-
-            const characterBlocks = avatars.map(character => createCharacterBlock(character)).join('');
-            const creatorName = creator === 'No Creator' ? "No Creators" : creator;
-
-            return `<div class="dropdown-container">
-                <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">${creatorName} (${avatars.length})</div>
-                <div class="dropdown-content character-list">
-                    ${characterBlocks}
-                </div>
-            </div>`;
-        }).join('');
 }
 
 function generateDropdown(sortedList, type) {
@@ -322,7 +154,7 @@ function generateDropdown(sortedList, type) {
                 return createDropdownContainer(
                     tag.name,
                     charactersForTag.length,
-                    'tag',
+                    'allTags',
                     tag.id
                 );
             }).join('');
@@ -396,14 +228,63 @@ function generateDropdown(sortedList, type) {
     return generators[type]?.() || '';
 }
 
-function createDropdownContainer(title, count, dataType, dataContent) {
-    return `<div class="dropdown-container" data-type="${dataType}" data-content="${dataContent}">
+function createDropdownContainer(title, count, type, content) {
+    return `<div class="dropdown-container" data-type="${type}" data-content="${content}">
         <div class="dropdown-title inline-drawer-toggle inline-drawer-header inline-drawer-design">
             ${title} (${count})
         </div>
         <div class="dropdown-content character-list">
         </div>
     </div>`;
+}
+
+function generateDropdownContent(sortedList, type, content){
+    const dropdownContent ={
+        allTags: () => {
+            const filteredCharacters = sortedList
+                .filter(item => tagMap[item.avatar]?.includes(content));
+            const container = document.createDocumentFragment();
+
+            filteredCharacters.forEach(character => {
+                const block = createCharacterBlock(character.avatar);
+                container.appendChild(block);
+            });
+
+            return container;
+        },
+        custom: () => {
+            const tags = content
+                .split(',')
+                .map(t => t.trim())
+                .filter(t => t.length > 0);
+
+            const filteredCharacters = sortedList.filter(item => {
+                const charTags = tagMap[item.avatar] || [];
+                return tags.every(tag => charTags.includes(tag));
+            });
+            const container = document.createDocumentFragment();
+
+            filteredCharacters.forEach(character => {
+                const block = createCharacterBlock(character.avatar);
+                container.appendChild(block);
+            });
+
+            return container;
+        },
+        creator: () => {
+            const filteredCharacters = sortedList.filter(item => item.data.creator === content);
+            const container = document.createDocumentFragment();
+
+            filteredCharacters.forEach(character => {
+                const block = createCharacterBlock(character.avatar);
+                container.appendChild(block);
+            });
+
+            return container;
+        }
+    };
+
+    return dropdownContent[type]?.() || '';
 }
 
 /**

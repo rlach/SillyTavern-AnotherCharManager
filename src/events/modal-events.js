@@ -101,7 +101,7 @@ export function initializeUIMenuEvents() {
         '#acm_manage_categories': () => {
             manageCustomCategories();
             const selectedPreset = $('#preset_selector option:selected').data('preset');
-            if(getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom') {
+            if (getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom') {
                 $('.popup-button-ok').on('click', refreshCharListDebounced);
             }
             printCategoriesList(selectedPreset, true);

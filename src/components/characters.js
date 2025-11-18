@@ -184,12 +184,12 @@ export async function showDuplicateConfirmation() {
         <h3>Are you sure you want to duplicate this character?</h3>
         <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
 
-    return await Popup(confirmMessage, POPUP_TYPE.CONFIRM);
+    return await new Popup(confirmMessage, POPUP_TYPE.CONFIRM);
 }
 
 export async function showRenameDialog(characterAvatar) {
     const charID = getIdByAvatar(characterAvatar);
-    return await Popup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
+    return await new Popup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
 }
 
 export async function renameCharacter() {
