@@ -1,9 +1,8 @@
-import {tags} from "../../../../../tags.js";
-import {tagList} from "../constants/context.js";
-import {refreshCharListDebounced} from "./charactersList.js";
-import {findTag} from "../services/tags-service.js";
-import {equalsIgnoreCaseAndAccents} from "../utils.js";
-import {addTagToCategory} from "../services/presets-service.js";
+import { tagList } from "../constants/context.js";
+import { refreshCharListDebounced } from "./charactersList.js";
+import { findTag } from "../services/tags-service.js";
+import { equalsIgnoreCaseAndAccents } from "../utils.js";
+import { addTagToCategory } from "../services/presets-service.js";
 
 /**
  * Renders a tag as an HTML string based on the provided tag ID and an optional category flag.
@@ -60,7 +59,7 @@ function onTagInputFocus() {
 
 function acmSelectTag(event, ui, listSelector, { tagListOptions = {} } = {}, isForCat) {
     let tagName = ui.item.value;
-    let tag = tags.find(t => equalsIgnoreCaseAndAccents(t.name, tagName));
+    let tag = tagList.find(t => equalsIgnoreCaseAndAccents(t.name, tagName));
 
     if (!tag) {
         toastr.error("You can't create tag from this interface. Please use the tag editor instead.");

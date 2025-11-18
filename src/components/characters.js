@@ -3,9 +3,9 @@ import {
     depth_prompt_role_default,
     setCharacterId,
     talkativeness_default
-} from '../../../../../../script.js';
-import {displayTag} from './tags.js';
-import {getBase64Async, getIdByAvatar} from '../utils.js';
+} from '/script.js';
+import { displayTag } from './tags.js';
+import { getBase64Async, getIdByAvatar } from '../utils.js';
 import {
     Popup,
     characters,
@@ -18,7 +18,7 @@ import {
     tagMap,
     unshallowCharacter,
 } from "../constants/context.js";
-import {selectedChar, setMem_avatar} from "../constants/settings.js";
+import { selectedChar, setMem_avatar } from "../constants/settings.js";
 import {
     dupeChar,
     editCharDebounced,
@@ -27,31 +27,9 @@ import {
     replaceAvatar,
     saveAltGreetings
 } from "../services/characters-service.js";
-import {addAltGreetingsTrigger} from "../events/characters-events.js";
-import {closeDetails} from "./modal.js";
+import { addAltGreetingsTrigger } from "../events/characters-events.js";
+import { closeDetails } from "./modal.js";
 
-
-// Function not used at this moment, leaving it here just in case
-// async function delChar(avatar, delChats = true) {
-//
-//     const toDel = {
-//         avatar_url: avatar,
-//         delete_chats: delChats,
-//     };
-//
-//     const response = await fetch('/api/characters/delete', {
-//         method: 'POST',
-//         headers: getRequestHeaders(),
-//         body: JSON.stringify(toDel),
-//         cache: 'no-cache',
-//     });
-//
-//     if (response.ok) {
-//         // TO DO ?
-//     } else {
-//         console.log('Error!');
-//     }
-// }
 
 // Function to fill details in the character details block
 export async function fillDetails(avatar) {

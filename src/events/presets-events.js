@@ -1,4 +1,4 @@
-import {Popup, POPUP_TYPE} from "../constants/context.js";
+import { Popup, POPUP_TYPE } from "../constants/context.js";
 import {
     addCategory,
     displayPresetName,
@@ -8,7 +8,7 @@ import {
     renamePreset,
     toggleTagButton
 } from "../components/presets.js";
-import {getCategory, getPreset, removeTagFromCategory} from "../services/presets-service.js";
+import { getCategory, getPreset, removeTagFromCategory } from "../services/presets-service.js";
 
 export function initializePresetsEvents() {
     $(document).on('change', '#preset_selector', function () {

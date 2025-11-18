@@ -1,5 +1,3 @@
-import {callGenericPopup} from "../../../../../popup.js";
-
 const getContext = SillyTavern.getContext;
 export const power_user = getContext().powerUserSettings;
 export const getTokenCountAsync = getContext().getTokenCountAsync;

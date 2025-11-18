@@ -3,7 +3,7 @@ import {
     updateSearchFilter,
     updateSortOrder
 } from "../components/charactersList.js";
-import {toggleCharacterCreationPopup} from "../components/characterCreation.js";
+import { toggleCharacterCreationPopup } from "../components/characterCreation.js";
 
 export function initializeCharactersListEvents() {
     // Trigger when a character is selected in the list

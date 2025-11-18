@@ -8,12 +8,12 @@ import {
     setMem_menu,
     setSelectedChar,
 } from "../constants/settings.js";
-import {characterId, characters, menuType, renderExtensionTemplateAsync} from "../constants/context.js";
-import {getSetting} from "../services/settings-service.js";
-import {getIdByAvatar} from "../utils.js";
-import {setCharacterId, setMenuType} from '../../../../../../script.js';
-import {updateDropdownPresetNames} from "./charactersList.js";
-import {updateLayout} from "./characterCreation.js";
+import { characterId, characters, menuType, renderExtensionTemplateAsync } from "../constants/context.js";
+import { getSetting } from "../services/settings-service.js";
+import { getIdByAvatar } from "../utils.js";
+import { setCharacterId, setMenuType } from '/script.js';
+import { updateDropdownPresetNames } from "./charactersList.js";
+import { updateLayout } from "./characterCreation.js";
 
 /**
  * Initializes the modal component

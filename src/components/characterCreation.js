@@ -1,5 +1,5 @@
 import { getBase64Async, updateTokenCount } from "../utils.js";
-import {Popup, POPUP_TYPE, power_user, t} from "../constants/context.js";
+import { Popup, POPUP_TYPE, power_user, t } from "../constants/context.js";
 import {
     create_data,
     resetCreateData,
@@ -7,7 +7,7 @@ import {
     setShouldCharacterPageReload,
     updateCreateData
 } from "../constants/settings.js";
-import {createCharacter} from "../services/characters-service.js";
+import { createCharacter } from "../services/characters-service.js";
 
 const FIELD_CONFIGURATIONS = {
     'name': '#acm_create_name',

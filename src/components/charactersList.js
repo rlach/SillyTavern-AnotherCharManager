@@ -1,11 +1,11 @@
-import {setCharacterId, setMenuType} from '../../../../../../script.js';
-import {debounce, getIdByAvatar} from "../utils.js";
-import {characters, eventSource, getThumbnailUrl, tagList, tagMap} from "../constants/context.js";
-import {selectedChar, setSearchValue, setSelectedChar} from "../constants/settings.js";
-import {fillAdvancedDefinitions, fillDetails} from "./characters.js";
-import {searchAndFilter, sortCharAR} from "../services/charactersList-service.js";
-import {getSetting, updateSetting} from "../services/settings-service.js";
-import {getPreset} from "../services/presets-service.js";
+import { setCharacterId, setMenuType } from '/script.js';
+import { debounce, getIdByAvatar } from "../utils.js";
+import { characters, eventSource, getThumbnailUrl, tagList, tagMap } from "../constants/context.js";
+import { selectedChar, setSearchValue, setSelectedChar } from "../constants/settings.js";
+import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
+import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
+import { getSetting, updateSetting } from "../services/settings-service.js";
+import { getPreset } from "../services/presets-service.js";
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
@@ -25,7 +25,7 @@ function createCharacterBlock(avatar) {
 
     div.innerHTML = `
         <div class="avatar acm_avatarList">
-            <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false">
+            <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false" loading="lazy">
         </div>
         <div class="char_name">
             <div class="char_name_block">

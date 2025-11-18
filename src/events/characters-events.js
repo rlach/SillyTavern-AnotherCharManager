@@ -1,4 +1,4 @@
-import {event_types, eventSource} from "../constants/context.js";
+import { event_types, eventSource } from "../constants/context.js";
 import {
     addAltGreeting,
     closeCharacterPopup,
@@ -11,11 +11,11 @@ import {
     toggleFavoriteStatus,
     update_avatar
 } from "../components/characters.js";
-import {closeDetails} from "../components/modal.js";
-import {checkApiAvailability, editCharDebounced, saveAltGreetings} from "../services/characters-service.js";
-import {refreshCharListDebounced} from "../components/charactersList.js";
-import {selectedChar, shouldCharacterPageReload} from "../constants/settings.js";
-import {updateTokenCount} from "../utils.js";
+import { closeDetails } from "../components/modal.js";
+import { checkApiAvailability, editCharDebounced, saveAltGreetings } from "../services/characters-service.js";
+import { refreshCharListDebounced } from "../components/charactersList.js";
+import { selectedChar, shouldCharacterPageReload } from "../constants/settings.js";
+import { updateTokenCount } from "../utils.js";
 
 export function initializeFieldUpdaters() {
     const elementsToInitialize = {

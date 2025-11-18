@@ -5,8 +5,8 @@ import {
     power_user,
     saveSettingsDebounced
 } from "../constants/context.js";
-import {createTagInput} from '../../../../../tags.js';
-import {acmCreateTagInput} from "../components/tags.js";
+import { createTagInput } from '/scripts/tags.js';
+import { acmCreateTagInput } from "../components/tags.js";
 
 
 export function initializeTagInput() {

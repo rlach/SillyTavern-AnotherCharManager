@@ -1,8 +1,8 @@
-import {getPastCharacterChats, setCharacterId, system_message_types} from '../../../../../../script.js';
-import {ensureImageFormatSupported, getCharaFilename} from '../../../../../utils.js';
-import {renameGroupMember} from '../../../../../group-chats.js';
-import {world_info} from '../../../../../world-info.js';
-import {createTagMapFromList} from '../../../../../tags.js';
+import { getPastCharacterChats, setCharacterId, system_message_types } from '/script.js';
+import { ensureImageFormatSupported, getCharaFilename } from '/scripts/utils.js';
+import { renameGroupMember } from '/scripts/group-chats.js';
+import { world_info } from '/scripts/world-info.js';
+import { createTagMapFromList } from '/scripts/tags.js';
 import {
     Popup,
     characterId,
@@ -18,8 +18,8 @@ import {
     saveSettingsDebounced,
     substituteParams, t
 } from "../constants/context.js";
-import {debounce, delay} from '../utils.js';
-import {renameTagKey} from './tags-service.js';
+import { debounce, delay } from '../utils.js';
+import { renameTagKey } from './tags-service.js';
 import {
     acm_crop_data,
     selectedChar,
@@ -27,8 +27,8 @@ import {
     setSelectedChar,
     setShouldCharacterPageReload
 } from '../constants/settings.js';
-import {selectAndDisplay} from "../components/charactersList.js";
-import {closeCreationPopup} from "../components/characterCreation.js";
+import { selectAndDisplay } from "../components/charactersList.js";
+import { closeCreationPopup } from "../components/characterCreation.js";
 
 
 /**
