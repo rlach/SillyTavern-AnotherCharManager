@@ -1,12 +1,10 @@
 /* ===== TAG COMPONENTS ===== */
 .acm_tag {
-    border-style: solid;
-    border-width: 1px;
-    border-radius: 5px;
+    border: 1px solid var(--white50a);
+    border-radius: var(--acm-border-radius-sm);
     box-sizing: border-box;
     color: var(--SmartThemeBodyColor);
     background-color: var(--black30a);
-    border-color: var(--white50a);
     padding: 0.1rem 0.2rem;
     font-size: calc(var(--mainFontSize) - 5%);
     display: flex;
