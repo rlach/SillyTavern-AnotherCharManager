@@ -7,7 +7,6 @@ import {
     setShouldCharacterPageReload,
     updateCreateData
 } from "../constants/settings.js";
-import {createTagInput} from '../../../../../tags.js';
 import {createCharacter} from "../services/characters-service.js";
 
 const FIELD_CONFIGURATIONS = {
@@ -58,7 +57,7 @@ export function toggleCharacterCreationPopup() {
         $('#acm_create_avatar').attr('src', 'img/ai4.png');
 
         setShouldCharacterPageReload(false);
-        createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
+
         // Affichage du popup
         $popup.css({ 'display': 'flex', 'opacity': 0.0 })
             .addClass('open')

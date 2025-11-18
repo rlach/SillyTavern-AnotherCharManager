@@ -1,14 +1,4 @@
 /* ===== TAG COMPONENTS ===== */
-#tags-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem;
-    height: 0;
-    overflow-y: auto;
-    margin-bottom: 5px;
-    transition: height 0.3s ease-out;
-}
-
 .acm_tag {
     border-style: solid;
     border-width: 1px;
@@ -40,4 +30,37 @@
 
 .tag-searchbar {
     width: 50%;
+}
+
+.acm_tagQuery_container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    height: 0;
+    min-height: 0;
+    overflow: hidden;
+    transition: height 0.3s ease, min-height 0.3s ease;
+}
+
+.acm_tagQuery_container.open {
+    overflow: hidden;
+}
+
+.acm_tagQuery_row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acm_tagQuery_label {
+    white-space: nowrap;
+    min-width: 120px;
+    text-align: right;
+}
+
+.acm_tagQuery_input {
+    flex: 1;
+    min-width: 0;
+    max-width: 120px;
 }

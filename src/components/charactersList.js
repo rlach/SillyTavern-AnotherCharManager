@@ -308,22 +308,26 @@ export function updateDropdownPresetNames() {
     });
 }
 
-export function toggleTagsList() {
-    const tagsList = document.getElementById('tags-list');
+export function toggleTagQueries() {
+    const tagsList = document.getElementById('acm_tagQuery');
 
     if (tagsList.classList.contains('open')) {
         // Fermeture de la liste
-        setTimeout(() => {
-            tagsList.style.minHeight = '0';
-            tagsList.style.height = '0';
-        }, 10);
+        tagsList.style.overflow = 'hidden';
+        tagsList.style.minHeight = '0';
+        tagsList.style.height = '0';
     } else {
         // Ouverture de la liste
+        const calculatedHeight = tagsList.scrollHeight > 80 ? '80px' : (tagsList.scrollHeight + 5) + 'px';
+        tagsList.style.minHeight = calculatedHeight;
+        tagsList.style.height = calculatedHeight;
+
+        // Allow overflow only after animation completes
         setTimeout(() => {
-            const calculatedHeight = tagsList.scrollHeight > 80 ? '80px' : (tagsList.scrollHeight + 5) + 'px';
-            tagsList.style.minHeight = calculatedHeight;
-            tagsList.style.height = calculatedHeight;
-        }, 10);
+            if (tagsList.classList.contains('open')) {
+                tagsList.style.overflow = 'visible';
+            }
+        }, 300); // Match the transition duration (0.3s = 300ms)
     }
 
     tagsList.classList.toggle('open');

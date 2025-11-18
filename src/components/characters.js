@@ -4,7 +4,6 @@ import {
     setCharacterId,
     talkativeness_default
 } from '../../../../../../script.js';
-import {createTagInput} from '../../../../../tags.js';
 import {displayTag} from './tags.js';
 import {getBase64Async, getIdByAvatar} from '../utils.js';
 import {
@@ -103,7 +102,6 @@ export async function fillDetails(avatar) {
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#acm_creatornotes').val(char.data?.creator_notes || char.creatorcomment);
     $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
-    createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
     displayAltGreetings(char.data.alternate_greetings).then(html => {
         $('#altGreetings_content').html(html);
     });

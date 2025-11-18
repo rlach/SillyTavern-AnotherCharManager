@@ -40,7 +40,30 @@
                         </form>
                         <span id="charNumber"></span>
                     </div>
-                    <div id="tags-list"></div>
+                    <div id="acm_tagQuery" class="acm_tagQuery_container">
+                        <div class="acm_tagQuery_row">
+                            <span class="acm_tagQuery_label">Mandatory tags:</span>
+                            <label for="acm_mandatoryInput" title="Mandatory Tags">
+                                <input id="acm_mandatoryInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                            </label>
+                            <div id="acm_mandatoryTags" class="tags"></div>
+                        </div>
+                        <div class="acm_tagQuery_row">
+                            <span class="acm_tagQuery_label">At least one tag:</span>
+                            <label for="acm_facultativeInput" title="Facultative Tags">
+                                <input id="acm_facultativeInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                            </label>
+                            <div id="acm_facultativeTags" class="tags"></div>
+                        </div>
+                        <div class="acm_tagQuery_row">
+                            <span class="acm_tagQuery_label">Excluded tags:</span>
+                            <label for="acm_excludedInput" title="Excluded Tags">
+                                <input id="acm_excludedInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                            </label>
+                            <div id="acm_excludedTags" class="tags"></div>
+                        </div>
+                    </div>
+                    <hr>
                     <div id="character-list"> </div>
                     <hr id="char-sep" style="display:none">
                     <div id="char-details" style="display:none">
@@ -55,7 +78,6 @@
                                         </span>
                                     </label>
                                 </div>
-
                                 <div class="char-details-summary-desc">
                                     <span id="ch_name_details"></span>
                                     <hr>
