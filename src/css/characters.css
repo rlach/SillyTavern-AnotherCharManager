@@ -82,6 +82,7 @@
 #edit_icon:hover {
     background: rgba(0, 0, 0, 0.8);
 }
+
 #edit_icon i {
     font-size: 1.1rem;
 }
@@ -89,10 +90,6 @@
 #edit_avatar_button {
     display: none;
 }
-
-/*#avatar_title:hover #edit_icon {*/
-/*    display: block;*/
-/*}*/
 
 .char-details-summary-desc {
     display: flex;
@@ -143,7 +140,7 @@
 .inline-drawer-design {
     background-image: linear-gradient(348deg, var(--white30a)2%, var(--grey30a)10%, var(--black70a)95%, var(--SmartThemeQuoteColor)100%);
     margin-bottom: 5px;
-    border-radius: 10px;
+    border-radius: var(--acm-border-radius-md);
     padding: 2px 5px;
     border: 1px solid var(--SmartThemeBorderColor);
     transition: all 250ms;
@@ -193,12 +190,12 @@
 }
 
 /* ===== FORM ELEMENTS ===== */
-#acm_personality {
+#acm_personality,
+#acm_scenario {
     width: 100%;
 }
 
 #acm_scenario {
-    width: 100%;
     margin-left: 0;
 }
 
