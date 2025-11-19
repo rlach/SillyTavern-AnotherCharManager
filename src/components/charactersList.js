@@ -6,6 +6,7 @@ import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
 import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { getPreset } from "../services/presets-service.js";
+import { imageLoader } from '../services/imageLoader.js';
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
 
@@ -33,7 +34,11 @@ function createCharacterBlock(avatar) {
 
     div.innerHTML = `
         <div class="avatar acm_avatarList">
-            <img id="img_${avatar}" src="${avatarThumb}" alt="${characters[id].avatar}" draggable="false" loading="lazy">
+            <img id="img_${avatar}"
+                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23e0e0e0' width='100' height='100'/%3E%3C/svg%3E"
+                 data-src="${avatarThumb}"
+                 alt="${characters[id].avatar}"
+                 draggable="false">
         </div>
         <div class="char_name">
             <div class="char_name_block">
@@ -67,8 +72,8 @@ function renderCharactersListHTML(sortedList) {
         let batchCount = 0;
 
         while (currentIndex < sortedList.length &&
-        batchCount < BATCH_SIZE &&
-        (performance.now() - startTime) < 12) {
+                batchCount < BATCH_SIZE &&
+                (performance.now() - startTime) < 12) {
 
             const item = sortedList[currentIndex];
             const charElement = createCharacterBlock(item.avatar);
@@ -79,6 +84,12 @@ function renderCharactersListHTML(sortedList) {
         }
 
         container.appendChild(fragment);
+
+        const newImages = container.querySelectorAll(`img[data-src]:not([data-observed])`);
+        newImages.forEach(img => {
+            img.dataset.observed = 'true';
+            imageLoader.observe(img);
+        });
 
         if (currentIndex < sortedList.length) {
             requestAnimationFrame(processBatch);

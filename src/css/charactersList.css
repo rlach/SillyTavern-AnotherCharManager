@@ -150,3 +150,19 @@
     border-radius: 0 var(--acm-border-radius-sm) var(--acm-border-radius-sm) 0 !important;
     flex: 1;
 }
+
+.avatar.acm_avatarList img {
+    transition: opacity 0.2s ease-in-out;
+    opacity: 0.6;
+    background-color: #e0e0e0;
+}
+
+.avatar.acm_avatarList img.loaded {
+    opacity: 1;
+}
+
+/* Optimisation GPU */
+.avatar.acm_avatarList img {
+    will-change: opacity;
+    transform: translateZ(0);
+}
