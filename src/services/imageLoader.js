@@ -9,8 +9,10 @@ class ImageLoader {
         this.root = options.root || null;
         this.currentlyLoading = 0;
         this.loadingQueue = [];
+        this.observedImages = new Set(); // AJOUTÉ : Garder trace des images observées
 
         this.createObserver();
+        this.setupResizeObserver(); // AJOUTÉ
     }
 
     createObserver() {
@@ -22,6 +24,39 @@ class ImageLoader {
                 threshold: 0.01
             }
         );
+    }
+
+    // AJOUTÉ : Observer les changements de taille du conteneur
+    setupResizeObserver() {
+        if (typeof ResizeObserver === 'undefined') {
+            console.warn('ResizeObserver not supported');
+            return;
+        }
+
+        this.resizeObserver = new ResizeObserver((entries) => {
+            // Quand le conteneur change de taille, rafraîchir l'Observer
+            if (this.observedImages.size > 0) {
+                this.refreshObserver();
+            }
+        });
+
+        // Observer le conteneur racine (ou le viewport si pas de root)
+        if (this.root) {
+            this.resizeObserver.observe(this.root);
+        }
+    }
+
+    // AJOUTÉ : Rafraîchir toutes les observations
+    refreshObserver() {
+        const imagesToReobserve = Array.from(this.observedImages);
+
+        // Déconnecter et reconnecter
+        imagesToReobserve.forEach(img => {
+            if (!img.dataset.loaded) {
+                this.observer.unobserve(img);
+                this.observer.observe(img);
+            }
+        });
     }
 
     handleIntersection(entries) {
@@ -78,6 +113,7 @@ class ImageLoader {
             this.currentlyLoading--;
             this.processQueue();
             this.observer.unobserve(img);
+            this.observedImages.delete(img); // AJOUTÉ : Retirer des images observées
         };
 
         tempImg.onerror = () => {
@@ -87,6 +123,7 @@ class ImageLoader {
             this.currentlyLoading--;
             this.processQueue();
             this.observer.unobserve(img);
+            this.observedImages.delete(img); // AJOUTÉ
         };
 
         tempImg.src = img.dataset.src;
@@ -95,12 +132,17 @@ class ImageLoader {
     observe(img) {
         if (img.dataset.loaded !== 'true') {
             this.observer.observe(img);
+            this.observedImages.add(img); // AJOUTÉ : Garder trace
         }
     }
 
     destroy() {
         this.observer.disconnect();
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+        }
         this.loadingQueue = [];
+        this.observedImages.clear(); // AJOUTÉ
         this.currentlyLoading = 0;
     }
 
@@ -117,6 +159,16 @@ class ImageLoader {
         }
 
         if (options.root !== undefined && options.root !== this.root) {
+            // Changer le root observé par le ResizeObserver
+            if (this.resizeObserver) {
+                if (this.root) {
+                    this.resizeObserver.unobserve(this.root);
+                }
+                if (options.root) {
+                    this.resizeObserver.observe(options.root);
+                }
+            }
+
             this.root = options.root;
             needsRecreate = true;
         }
@@ -124,6 +176,7 @@ class ImageLoader {
         if (needsRecreate) {
             this.observer.disconnect();
             this.createObserver();
+            this.refreshObserver(); // AJOUTÉ : Re-observer toutes les images
         }
     }
 }
