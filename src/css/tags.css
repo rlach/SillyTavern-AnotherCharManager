@@ -61,4 +61,7 @@
     flex: 1;
     min-width: 0;
     max-width: 120px;
+    background-color: var(--SmartThemeBlurTintColor);
+    color: var(--SmartThemeBodyColor);
+    border: 1px solid var(--SmartThemeBorderColor);
 }
