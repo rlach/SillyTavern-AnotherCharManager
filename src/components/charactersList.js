@@ -349,7 +349,6 @@ export function toggleTagQueries() {
         tagsList.style.minHeight = '0';
         tagsList.style.height = '0';
     } else {
-        // const calculatedHeight = tagsList.scrollHeight > 80 ? '80px' : (tagsList.scrollHeight + 5) + 'px';
         const calculatedHeight = (tagsList.scrollHeight + 5) + 'px';
         tagsList.style.minHeight = calculatedHeight;
         tagsList.style.height = calculatedHeight;
