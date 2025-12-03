@@ -15,10 +15,11 @@ export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 2
  * The block includes styling and details such as the avatar image, name, and associated tags.
  *
  * @param {string} avatar - The identifier for the character avatar used to create the block.
+ * @param useLazyLoading - Indicate if using lazy loading for the avatar image.
  * @return {HTMLDivElement} Returns a `div` element representing the character block, containing
  *         character information and a thumbnail of the avatar.
  */
-function createCharacterBlock(avatar) {
+function createCharacterBlock(avatar, useLazyLoading = true) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
 
@@ -26,17 +27,21 @@ function createCharacterBlock(avatar) {
     const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
     const isFav = (characters[id].fav || characters[id].data.extensions.fav) ? 'fav' : '';
 
-    // Créer l'élément avec DOM natif
     const div = document.createElement('div');
     div.className = `character_item ${charClass} ${isFav}`;
     div.title = `[${characters[id].name} - Tags: ${tagMap[avatar].length}]`;
     div.setAttribute('data-avatar', avatar);
 
+    const imgSrc = useLazyLoading
+        ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23e0e0e0' width='100' height='100'/%3E%3C/svg%3E"
+        : avatarThumb;
+    const dataSrcAttr = useLazyLoading ? `data-src="${avatarThumb}"` : '';
+
     div.innerHTML = `
         <div class="avatar acm_avatarList">
             <img id="img_${avatar}"
-                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23e0e0e0' width='100' height='100'/%3E%3C/svg%3E"
-                 data-src="${avatarThumb}"
+                 src="${imgSrc}"
+                 ${dataSrcAttr}
                  alt="${characters[id].avatar}"
                  draggable="false">
         </div>
@@ -50,6 +55,10 @@ function createCharacterBlock(avatar) {
     return div;
 }
 
+const requestIdle = window.requestIdleCallback || (cb => {
+    setTimeout(() => cb({ timeRemaining: () => 5 }), 1);
+});
+
 /**
  * Renders a batch-processed list of character elements into the HTML container element.
  * The method ensures the rendering process does not block the UI thread by processing elements
@@ -60,23 +69,23 @@ function createCharacterBlock(avatar) {
  * @return {void} - Does not return a value. The method directly manipulates the DOM to render content.
  */
 function renderCharactersListHTML(sortedList) {
-    const container = $('#character-list')[0]; // Obtenir l'élément DOM natif
-    container.innerHTML = ''; // Vider le container
+    const container = $('#character-list')[0];
+    container.innerHTML = '';
 
     const BATCH_SIZE = 20;
     let currentIndex = 0;
 
-    function processBatch() {
-        const startTime = performance.now();
+    function processBatch(deadline) {
         const fragment = document.createDocumentFragment();
         let batchCount = 0;
 
         while (currentIndex < sortedList.length &&
                 batchCount < BATCH_SIZE &&
-                (performance.now() - startTime) < 12) {
+                deadline.timeRemaining() > 0) {
 
             const item = sortedList[currentIndex];
-            const charElement = createCharacterBlock(item.avatar);
+            const useLazyLoading = currentIndex >= 100;
+            const charElement = createCharacterBlock(item.avatar, useLazyLoading);
             fragment.appendChild(charElement);
 
             currentIndex++;
@@ -92,10 +101,10 @@ function renderCharactersListHTML(sortedList) {
         });
 
         if (currentIndex < sortedList.length) {
-            requestAnimationFrame(processBatch);
+            requestIdle(processBatch);
         }
     }
-    requestAnimationFrame(processBatch);
+    requestIdle(processBatch);
 }
 
 /**
@@ -188,18 +197,13 @@ function generateDropdown(sortedList, type) {
                     .filter(item => tagMap[item.avatar]?.includes(tag.id))
                     .map(item => item.avatar);
                 if (charactersForTag.length === 0) return '';
-                return createDropdownContainer(
-                    tag.name,
-                    charactersForTag.length,
-                    'allTags',
-                    tag.id
-                );
+                return createDropdownContainer(tag.name, charactersForTag.length, 'allTags', tag.id);
             }).join('');
             const noTagsCharacters = sortedList
                 .filter(item => !tagMap[item.avatar] || tagMap[item.avatar].length === 0)
                 .map(item => item.avatar);
             const noTagsDropdown = noTagsCharacters.length > 0
-                ? createDropdownContainer('No Tags', noTagsCharacters.length, 'tag', 'no-tags')
+                ? createDropdownContainer('No Tags', noTagsCharacters.length, 'allTags', 'no-tags')
                 : '';
             return tagDropdowns + noTagsDropdown;
         },
@@ -285,10 +289,16 @@ function generateDropdownContent(sortedList, type, content){
     const dropdownContent ={
         allTags: () => {
             const filteredCharacters = sortedList
-                .filter(item => tagMap[item.avatar]?.includes(content));
+                .filter(item => {
+                    if (content === 'no-tags') {
+                        return !tagMap[item.avatar] || tagMap[item.avatar].length === 0;
+                    }
+                    return tagMap[item.avatar]?.includes(content);
+
+                });
             const container = document.createDocumentFragment();
             filteredCharacters.forEach(character => {
-                const block = createCharacterBlock(character.avatar);
+                const block = createCharacterBlock(character.avatar, false);
                 container.appendChild(block);
             });
             return container;
@@ -304,7 +314,7 @@ function generateDropdownContent(sortedList, type, content){
             });
             const container = document.createDocumentFragment();
             filteredCharacters.forEach(character => {
-                const block = createCharacterBlock(character.avatar);
+                const block = createCharacterBlock(character.avatar, false);
                 container.appendChild(block);
             });
             return container;
@@ -313,7 +323,7 @@ function generateDropdownContent(sortedList, type, content){
             const filteredCharacters = sortedList.filter(item => item.data.creator === content);
             const container = document.createDocumentFragment();
             filteredCharacters.forEach(character => {
-                const block = createCharacterBlock(character.avatar);
+                const block = createCharacterBlock(character.avatar, false);
                 container.appendChild(block);
             });
             return container;
