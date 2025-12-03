@@ -89,9 +89,11 @@ export function printCategoriesList(presetID, init = false){
                         </div>`;
             const catElement = $(catHTML);
             const catTagList = catElement.find(`#acm_catTagList_${index}`);
-            cat.tags.forEach(tag => {
-                catTagList.append(displayTag(tag, true));
-            });
+            if (cat.tags) {
+                cat.tags.forEach(tag => {
+                    catTagList.append(displayTag(tag, true));
+                });
+            }
             catTagList.append(`<label for="input_cat_tag_${index}" title="Search or create a tag.">
                                     <input id="input_cat_tag_${index}" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
                                 </label>`);
