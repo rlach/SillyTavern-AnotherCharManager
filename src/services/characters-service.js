@@ -410,14 +410,11 @@ export async function createCharacter(formData) {
 
         const avatarId = await fetchResult.text();
         createTagMapFromList('#acmTagList', avatarId);
-        setShouldCharacterPageReload(true);
-        await new Promise((resolve) => {
-            eventSource.once('character_list_refreshed', resolve);
-            getCharacters();
-        });
         setCrop_data(undefined);
         await delay(500);
         closeCreationPopup();
+        setShouldCharacterPageReload(true);
+        await getCharacters();
         selectAndDisplay(avatarId);
     }
     catch (error) {
