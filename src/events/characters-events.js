@@ -92,7 +92,13 @@ export function initializeCharactersEvents() {
     eventSource.on(event_types.CHARACTER_DUPLICATED, refreshCharListDebounced);
 
     // Load the character list in the background when ST launch
+    let isPageLoadCooldown = false;
     eventSource.on('character_page_loaded', function () {
+        if (isPageLoadCooldown) return;
+        isPageLoadCooldown = true;
+
+        setTimeout(() => { isPageLoadCooldown = false; }, 5000);
+
         if(shouldCharacterPageReload) {
             refreshCharListDebounced();
         }
