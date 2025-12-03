@@ -78,7 +78,7 @@ export function printCategoriesList(presetID, init = false){
             const catHTML = `
                         <div data-catid="${index}">
                             <div class="acm_catList">
-                                <div class="drag-handle ui-sortable-handle" data-i18n="[title]Drag to reorder categoies">☰</div>
+                                <div class="drag-handle ui-sortable-handle" data-i18n="[title]Drag to reorder categories">☰</div>
                                 <h4>- ${cat.name} -</h4>
                                 <div style="display:flex;">
                                     <div class="menu_button fa-solid fa-edit cat_rename" title="Rename category"></div>

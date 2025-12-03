@@ -214,7 +214,7 @@ function generateDropdown(sortedList, type) {
                 return "Looks like our categories went on vacation! 🏖️ Check back when they're done sunbathing!";
             }
             return categories.map(category => {
-                const members = category.tags;
+                const members = category.members;
                 const charactersForCat = sortedList
                     .filter(item => members.every(memberId => tagMap[item.avatar]?.includes(String(memberId))))
                     .map(item => item.avatar);
