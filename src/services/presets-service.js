@@ -136,7 +136,7 @@ export function removePresetCategory(presetIndex, categoryIndex) {
  */
 export function addTagToCategory(presetIndex, categoryIndex, tagId) {
     const category = getCategory(presetIndex, categoryIndex);
-    if (category.members.includes(tagId)) {
+    if (category.tags.includes(tagId)) {
         return; // Tag already exists in category
     }
     const updatedPresets = [...getSetting('dropdownPresets')];
