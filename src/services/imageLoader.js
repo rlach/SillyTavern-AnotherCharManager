@@ -4,7 +4,7 @@
  */
 class ImageLoader {
     constructor(options = {}) {
-        this.maxConcurrent = options.maxConcurrent || 8;
+        this.maxConcurrent = options.maxConcurrent || 12;
         this.rootMargin = options.rootMargin || '800px';
         this.root = options.root || null;
         this.currentlyLoading = 0;
@@ -104,29 +104,47 @@ class ImageLoader {
 
         const tempImg = new Image();
 
-        tempImg.onload = () => {
-            img.src = img.dataset.src;
-            img.dataset.loaded = 'true';
-            delete img.dataset.loading;
-            img.classList.add('loaded');
-
-            this.currentlyLoading--;
-            this.processQueue();
-            this.observer.unobserve(img);
-            this.observedImages.delete(img); // AJOUTÉ : Retirer des images observées
-        };
-
-        tempImg.onerror = () => {
-            console.error('Failed to load image:', img.dataset.src);
-            delete img.dataset.loading;
-
-            this.currentlyLoading--;
-            this.processQueue();
-            this.observer.unobserve(img);
-            this.observedImages.delete(img); // AJOUTÉ
-        };
+        // tempImg.onload = () => {
+        //     img.src = img.dataset.src;
+        //     img.dataset.loaded = 'true';
+        //     delete img.dataset.loading;
+        //     img.classList.add('loaded');
+        //
+        //     this.currentlyLoading--;
+        //     this.processQueue();
+        //     this.observer.unobserve(img);
+        //     this.observedImages.delete(img); // AJOUTÉ : Retirer des images observées
+        // };
+        //
+        // tempImg.onerror = () => {
+        //     console.error('Failed to load image:', img.dataset.src);
+        //     delete img.dataset.loading;
+        //
+        //     this.currentlyLoading--;
+        //     this.processQueue();
+        //     this.observer.unobserve(img);
+        //     this.observedImages.delete(img); // AJOUTÉ
+        // };
 
         tempImg.src = img.dataset.src;
+
+        tempImg.decode()
+            .then(() => {
+                img.src = tempImg.src;
+                img.dataset.loaded = 'true';
+                delete img.dataset.loading;
+                img.classList.add('loaded');
+            })
+            .catch((err) => {
+                console.error('Failed to load/decode image:', img.dataset.src, err);
+                // Handle error fallback if needed
+            })
+            .finally(() => {
+                this.currentlyLoading--;
+                this.processQueue();
+                this.observer.unobserve(img);
+                this.observedImages.delete(img);
+            });
     }
 
     observe(img) {
@@ -142,7 +160,7 @@ class ImageLoader {
             this.resizeObserver.disconnect();
         }
         this.loadingQueue = [];
-        this.observedImages.clear(); // AJOUTÉ
+        this.observedImages.clear();
         this.currentlyLoading = 0;
     }
 
@@ -194,14 +212,12 @@ export function initializeCharacterModule() {
         return;
     }
 
-    // Configurer le loader avec votre conteneur
     imageLoader.updateOptions({
         root: characterContainer,
-        maxConcurrent: 8,
+        maxConcurrent: 12,
         rootMargin: '800px'
     });
 
-    // Listener de scroll sur votre conteneur
     let lastScrollTop = 0;
     characterContainer.addEventListener('scroll', () => {
         const currentScrollTop = characterContainer.scrollTop;
@@ -214,8 +230,6 @@ export function initializeCharacterModule() {
             imageLoader.updateOptions({ rootMargin: '800px' });
         }
     }, { passive: true });
-
-    // Charger vos personnages...
 }
 
 // Nettoyage si besoin
