@@ -56,8 +56,14 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
 }
 
 const requestIdle = window.requestIdleCallback || (cb => {
-    setTimeout(() => cb({ timeRemaining: () => 5 }), 1);
+    return setTimeout(() => cb({ timeRemaining: () => 5 }), 1);
 });
+
+const cancelIdle = window.cancelIdleCallback || (id => {
+    clearTimeout(id);
+});
+
+let activeBatchHandle = null;
 
 /**
  * Renders a batch-processed list of character elements into the HTML container element.
@@ -69,6 +75,11 @@ const requestIdle = window.requestIdleCallback || (cb => {
  * @return {void} - Does not return a value. The method directly manipulates the DOM to render content.
  */
 function renderCharactersListHTML(sortedList) {
+    if (activeBatchHandle) {
+        cancelIdle(activeBatchHandle);
+        activeBatchHandle = null;
+    }
+
     const container = $('#character-list')[0];
     container.innerHTML = '';
 
@@ -101,10 +112,12 @@ function renderCharactersListHTML(sortedList) {
         });
 
         if (currentIndex < sortedList.length) {
-            requestIdle(processBatch);
+            activeBatchHandle = requestIdle(processBatch);
+        } else {
+            activeBatchHandle = null;
         }
     }
-    requestIdle(processBatch);
+    activeBatchHandle = requestIdle(processBatch);
 }
 
 /**

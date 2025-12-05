@@ -104,28 +104,6 @@ class ImageLoader {
 
         const tempImg = new Image();
 
-        // tempImg.onload = () => {
-        //     img.src = img.dataset.src;
-        //     img.dataset.loaded = 'true';
-        //     delete img.dataset.loading;
-        //     img.classList.add('loaded');
-        //
-        //     this.currentlyLoading--;
-        //     this.processQueue();
-        //     this.observer.unobserve(img);
-        //     this.observedImages.delete(img); // AJOUTÉ : Retirer des images observées
-        // };
-        //
-        // tempImg.onerror = () => {
-        //     console.error('Failed to load image:', img.dataset.src);
-        //     delete img.dataset.loading;
-        //
-        //     this.currentlyLoading--;
-        //     this.processQueue();
-        //     this.observer.unobserve(img);
-        //     this.observedImages.delete(img); // AJOUTÉ
-        // };
-
         tempImg.src = img.dataset.src;
 
         tempImg.decode()
