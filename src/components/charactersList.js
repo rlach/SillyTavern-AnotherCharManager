@@ -28,7 +28,7 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
     const isFav = (characters[id].fav || characters[id].data.extensions.fav) ? 'fav' : '';
 
     const div = document.createElement('div');
-    div.className = `character_item ${charClass} ${isFav}`;
+    div.className = `card ${charClass} ${isFav}`;
     div.title = `[${characters[id].name} - Tags: ${tagMap[avatar].length}]`;
     div.setAttribute('data-avatar', avatar);
 
@@ -38,17 +38,18 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
     const dataSrcAttr = useLazyLoading ? `data-src="${avatarThumb}"` : '';
 
     div.innerHTML = `
-        <div class="avatar acm_avatarList">
+        <!-- Media -->
+        <div class="card__media">
             <img id="img_${avatar}"
-                 src="${imgSrc}"
-                 ${dataSrcAttr}
-                 alt="${characters[id].avatar}"
-                 draggable="false">
+             src="${imgSrc}"
+             ${dataSrcAttr}
+             alt="${characters[id].avatar}"
+             draggable="false">
         </div>
-        <div class="char_name">
-            <div class="char_name_block">
-                <span>${characters[id].name} : ${tagMap[avatar].length}</span>
-            </div>
+        <!-- Header -->
+        <div class="card__header">
+            <h3 class="card__header-title">${characters[id].name}</h3>
+            <p class="card__header-meta">Tags: ${tagMap[avatar].length}</p>
         </div>
     `;
 
