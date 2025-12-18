@@ -29,7 +29,7 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
 
     const div = document.createElement('div');
     div.className = `card ${charClass} ${isFav}`;
-    div.title = `[${characters[id].name} - Tags: ${tagMap[avatar].length}]`;
+    div.title = `[${characters[id].name} - Tags: ${tagMap[avatar]?.length ?? 0}]`;
     div.setAttribute('data-avatar', avatar);
 
     const imgSrc = useLazyLoading
@@ -49,7 +49,7 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
         <!-- Header -->
         <div class="card__header">
             <h3 class="card__header-title">${characters[id].name}</h3>
-            <p class="card__header-meta">Tags: ${tagMap[avatar].length}</p>
+            <p class="card__header-meta">Tags: ${tagMap[avatar]?.length ?? 0}</p>
         </div>
     `;
 
@@ -128,7 +128,7 @@ function renderCharactersListHTML(sortedList) {
  * @param {string} avatar - The identifier for the avatar to be selected and displayed.
  * @return {void} This function does not return a value.
  */
-export function selectAndDisplay(avatar) {
+export async function selectAndDisplay(avatar) {
     // Check if a visible character is already selected
     if(typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null){
         document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
@@ -138,8 +138,8 @@ export function selectAndDisplay(avatar) {
     setCharacterId(getIdByAvatar(avatar));
     $('#acm_export_format_popup').hide();
 
-    fillDetails(avatar);
-    fillAdvancedDefinitions(avatar);
+    await fillDetails(avatar);
+    await fillAdvancedDefinitions(avatar);
 
     document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';

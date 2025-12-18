@@ -91,7 +91,7 @@ export function printCategoriesList(presetID, init = false){
             const catTagList = catElement.find(`#acm_catTagList_${index}`);
             if (cat.tags) {
                 cat.tags.forEach(tag => {
-                    catTagList.append(displayTag(tag, true));
+                    catTagList.append(displayTag(tag, 'category'));
                 });
             }
             catTagList.append(`<label for="input_cat_tag_${index}" title="Search or create a tag.">
@@ -100,7 +100,7 @@ export function printCategoriesList(presetID, init = false){
             catTagList.append(`<i class="fa-solid fa-plus tag addCatTag"></i>`);
             catContainer.append(catElement);
             $('#acm_custom_categories').append(catContainer);
-            acmCreateTagInput(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } }, true);
+            acmCreateTagInput(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } }, 'category');
         });
         makeCategoryDraggable("#catContainer");
     }

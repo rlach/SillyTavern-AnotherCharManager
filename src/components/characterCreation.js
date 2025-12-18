@@ -4,10 +4,10 @@ import {
     create_data,
     resetCreateData,
     setCrop_data,
-    setShouldCharacterPageReload,
     updateCreateData
 } from "../constants/settings.js";
 import { createCharacter } from "../services/characters-service.js";
+import { closeDetails } from "./modal.js";
 
 /**
  * A mapping of field names to their corresponding CSS selectors.
@@ -36,6 +36,8 @@ const FIELD_CONFIGURATIONS = {
 export function toggleCharacterCreationPopup() {
     const $popup = $('#acm_create_popup');
     if ($popup.css('display') === 'none') {
+
+        closeDetails();
         // Initialize all form fields with create_data values
         $('#acm_create_name').val(create_data.name);
         $('#acm_create_desc').val(create_data.description);
@@ -55,6 +57,8 @@ export function toggleCharacterCreationPopup() {
         $('#acm_depth_prompt_depth2').val(create_data.depth_prompt_depth);
         $('#acm_depth_prompt_role2').val(create_data.depth_prompt_role);
         $('#acm_talkativeness_slider2').val(create_data.talkativeness);
+        // Tags input field
+        $('#acmTagInput').empty();
 
         // Update token counts for all fields
         Object.values(FIELD_CONFIGURATIONS).forEach(selector => {
@@ -62,7 +66,6 @@ export function toggleCharacterCreationPopup() {
         });
         // Avatar handling
         $('#acm_create_avatar').attr('src', 'img/ai4.png');
-        setShouldCharacterPageReload(false);
         // Display the popup
         $popup.css({ 'display': 'flex', 'opacity': 0.0 })
             .addClass('open')

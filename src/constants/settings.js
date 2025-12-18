@@ -20,12 +20,6 @@ export const setMem_avatar = (value) => {
     mem_avatar = value;
 };
 
-export let shouldCharacterPageReload = true;
-
-export function setShouldCharacterPageReload(value) {
-    shouldCharacterPageReload = value;
-}
-
 export let acm_crop_data;
 export const setCrop_data = (value) => {
     acm_crop_data = value;

@@ -25,10 +25,9 @@ import {
     selectedChar,
     setCrop_data,
     setSelectedChar,
-    setShouldCharacterPageReload
 } from '../constants/settings.js';
-import { selectAndDisplay } from "../components/charactersList.js";
 import { closeCreationPopup } from "../components/characterCreation.js";
+import { refreshCharListDebounced } from "../components/charactersList.js";
 
 // Create a debounced version of editChar
 export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
@@ -413,9 +412,8 @@ export async function createCharacter(formData) {
         setCrop_data(undefined);
         await delay(500);
         closeCreationPopup();
-        setShouldCharacterPageReload(true);
         await getCharacters();
-        selectAndDisplay(avatarId);
+        refreshCharListDebounced();
     }
     catch (error) {
         console.error('Error creating character', error);

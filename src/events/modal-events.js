@@ -19,6 +19,7 @@ import { manageCustomCategories, printCategoriesList } from "../components/prese
  */
 export function initializeExtMenuEvents() {
     $('#acm_open').on('click', function () {
+        refreshCharListDebounced();
         openModal();
     });
 }
@@ -34,6 +35,7 @@ export function initializeExtMenuEvents() {
  */
 export function initializeModalEvents() {
     $('#acm-manager').on('click', function () {
+        refreshCharListDebounced();
         openModal();
     });
 

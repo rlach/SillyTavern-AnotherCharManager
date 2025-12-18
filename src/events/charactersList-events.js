@@ -1,4 +1,5 @@
 import {
+    refreshCharListDebounced,
     selectAndDisplay, toggleFavoritesOnly, toggleTagQueries,
     updateSearchFilter,
     updateSortOrder
@@ -57,4 +58,9 @@ export function initializeToolbarEvents() {
     });
 
     $('#acm_character_create_button').on("click", toggleCharacterCreationPopup);
+
+    $(document).on("click", ".tag_acm_remove", function () {
+        $(this).closest('[data-tagid]').remove();
+        refreshCharListDebounced();
+    });
 }

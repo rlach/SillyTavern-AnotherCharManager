@@ -1,4 +1,4 @@
-import { event_types, eventSource } from "../constants/context.js";
+import { eventSource } from "../constants/context.js";
 import {
     addAltGreeting,
     closeCharacterPopup,
@@ -14,7 +14,7 @@ import {
 import { closeDetails } from "../components/modal.js";
 import { checkApiAvailability, editCharDebounced, saveAltGreetings } from "../services/characters-service.js";
 import { refreshCharListDebounced } from "../components/charactersList.js";
-import { selectedChar, shouldCharacterPageReload } from "../constants/settings.js";
+import { selectedChar } from "../constants/settings.js";
 import { updateTokenCount } from "../utils.js";
 
 /**
@@ -89,19 +89,8 @@ export function initializeCharactersEvents() {
         refreshCharListDebounced();
     });
     // Add listener to refresh the display on characters duplication
-    eventSource.on(event_types.CHARACTER_DUPLICATED, refreshCharListDebounced);
-
-    // Load the character list in the background when ST launch
-    let isPageLoadCooldown = false;
-    eventSource.on('character_page_loaded', function () {
-        if (isPageLoadCooldown) return;
-        isPageLoadCooldown = true;
-
-        setTimeout(() => { isPageLoadCooldown = false; }, 5000);
-
-        if(shouldCharacterPageReload) {
-            refreshCharListDebounced();
-        }
+    eventSource.on('character_duplicated', function () {
+        refreshCharListDebounced();
     });
 
     // Adding textarea trigger on input
@@ -165,6 +154,15 @@ export function initializeCharactersEvents() {
         const greetingIndex = parseInt(this.closest('.altgreetings-drawer-toggle').querySelector('.greeting_index').textContent);
         delAltGreeting(greetingIndex, inlineDrawer);
     });
+
+    const tagListObserver = new MutationObserver(function () {
+        refreshCharListDebounced();
+    });
+
+    const tagListElement = document.getElementById('tag_List');
+    if (tagListElement) {
+        tagListObserver.observe(tagListElement, { childList: true });
+    }
 }
 
 /**

@@ -22,9 +22,9 @@ export function searchAndFilter(){
         ? [...characters].filter(character => character.fav === true || character.data.extensions.fav === true)
         : [...characters];
 
-    const excludedTags = $('#acm_excludedTags > span').map(function() { return this.id; }).get().filter(id => id);
-    const mandatoryTags = $('#acm_mandatoryTags > span').map(function() { return this.id; }).get().filter(id => id);
-    const facultativeTags = $('#acm_facultativeTags > span').map(function() { return this.id; }).get().filter(id => id);
+    const excludedTags = $('#acm_excludedTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
+    const mandatoryTags = $('#acm_mandatoryTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
+    const facultativeTags = $('#acm_facultativeTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
 
     // Filtering based on tags
     let tagfilteredChars = charactersCopy.filter(item => {
