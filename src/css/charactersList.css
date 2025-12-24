@@ -38,16 +38,22 @@
     padding: 10px;
     width: 110px;
     border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--SmartThemeBlurTintColor);
+    /*background-color: rgba(255, 255, 255, 0.1);*/
     backdrop-filter: blur(20px);
     transition: all 0.3s ease;
     margin: 5px;
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-        inset 0 0 22px 11px rgba(255, 255, 255, 0.05);
+        0 8px 32px rgba(119, 110, 110, 0.18),
+        inset 0 1px 0 rgba(28, 19, 72, 0.77),
+        inset 0 -1px 0 rgba(61, 79, 63, 0.84),
+        inset 0 0 25px 7px var(--SmartThemeEmColor);
+    /*box-shadow:*/
+    /*    0 8px 32px rgba(0, 0, 0, 0.1),*/
+    /*    inset 0 1px 0 rgba(255, 255, 255, 0.2),*/
+    /*    inset 0 -1px 0 rgba(255, 255, 255, 0.05),*/
+    /*    inset 0 0 22px 11px rgba(255, 255, 255, 0.05);*/
     cursor: pointer;
     overflow: hidden;
 }
@@ -115,6 +121,11 @@
     margin: 0 0 .25em;
     color: white;
     font-size: 0.9em;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    word-break: break-word;
 }
 
 .card__header-meta {
