@@ -84,7 +84,19 @@ function onTagInputFocus() {
 }
 
 /**
- * Handles the selection of a tag and appends it based on the specified mode.
+ * Handles the selection and assignment of tags based on user interaction.
+ * The method works with different modes to allow tags to be applied in specific contexts.
+ * Tags can be associated with categories, distributed across multiple lists, or handled in a classic manner.
+ *
+ * @param {Object} event - The event object triggered by the user interaction.
+ * @param {Object} ui - The UI interaction object containing details about the selected item.
+ * @param {string|Object} listSelector - The selector or jQuery object identifying the DOM element where the tag should be added.
+ * @param {Object} options - Additional configuration options for tag manipulation.
+ * @param {Object} [options.tagListOptions={}] - Optional override for tag list behavior.
+ * @param {string} [options.mode='classic'] - The operational mode determining how tags are managed (`classic`, `multiple`, `category`).
+ * @param {Array<string|Object>} [options.allLists=[]] - A collection of selectors or jQuery objects representing all lists that may be affected.
+ *
+ * @return {boolean} Always returns false to prevent default handling behaviors.
  */
 function acmSelectTag(event, ui, listSelector, { tagListOptions = {}, mode = 'classic', allLists = []} = {}) {
     let tagName = ui.item.value;

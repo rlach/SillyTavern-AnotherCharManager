@@ -48,6 +48,7 @@ export function initializeCharacterCreationEvents() {
         closeCreationPopup();
     });
 
+    // Switch panel during character creation
     $('#column-separator').on('click', function () {
         if ($('#acm_left_panel').hasClass('panel-hidden')){
             updateLayout(false);

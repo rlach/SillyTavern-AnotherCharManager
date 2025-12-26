@@ -140,7 +140,7 @@ export function closeDetails( reset = true ) {
 
     $('#acm_export_format_popup').hide();
     document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected','char_select');
-    document.getElementById('char-details').style.display = 'none';
+    document.getElementById('char-details').classList.remove("open");
     document.getElementById('char-sep').style.display = 'none';
     setSelectedChar(undefined);
 }

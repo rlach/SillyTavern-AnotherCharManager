@@ -137,13 +137,14 @@ export async function selectAndDisplay(avatar) {
     setSelectedChar(avatar);
     setCharacterId(getIdByAvatar(avatar));
     $('#acm_export_format_popup').hide();
-
+    window.acmIsUpdatingDetails = true;
     await fillDetails(avatar);
     await fillAdvancedDefinitions(avatar);
+    window.acmIsUpdatingDetails = false;
 
     document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
-    document.getElementById('char-details').style.removeProperty('display');
+    document.getElementById('char-details').classList.add("open");
 }
 
 /**

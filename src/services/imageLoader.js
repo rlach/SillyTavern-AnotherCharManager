@@ -1,6 +1,8 @@
 /**
- * Service de chargement optimisé des images de personnages avec préchargement intelligent.
- * Utilise l'Intersection Observer API pour charger les images avant qu'elles n'entrent dans le viewport.
+ * The ImageLoader class is responsible for managing the lazy loading of images
+ * with features such as prioritization, intersection observing, and concurrent loading control.
+ * This utility ensures efficient resource loading and improves performance by loading images only
+ * when they are about to enter the viewport.
  */
 class ImageLoader {
     constructor(options = {}) {
@@ -9,10 +11,10 @@ class ImageLoader {
         this.root = options.root || null;
         this.currentlyLoading = 0;
         this.loadingQueue = [];
-        this.observedImages = new Set(); // AJOUTÉ : Garder trace des images observées
+        this.observedImages = new Set();
 
         this.createObserver();
-        this.setupResizeObserver(); // AJOUTÉ
+        this.setupResizeObserver();
     }
 
     createObserver() {
@@ -26,7 +28,6 @@ class ImageLoader {
         );
     }
 
-    // AJOUTÉ : Observer les changements de taille du conteneur
     setupResizeObserver() {
         if (typeof ResizeObserver === 'undefined') {
             console.warn('ResizeObserver not supported');
@@ -34,23 +35,19 @@ class ImageLoader {
         }
 
         this.resizeObserver = new ResizeObserver((entries) => {
-            // Quand le conteneur change de taille, rafraîchir l'Observer
             if (this.observedImages.size > 0) {
                 this.refreshObserver();
             }
         });
 
-        // Observer le conteneur racine (ou le viewport si pas de root)
         if (this.root) {
             this.resizeObserver.observe(this.root);
         }
     }
 
-    // AJOUTÉ : Rafraîchir toutes les observations
     refreshObserver() {
         const imagesToReobserve = Array.from(this.observedImages);
 
-        // Déconnecter et reconnecter
         imagesToReobserve.forEach(img => {
             if (!img.dataset.loaded) {
                 this.observer.unobserve(img);
@@ -115,7 +112,6 @@ class ImageLoader {
             })
             .catch((err) => {
                 console.error('Failed to load/decode image:', img.dataset.src, err);
-                // Handle error fallback if needed
             })
             .finally(() => {
                 this.currentlyLoading--;
@@ -128,7 +124,7 @@ class ImageLoader {
     observe(img) {
         if (img.dataset.loaded !== 'true') {
             this.observer.observe(img);
-            this.observedImages.add(img); // AJOUTÉ : Garder trace
+            this.observedImages.add(img);
         }
     }
 
@@ -155,7 +151,6 @@ class ImageLoader {
         }
 
         if (options.root !== undefined && options.root !== this.root) {
-            // Changer le root observé par le ResizeObserver
             if (this.resizeObserver) {
                 if (this.root) {
                     this.resizeObserver.unobserve(this.root);
@@ -172,16 +167,25 @@ class ImageLoader {
         if (needsRecreate) {
             this.observer.disconnect();
             this.createObserver();
-            this.refreshObserver(); // AJOUTÉ : Re-observer toutes les images
+            this.refreshObserver();
         }
     }
 }
 
-// Instance unique exportée
+/**
+ * An instance of the ImageLoader class responsible for handling image loading operations.
+ * This variable is used to manage and streamline the process of loading images,
+ * providing utilities such as caching, error handling, and asynchronous loading.
+ */
 export const imageLoader = new ImageLoader();
 
-
-// Au démarrage de votre module
+/**
+ * Initializes the character module by setting up the character container and configuring lazy-loading options for images.
+ * Adds a scroll event listener to dynamically adjust the image lazy-loading margin based on scrolling speed.
+ * Logs an error if the character container is not found in the DOM.
+ *
+ * @return {void} Does not return a value.
+ */
 export function initializeCharacterModule() {
     const characterContainer = document.getElementById('character-list');
 
@@ -210,7 +214,14 @@ export function initializeCharacterModule() {
     }, { passive: true });
 }
 
-// Nettoyage si besoin
+/**
+ * Destroys the character module by cleaning up and releasing resources.
+ *
+ * This method deallocates any resources or memory associated with the character module,
+ * ensuring that the `imageLoader` used for character-related assets is properly destroyed.
+ *
+ * @return {void} No return value.
+ */
 export function destroyCharacterModule() {
     imageLoader.destroy();
 }

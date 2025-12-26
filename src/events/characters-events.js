@@ -156,6 +156,7 @@ export function initializeCharactersEvents() {
     });
 
     const tagListObserver = new MutationObserver(function () {
+        if (window.acmIsUpdatingDetails) return;
         refreshCharListDebounced();
     });
 

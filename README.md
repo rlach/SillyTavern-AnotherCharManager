@@ -13,7 +13,7 @@ I've decided to work on it to have something that better suits my needs, because
 * With ACM, you can sort by the number of tags characters have, for example, to find those without tags.
 * Editing tags on a character does not load their chat, so it won't change the chat recent history.
 * You can edit the description, first message, alternative greetings and Creator's notes.
-* You can rename, duplicate, delete, export and import characters.
+* You can create, rename, duplicate, delete, export and import characters.
 * Access the advanced definitions window.
 * Open a character chat.
 * Replace the avatar (check prerequisites)
