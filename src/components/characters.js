@@ -67,7 +67,7 @@ export async function fillDetails(avatar) {
         char.mes_example
     );
     const tokens = await getTokenCountAsync(text);
-    $('#ch_infos_tokens').text(`Tokens: ${tokens}`);
+    $('#ch_infos_tok').text(`Tokens: ${tokens}`);
     const permText = substituteParams(
         char.name +
         char.description +
@@ -76,7 +76,7 @@ export async function fillDetails(avatar) {
         (char.data?.extensions?.depth_prompt?.prompt ?? '')
     );
     const permTokens = await getTokenCountAsync(permText);
-    $('#ch_infos_permtokens').text(`Perm. Tokens: ${permTokens}`);
+    $('#ch_infos_permtok').text(`Perm. Tokens: ${permTokens}`);
     $('#acm_description_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.description))}`);
     $('#acm_description').val(char.description);
     $('#acm_firstMess_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.first_mes))}`);
