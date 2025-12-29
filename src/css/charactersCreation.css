@@ -1,13 +1,51 @@
-/* Character creation */
+/* ===== CHARACTER CREATION COMPONENTS ===== */
 #acm_right_panel, #acm_left_panel {
     overflow-y: auto;
     padding: 10px;
 }
 
 .avatar-and-name-block {
-    justify-content: space-between;
     display: flex;
-    flex-wrap: wrap;
+    gap: 10px;
+    padding: 5px;
+}
+
+#acm_create_avatar_wrapper {
+    position: relative;
+}
+
+#acm_create_edit_icon {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    border-radius: 50%;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease;
+}
+
+#acm_create_avatar_wrapper:hover #acm_create_edit_icon {
+    opacity: 1;
+    transform: scale(1);
+}
+
+#acm_create_edit_icon:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+#acm_create_edit_icon i {
+    font-size: 1.1rem;
+}
+
+#acm_create_name {
+    max-width: 300px;
 }
 
 #acmTagInput {
@@ -34,14 +72,15 @@
     min-height: 100%;
     padding: 10px;
     background-image: linear-gradient(348deg, var(--white30a)15%, var(--grey30a)20%, var(--black70a)80%, var(--SmartThemeQuoteColor)100%);
-    border-radius: 10px;
+    border-radius: var(--acm-border-radius-md);
     border: 1px solid var(--SmartThemeBorderColor);
-    user-select: none;
-    transition: all 0.3s ease;
-    cursor: pointer;
     border-left: 1px solid rgba(255, 255, 255, 0.3);
     border-right: 1px solid rgba(255, 255, 255, 0.3);
+    user-select: none;
+    transition: var(--acm-transition-fast);
+    cursor: pointer;
 }
+
 .column-separator:hover {
     box-shadow: 0 0 10px var(--SmartThemeQuoteColor), 0 0 20px var(--white30a);
 }
@@ -60,7 +99,7 @@
     font-size: var(--mainFontSize);
 }
 
-/* Slide transition panels */
+/* ===== SLIDE TRANSITION PANELS ===== */
 .panel-transition {
     transition: all 0.5s ease;
     overflow: hidden;

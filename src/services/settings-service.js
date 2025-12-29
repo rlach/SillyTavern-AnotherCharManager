@@ -49,3 +49,30 @@ export function resetSettings() {
     extensionSettings.acm = { ...defaultSettings };
     saveSettingsDebounced();
 }
+
+/**
+ * Migrates the dropdown presets to ensure 'members' are renamed to 'tags'
+ */
+export function migrateDropdownPresets() {
+    if (!Array.isArray(extensionSettings.acm.dropdownPresets)) {
+        return;
+    }
+
+    let hasChanges = false;
+
+    extensionSettings.acm.dropdownPresets.forEach(preset => {
+        if (Array.isArray(preset.categories)) {
+            preset.categories.forEach(category => {
+                if (Array.isArray(category.members) && !category.tags) {
+                    category.tags = category.members;
+                    delete category.members;
+                    hasChanges = true;
+                }
+            });
+        }
+    });
+
+    if (hasChanges) {
+        saveSettingsDebounced();
+    }
+}

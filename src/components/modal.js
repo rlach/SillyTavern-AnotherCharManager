@@ -8,12 +8,12 @@ import {
     setMem_menu,
     setSelectedChar,
 } from "../constants/settings.js";
-import {characterId, characters, menuType, renderExtensionTemplateAsync} from "../constants/context.js";
-import {getSetting} from "../services/settings-service.js";
-import {getIdByAvatar} from "../utils.js";
-import {setCharacterId, setMenuType} from '../../../../../../script.js';
-import {updateDropdownPresetNames} from "./charactersList.js";
-import {updateLayout} from "./characterCreation.js";
+import { characterId, characters, menuType, renderExtensionTemplateAsync } from "../constants/context.js";
+import { getSetting } from "../services/settings-service.js";
+import { getIdByAvatar } from "../utils.js";
+import { setCharacterId, setMenuType } from '/script.js';
+import { updateDropdownPresetNames } from "./charactersList.js";
+import { updateLayout } from "./characterCreation.js";
 
 /**
  * Initializes the modal component
@@ -95,7 +95,12 @@ function initializePoppers() {
     };
 }
 
-// Function to build the modal
+/**
+ * Opens a modal window and initializes its contents and settings.
+ * This method adjusts global variables, updates UI components, and applies specific display and transition effects.
+ *
+ * @return {void} This function does not return any value.
+ */
 export function openModal() {
 
     // Memorize some global variables
@@ -124,17 +129,27 @@ export function openModal() {
     document.getElementById('favOnly_checkbox').checked = getSetting('favOnly');
 }
 
-// Function to close the details panel
+/**
+ * Closes the character details section and optionally resets the character selection.
+ *
+ * @param {boolean} [reset=true] - Indicates whether to reset the character selection. Defaults to true.
+ * @return {void} Does not return a value.
+ */
 export function closeDetails( reset = true ) {
     if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
 
     $('#acm_export_format_popup').hide();
     document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected','char_select');
-    document.getElementById('char-details').style.display = 'none';
+    document.getElementById('char-details').classList.remove("open");
     document.getElementById('char-sep').style.display = 'none';
     setSelectedChar(undefined);
 }
 
+/**
+ * Closes the modal by resetting certain state variables, hiding the popup, and resetting its styles and classes.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function closeModal() {
     closeDetails();
     setCharacterId(getIdByAvatar(mem_avatar));
@@ -152,6 +167,16 @@ export function closeModal() {
     }, 125);
 }
 
+/**
+ * Toggles the visibility of dropdown menus based on the provided options. Can either close all menus, toggle a specific menu, or update popper positioning for open menus.
+ *
+ * @param {Object} [options={}] - The configuration options for toggling dropdown menus.
+ * @param {boolean} [options.closeAll=false] - If true, closes all dropdown menus regardless of current state.
+ * @param {string|null} [options.menuToToggle=null] - The key of the specific menu to toggle. Keys must match the predefined menu identifiers (e.g., "main", "sub", "preset", "export").
+ * @param {boolean} [options.updatePoppers=true] - If true, updates the positioning of popper instances associated with the menus.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function toggleDropdownMenus(options = {}) {
     const {
         closeAll = false,
@@ -199,7 +224,14 @@ export function toggleDropdownMenus(options = {}) {
     }
 }
 
-// Fonction utilitaire pour fermer les menus lors d'un clic extérieur
+/**
+ * Initializes a function to handle clicks outside of specified dropdown elements.
+ * The function ensures that interactions outside a defined list of dropdown-related elements
+ * trigger the closure of all dropdown menus.
+ *
+ * @return {Function} Returns an event handler function that can be used to detect and handle clicks
+ * outside of specified dropdown elements by closing all dropdown menus.
+ */
 export function initializeDropdownClickOutside() {
     const excludedElements = [
         'dropdown-ui-menu',

@@ -1,8 +1,8 @@
-import {initializeExtMenuEvents, initializeModalEvents, initializeUIMenuEvents} from "./modal-events.js";
-import {initializeCharactersEvents} from "./characters-events.js";
-import {initializePresetsEvents} from "./presets-events.js";
-import {initializeCharactersListEvents, initializeToolbarEvents} from "./charactersList-events.js";
-import {initializeCharacterCreationEvents} from "./characterCreation-events.js";
+import { initializeExtMenuEvents, initializeModalEvents, initializeUIMenuEvents } from "./modal-events.js";
+import { initializeCharactersEvents } from "./characters-events.js";
+import { initializePresetsEvents } from "./presets-events.js";
+import { initializeCharactersListEvents, initializeToolbarEvents } from "./charactersList-events.js";
+import { initializeCharacterCreationEvents } from "./characterCreation-events.js";
 
 
 /**

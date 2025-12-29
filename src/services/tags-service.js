@@ -1,19 +1,36 @@
 import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from '../utils.js';
-import { tagFilterstates } from "../constants/settings.js";
 import {
     tagList,
     tagMap,
     power_user,
     saveSettingsDebounced
 } from "../constants/context.js";
+import { createTagInput } from '/scripts/tags.js';
+import { acmCreateTagInput } from "../components/tags.js";
+
 
 /**
- * Initializes tag filter states
+ * Initializes multiple tag input components on specified elements with provided configurations.
+ * This method sets up tag input fields where tags can be added, managed, and removed.
+ *
+ * @return {void} Does not return a value.
  */
-export function initializeTagFilterStates() {
-    tagList.forEach(tag => {
-        tagFilterstates.set(tag.id, 1);
-    });
+export function initializeTagInput() {
+    createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
+    createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
+    // Grouping the three interdependent inputs using the 'multiple' mode
+    const multiInputs = [
+        '#acm_mandatoryInput',
+        '#acm_facultativeInput',
+        '#acm_excludedInput'
+    ];
+    const multiLists = [
+        '#acm_mandatoryTags',
+        '#acm_facultativeTags',
+        '#acm_excludedTags'
+    ];
+
+    acmCreateTagInput(multiInputs, multiLists, { tagOptions: { removable: true } }, 'multiple');
 }
 
 /**
@@ -40,16 +57,42 @@ export function renameTagKey(oldKey, newKey) {
  * @return {Array<string>} - The filtered and sorted list of tag names matching the search term, including the term itself if no exact match is found.
  */
 export function findTag(request, resolve, listSelector) {
-    const skipIds = [...($(listSelector).find('.tag').map((_, el) => $(el).attr('id')))];
-    const haystack = tagList.filter(t => !skipIds.includes(t.id)).sort(compareTagsForSort).map(t => t.name);
+    const skipIds = [...($(listSelector).find('.tag').map((_, el) => $(el).data('tagid')))];
+    const haystack = tagList
+        .filter(t => !skipIds.includes(t.id))
+        .sort(compareTagsForSort)
+        .map(t => t.name);
     const needle = request.term;
     const hasExactMatch = haystack.findIndex(x => equalsIgnoreCaseAndAccents(x, needle)) !== -1;
     const result = haystack.filter(x => includesIgnoreCaseAndAccents(x, needle));
 
-    if (request.term && !hasExactMatch) {
+    if (needle && !hasExactMatch) {
         result.unshift(request.term);
     }
+    resolve(result);
+}
 
+/**
+ * Filters suggestions by checking multiple list selectors for existing tags.
+ */
+export function acmFindTagMulti(request, resolve, listSelectors) {
+    const selectors = Array.isArray(listSelectors) ? listSelectors : [listSelectors];
+    const skipIds = [];
+
+    selectors.forEach(selector => {
+        $(selector).find('.tag').each((_, el) => {
+            const id = $(el).attr('data-tagid');
+            if (id) skipIds.push(id);
+        });
+    });
+
+    const haystack = tagList
+        .filter(t => !skipIds.includes(t.id))
+        .sort(compareTagsForSort)
+        .map(t => t.name);
+
+    const needle = request.term;
+    const result = haystack.filter(x => includesIgnoreCaseAndAccents(x, needle));
     resolve(result);
 }
 

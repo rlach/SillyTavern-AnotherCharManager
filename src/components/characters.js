@@ -3,16 +3,14 @@ import {
     depth_prompt_role_default,
     setCharacterId,
     talkativeness_default
-} from '../../../../../../script.js';
-import {createTagInput} from '../../../../../tags.js';
-import {displayTag} from './tags.js';
-import {getBase64Async, getIdByAvatar} from '../utils.js';
+} from '/script.js';
+import { displayTag } from './tags.js';
+import { getBase64Async, getIdByAvatar } from '../utils.js';
 import {
-    callPopup,
+    callGenericPopup,
     characters,
     getThumbnailUrl,
     getTokenCountAsync,
-    Popup,
     POPUP_TYPE,
     power_user,
     selectCharacterById,
@@ -20,7 +18,7 @@ import {
     tagMap,
     unshallowCharacter,
 } from "../constants/context.js";
-import {selectedChar, setMem_avatar} from "../constants/settings.js";
+import { selectedChar, setMem_avatar } from "../constants/settings.js";
 import {
     dupeChar,
     editCharDebounced,
@@ -29,33 +27,15 @@ import {
     replaceAvatar,
     saveAltGreetings
 } from "../services/characters-service.js";
-import {addAltGreetingsTrigger} from "../events/characters-events.js";
-import {closeDetails} from "./modal.js";
+import { addAltGreetingsTrigger } from "../events/characters-events.js";
+import { closeDetails } from "./modal.js";
 
-
-// Function not used at this moment, leaving it here just in case
-// async function delChar(avatar, delChats = true) {
-//
-//     const toDel = {
-//         avatar_url: avatar,
-//         delete_chats: delChats,
-//     };
-//
-//     const response = await fetch('/api/characters/delete', {
-//         method: 'POST',
-//         headers: getRequestHeaders(),
-//         body: JSON.stringify(toDel),
-//         cache: 'no-cache',
-//     });
-//
-//     if (response.ok) {
-//         // TO DO ?
-//     } else {
-//         console.log('Error!');
-//     }
-// }
-
-// Function to fill details in the character details block
+/**
+ * Fills the character details in the user interface based on the provided avatar.
+ *
+ * @param {string} avatar - The avatar identifier of the character for which details are to be filled.
+ * @return {Promise<void>} A promise that resolves when all character details have been successfully populated and updates are complete.
+ */
 export async function fillDetails(avatar) {
     if (typeof characters[getIdByAvatar(avatar)].data.alternate_greetings === 'undefined') {
         await unshallowCharacter(getIdByAvatar(avatar));
@@ -87,7 +67,7 @@ export async function fillDetails(avatar) {
         char.mes_example
     );
     const tokens = await getTokenCountAsync(text);
-    $('#ch_infos_tokens').text(`Tokens: ${tokens}`);
+    $('#ch_infos_tok').text(`Tokens: ${tokens}`);
     const permText = substituteParams(
         char.name +
         char.description +
@@ -96,26 +76,32 @@ export async function fillDetails(avatar) {
         (char.data?.extensions?.depth_prompt?.prompt ?? '')
     );
     const permTokens = await getTokenCountAsync(permText);
-    $('#ch_infos_permtokens').text(`Perm. Tokens: ${permTokens}`);
+    $('#ch_infos_permtok').text(`Perm. Tokens: ${permTokens}`);
     $('#acm_description_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.description))}`);
     $('#acm_description').val(char.description);
     $('#acm_firstMess_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.first_mes))}`);
     $('#acm_firstMess').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#acm_creatornotes').val(char.data?.creator_notes || char.creatorcomment);
-    $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag)).join('')}`);
-    createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
+    $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag, 'details')).join('')}`);
     displayAltGreetings(char.data.alternate_greetings).then(html => {
         $('#altGreetings_content').html(html);
     });
     $('#acm_favorite_button').toggleClass('fav_on', char.fav || char.data.extensions.fav).toggleClass('fav_off', !(char.fav || char.data.extensions.fav));
-
     addAltGreetingsTrigger()
 }
 
+/**
+ * Populates various advanced character definition fields in the user interface with data associated
+ * with the given avatar. The method performs asynchronous operations to fetch token counts for certain
+ * data fields and updates the UI accordingly.
+ *
+ * @param {Object} avatar - The avatar object used to retrieve character information for populating the fields.
+ * @return {Promise<void>} A promise that resolves once all advanced definition fields are populated with
+ *                         character data and token counts.
+ */
 export async function fillAdvancedDefinitions(avatar) {
     const char = characters[getIdByAvatar(avatar)];
-
     $('#acm_character_popup-button-h3').text(char.name);
     $('#acm_creator_notes_textarea').val(char.data?.creator_notes || char.creatorcomment);
     $('#acm_character_version_textarea').val(char.data?.character_version || '');
@@ -136,13 +122,21 @@ export async function fillAdvancedDefinitions(avatar) {
     $('#acm_talkativeness_slider').val(char.talkativeness || talkativeness_default);
     $('#acm_mes_examples').val(char.mes_example);
     $('#acm_messages_examples').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.mes_example))}`);
-
 }
 
+/**
+ * Toggles the favorite status of the currently selected character.
+ * This function updates the favorite status of the character in the data model
+ * and reflects the change in the user interface by toggling the favorite button's class.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function toggleFavoriteStatus() {
+    // Retrieve the ID of the currently selected character
     const id = getIdByAvatar(selectedChar);
+    // Determine the current favorite status of the character
     const isFavorite = characters[id].fav || characters[id].data.extensions.fav;
-
+    // Prepare the updated data object with the toggled favorite status
     const update = {
         avatar: selectedChar,
         fav: !isFavorite,
@@ -152,10 +146,11 @@ export function toggleFavoriteStatus() {
             }
         }
     };
-
+    // Apply the update using a debounced function to avoid excessive updates
     editCharDebounced(update);
-
+    // Get the favorite button element from the DOM
     const favoriteButton = $('#acm_favorite_button')[0];
+    // Update the button's class to reflect the new favorite status
     if (isFavorite) {
         favoriteButton.classList.replace('fav_on', 'fav_off');
     } else {
@@ -163,44 +158,94 @@ export function toggleFavoriteStatus() {
     }
 }
 
+/**
+ * Exports the currently selected character in the specified format.
+ * This function utilizes the `exportChar` service to handle the export process.
+ *
+ * @param {string} format - The format in which the character should be exported (e.g., JSON, XML).
+ * @return {void} This function does not return a value.
+ */
 export function exportCharacter(format) {
     exportChar(format, selectedChar);
 }
 
+/**
+ * Duplicates the currently selected character.
+ * This function checks if a character is selected, prompts the user for confirmation,
+ * and duplicates the character if the user confirms the action.
+ *
+ * @async
+ * @return {Promise<void>} A promise that resolves once the character duplication process is complete.
+ */
 export async function duplicateCharacter() {
     if (!selectedChar) {
+        // Display a warning if no character is selected
         toastr.warning('You must first select a character to duplicate!');
         return;
     }
-
+    // Show a confirmation dialog to the user
     const confirmed = await showDuplicateConfirmation();
     if (!confirmed) {
+        // Log a message if the user cancels the duplication
         console.log('User cancelled duplication');
         return;
     }
-
+    // Duplicate the selected character
     await dupeChar(selectedChar);
 }
 
+/**
+ * Displays a confirmation popup to the user asking if they want to duplicate a character.
+ * The popup includes a message explaining the duplication action and an alternative option
+ * to start a new chat with the same character.
+ *
+ * @async
+ * @return {Promise<Popup>} A promise that resolves to the confirmation popup instance.
+ */
 export async function showDuplicateConfirmation() {
     const confirmMessage = `
         <h3>Are you sure you want to duplicate this character?</h3>
         <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
-
-    return await callPopup(confirmMessage, POPUP_TYPE.CONFIRM);
+    return await callGenericPopup(confirmMessage, POPUP_TYPE.CONFIRM);
 }
 
+/**
+ * Displays a rename dialog for the specified character.
+ * This function creates a popup dialog that allows the user to input a new name
+ * for the character identified by the provided avatar.
+ *
+ * @async
+ * @param {string} characterAvatar - The avatar identifier of the character to be renamed.
+ * @return {Promise<Popup>} A promise that resolves to the popup instance for the rename dialog.
+ */
 export async function showRenameDialog(characterAvatar) {
     const charID = getIdByAvatar(characterAvatar);
-    return await callPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
+    return await callGenericPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
 }
 
+/**
+ * Renames the currently selected character.
+ * This function retrieves the character ID based on the selected avatar,
+ * displays a rename dialog to the user, and updates the character's name
+ * with the new name provided by the user.
+ *
+ * @async
+ * @return {Promise<void>} A promise that resolves once the character's name has been successfully updated.
+ */
 export async function renameCharacter() {
     const charID = getIdByAvatar(selectedChar);
     const newName = await showRenameDialog(selectedChar);
     await renameChar(selectedChar, charID, newName);
 }
 
+/**
+ * Opens the character chat interface for the currently selected character.
+ * This function resets the character ID and avatar memory, selects the character
+ * by its ID, and closes the details view. It also transitions the shadow popup
+ * to fade out and hides the popup after a short delay.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function openCharacterChat() {
     setCharacterId(undefined);
     setMem_avatar(undefined);
@@ -218,9 +263,15 @@ export function openCharacterChat() {
     }, 125);
 }
 
+/**
+ * Toggles the visibility of the advanced definitions popup.
+ * This function checks the current display state of the popup and either shows or hides it.
+ * When showing the popup, it applies a fade-in transition effect; when hiding, it removes the 'open' class.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function toggleAdvancedDefinitionsPopup() {
     const $popup = $('#acm_character_popup');
-
     if ($popup.css('display') === 'none') {
         $popup.css({ 'display': 'flex', 'opacity': 0.0 })
             .addClass('open')
@@ -234,6 +285,13 @@ export function toggleAdvancedDefinitionsPopup() {
     }
 }
 
+/**
+ * Closes the character popup in the user interface.
+ * This function applies a fade-out transition effect to the popup and hides it
+ * after the transition is complete.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function closeCharacterPopup() {
     $('#character_popup').transition({
         opacity: 0,
@@ -245,43 +303,53 @@ export function closeCharacterPopup() {
     }, 125);
 }
 
-// Function to replace the avatar with a new one
+
+/**
+ * Updates the avatar of the currently selected character.
+ * This function allows the user to upload a new avatar image, optionally crop it,
+ * and then update the avatar in the application. The updated avatar is displayed
+ * in the user interface and saved in the data model.
+ *
+ * @async
+ * @param {HTMLInputElement} input - The file input element containing the uploaded image file.
+ * @return {Promise<void>} A promise that resolves when the avatar update process is complete.
+ */
 export async function update_avatar(input){
     if (input.files && input.files[0]) {
-
         let crop_data = undefined;
         const file = input.files[0];
         const fileData = await getBase64Async(file);
 
         if (!power_user.never_resize_avatars) {
-            const dlg = new Popup('Set the crop position of the avatar image', POPUP_TYPE.CROP, '', { cropImage: fileData });
+            // Display a cropping dialog to the user
+            const dlg = callGenericPopup('Set the crop position of the avatar image', POPUP_TYPE.CROP, '', { cropImage: fileData });
             const croppedImage = await dlg.show();
 
             if (!croppedImage) {
-                return;
+                return; // Exit if the user cancels the cropping dialog
             }
             crop_data = dlg.cropData;
 
             try {
+                // Replace the avatar with the cropped image
                 await replaceAvatar(file, getIdByAvatar(selectedChar), crop_data);
-                // Firefox tricks
+                // Update the avatar image in the UI with a cache-busting timestamp
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                //$(`#${selectedChar}`).attr('src', newImageUrl);
                 $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
             } catch {
-                toast.error("Something went wrong.");
+                toast.error("Something went wrong."); // Display an error message if the update fails
             }
         } else {
             try {
+                // Replace the avatar without cropping
                 await replaceAvatar(file, getIdByAvatar(selectedChar));
-                // Firefox tricks
+                // Update the avatar image in the UI with a cache-busting timestamp
                 const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                //$(`#${selectedChar}`).attr('src', newImageUrl);
                 $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
             } catch {
-                toast.error("Something went wrong.");
+                toast.error("Something went wrong."); // Display an error message if the update fails
             }
         }
     }
@@ -295,10 +363,8 @@ export async function update_avatar(input){
  */
 export function addAltGreeting(){
     const drawerContainer = document.getElementById('altGreetings_content');
-
     // Determine the new greeting index
     const greetingIndex = drawerContainer.getElementsByClassName('inline-drawer').length + 1;
-
     // Create the new inline-drawer block
     const altGreetingDiv = document.createElement('div');
     altGreetingDiv.className = 'inline-drawer';
@@ -319,16 +385,13 @@ export function addAltGreeting(){
                     <textarea class="altGreeting_zone autoSetHeight"></textarea>
                 </div>
             </div>`;
-
     // Add the new inline-drawer block
     $('#chicken').empty();
     drawerContainer.appendChild(altGreetingDiv);
-
     // Add the event on the textarea
     altGreetingDiv.querySelector(`.altGreeting_zone`).addEventListener('input', (event) => {
         saveAltGreetings(event);
     });
-
     // Save it
     saveAltGreetings();
 }
@@ -344,10 +407,8 @@ export function addAltGreeting(){
 export function delAltGreeting(index, inlineDrawer){
     // Delete the AltGreeting block
     inlineDrawer.remove();
-
     // Update the others AltGreeting blocks
     const $altGreetingsToggle = $('.altgreetings-drawer-toggle');
-
     if ($('div[id^="altGreetDrawer"]').length === 0) {
         $('#altGreetings_content').html('<span id="chicken">Nothing here but chickens!!</span>');
     }
@@ -360,7 +421,6 @@ export function delAltGreeting(index, inlineDrawer){
             }
         });
     }
-
     // Save it
     saveAltGreetings();
 }
@@ -373,7 +433,6 @@ export function delAltGreeting(index, inlineDrawer){
  */
 async function displayAltGreetings(item) {
     let altGreetingsHTML = '';
-
     if (!item || item.length === 0) {
         return '<span id="chicken">Nothing here but chickens!!</span>';
     } else {

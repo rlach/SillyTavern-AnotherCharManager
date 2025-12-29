@@ -1,59 +1,105 @@
+// import { Fuse } from '/lib.js';
 import { getSetting } from "./settings-service.js";
 import { characters, tagList, tagMap } from "../constants/context.js";
-import { searchValue, tagFilterstates } from "../constants/settings.js";
-
+import { searchValue } from "../constants/settings.js";
+const { Fuse } = SillyTavern.libs;
+/**
+ * Filters and searches through a list of characters based on user-defined criteria such as tags, favorites,
+ * and a search query. The method utilizes settings, tag filters, and fuzzy search to return a filtered list
+ * of characters that satisfy the specified conditions.
+ *
+ * The filtering process includes:
+ * - Excluding characters with specified excluded tags
+ * - Including only characters with all mandatory tags
+ * - Optionally including characters with at least one facultative tag
+ * - Searching by fields like name, creator, creator notes, or tags using a fuzzy search algorithm
+ *
+ * @return {Array} The filtered and potentially searched list of character objects that meet the filter criteria.
+ */
 export function searchAndFilter(){
     let filteredChars = [];
     const charactersCopy = getSetting('favOnly')
         ? [...characters].filter(character => character.fav === true || character.data.extensions.fav === true)
         : [...characters];
 
-    // Get tags states
-    const tagStates = [...tagFilterstates.entries()];
+    const excludedTags = $('#acm_excludedTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
+    const mandatoryTags = $('#acm_mandatoryTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
+    const facultativeTags = $('#acm_facultativeTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
 
-    // Split included and excluded tags
-    const includedTagIds = tagList
-        .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 2))
-        .map(tag => tag.id);
-
-    const excludedTagIds = tagList
-        .filter(tag => tagStates.find(([id, state]) => id === tag.id && state === 3))
-        .map(tag => tag.id);
-
-    // Filtering based on tags states
+    // Filtering based on tags
     let tagfilteredChars = charactersCopy.filter(item => {
         const characterTags = tagMap[item.avatar] || [];
 
-        // Check if there are included tags
-        const hasIncludedTag = includedTagIds.length === 0 || characterTags.some(tagId => includedTagIds.includes(tagId));
+        // First: Exclude characters with any excluded tags
+        if (excludedTags.length > 0) {
+            const hasExcludedTag = characterTags.some(tagId => excludedTags.includes(tagId));
+            if (hasExcludedTag) return false;
+        }
 
-        // Check if there are excluded tags
-        const hasExcludedTag = characterTags.some(tagId => excludedTagIds.includes(tagId));
+        // Second: Filter out characters that don't have ALL mandatory tags
+        if (mandatoryTags.length > 0) {
+            const hasAllMandatoryTags = mandatoryTags.every(tagId => characterTags.includes(tagId));
+            if (!hasAllMandatoryTags) return false;
+        }
 
-        // Return true if:
-        // 1. There are no excluded tags
-        // 2. There are at least one included tags
-        return hasIncludedTag && !hasExcludedTag;
+        // Third: Filter out characters that don't have at least ONE facultative tag
+        if (facultativeTags.length > 0) {
+            const hasAtLeastOneFacultativeTag = facultativeTags.some(tagId => characterTags.includes(tagId));
+            if (!hasAtLeastOneFacultativeTag) return false;
+        }
+
+        return true;
     });
 
     if (searchValue !== '') {
-        const searchValueLower = searchValue.trim().toLowerCase();
+        const searchValueTrimmed = searchValue.trim();
+        const searchField = $('#search_filter_dropdown').val();
 
-        // Find matching tag IDs based on searchValue
-        const matchingTagIds = tagList
-            .filter(tag => tag.name.toLowerCase().includes(searchValueLower))
-            .map(tag => tag.id);
+        let fuseOptions;
 
-        // Filter characters by description, name, creator comment, or tag
-        filteredChars = tagfilteredChars.filter(item => {
-            const matchesText = item.description?.toLowerCase().includes(searchValueLower) ||
-                item.name?.toLowerCase().includes(searchValueLower) ||
-                item.creatorcomment?.toLowerCase().includes(searchValueLower);
+        switch (searchField) {
+            case 'name':
+                fuseOptions = {
+                    keys: ['data.name'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                break;
+            case 'creator':
+                fuseOptions = {
+                    keys: ['data.creator'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                break;
+            case 'creator_notes':
+                fuseOptions = {
+                    keys: ['data.creator_notes'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                break;
+            case 'tags':
+                // For tags, we'll search tag names first, then filter characters
+                const tagFuseOptions = {
+                    keys: ['name'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                const tagFuse = new Fuse(tagList, tagFuseOptions);
+                const matchingTags = tagFuse.search(searchValueTrimmed);
+                const matchingTagIds = matchingTags.map(result => result.item.id);
 
-            const matchesTag = (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
+                filteredChars = tagfilteredChars.filter(item => {
+                    return (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
+                });
+                return filteredChars;
+        }
 
-            return matchesText || matchesTag;
-        });
+        const fuse = new Fuse(tagfilteredChars, fuseOptions);
+        const results = fuse.search(searchValueTrimmed);
+        filteredChars = results.map(result => result.item);
+
         return filteredChars;
     }
     else {
@@ -61,7 +107,14 @@ export function searchAndFilter(){
     }
 }
 
-// Function to sort the character array based on specified property and order
+/**
+ * Sorts an array of character objects based on a specified property and order.
+ *
+ * @param {Array<Object>} chars - The array of character objects to be sorted.
+ * @param {string} sort_data - The property of the character objects to sort by (e.g., 'name', 'tags', 'date_last_chat', 'date_added', 'data_size').
+ * @param {string} sort_order - The order of sorting, either 'asc' for ascending or 'desc' for descending.
+ * @return {Array<Object>} The sorted array of character objects.
+ */
 export function sortCharAR(chars, sort_data, sort_order) {
     return chars.sort((a, b) => {
         let comparison = 0;
@@ -78,6 +131,9 @@ export function sortCharAR(chars, sort_data, sort_order) {
                 break;
             case 'date_added':
                 comparison = b[sort_data] - a[sort_data];
+                break;
+            case 'data_size':
+                comparison = a[sort_data] - b[sort_data];
                 break;
         }
         return sort_order === 'desc' ? comparison * -1 : comparison;

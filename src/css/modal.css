@@ -27,12 +27,12 @@
     border: 1px solid var(--SmartThemeBorderColor);
     padding: 4px;
     background-color: var(--SmartThemeBlurTintColor);
-    border-radius: 10px;
+    border-radius: var(--acm-border-radius-md);
     max-height: 90svh;
     display: flex;
     flex-direction: column;
     overflow-y: hidden;
-    transition: all 0.3s ease;
+    transition: var(--acm-transition-fast);
 }
 
 #acm_popup_preview {
@@ -45,13 +45,13 @@
     top: 50%;
     transform: translateY(-50%);
     border: 2px solid var(--SmartThemeBorderColor);
-    border-radius: 12px;
+    border-radius: var(--acm-border-radius-lg);
     background-color: rgba(var(--SmartThemeBorderColor));
     box-shadow: 0 0 8px 6px rgba(80, 255, 240, 0.3);
     pointer-events: none;
     z-index: 9999;
     display: none;
-    transition: all 0.3s ease;
+    transition: var(--acm-transition-fast);
 }
 
 #acm_popup_holder {
@@ -89,7 +89,7 @@
     box-shadow: 0 0 20px var(--black70a);
     padding: 10px;
     border: 1px solid var(--SmartThemeBorderColor);
-    border-radius: 0 0 10px 10px;
+    border-radius: 0 0 var(--acm-border-radius-md) var(--acm-border-radius-md);
     overflow-y: auto;
 }
 
@@ -98,9 +98,7 @@
 }
 
 #acm_character_popup h3 {
-    margin-top: 0;
-    margin-bottom: 0;
-    margin-left: 0;
+    margin: 0 0 0 0;
     display: inline;
 }
 

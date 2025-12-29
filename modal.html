@@ -5,7 +5,7 @@
                 <div class="list-character-wrapper flexFlowColumn">
                     <div class="sortAndFilter">
                         <form class="form_sort_filter" action="javascript:voidnull;">
-                            <!--                            <div id="acm_character_create_button" class="menu_button fa-solid fa-plus faSmallFontSquareFix" title="Create Character"></div>-->
+                            <div id="acm_character_create_button" class="menu_button fa-solid fa-plus faSmallFontSquareFix" title="Create Character"></div>
                             <div id="acm_character_import_button" class="menu_button fa-solid fa-file-import faSmallFontSquareFix" title="Import Character from File"></div>
                             <div id="acm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL"></div>
                             <div id="acm_tags_view" class="menu_button tags_view fa-solid fa-gear faSmallFontSquareFix" title="Manage tags"></div>
@@ -19,24 +19,57 @@
                                 <option data-field="date_last_chat" data-order="asc">Recent</option>
                                 <option data-field="date_added" data-order="asc">Newest</option>
                                 <option data-field="date_added" data-order="desc">Oldest</option>
+                                <option data-field="data_size" data-order="asc">Least Tokens</option>
+                                <option data-field="data_size" data-order="desc">Most Tokens</option>
                             </select>
                             <label for="char_search_bar" title="Search for specific tags or characters.">
-                                <input id="char_search_bar" class="text_pole width100p" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
+                                <div class="search-with-dropdown">
+                                    <select id="search_filter_dropdown" class="search-dropdown-select">
+                                        <option value="name">Name</option>
+                                        <option value="creator">Creator</option>
+                                        <option value="creator_notes">Creator's Notes</option>
+                                        <option value="tags">Tags</option>
+                                    </select>
+                                    <input id="char_search_bar" class="text_pole width100p search-with-dropdown-input" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
+                                </div>
                             </label>
                             <label class="acm_checkbox">
-                                <span>Only Favs</span>
+                                <span>Favs</span>
                                 <input id="favOnly_checkbox" type="checkbox">
                             </label>
                         </form>
                         <span id="charNumber"></span>
                     </div>
-                    <div id="tags-list"></div>
+                    <div id="acm_tagQuery" class="acm_tagQuery_container">
+                        <div class="acm_tagQuery_row">
+                            <span class="acm_tagQuery_label">Mandatory tags:</span>
+                            <label for="acm_mandatoryInput" title="Mandatory Tags">
+                                <input id="acm_mandatoryInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                            </label>
+                            <div id="acm_mandatoryTags" class="tags"></div>
+                        </div>
+                        <div class="acm_tagQuery_row">
+                            <span class="acm_tagQuery_label">At least one tag:</span>
+                            <label for="acm_facultativeInput" title="Facultative Tags">
+                                <input id="acm_facultativeInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                            </label>
+                            <div id="acm_facultativeTags" class="tags"></div>
+                        </div>
+                        <div class="acm_tagQuery_row">
+                            <span class="acm_tagQuery_label">Excluded tags:</span>
+                            <label for="acm_excludedInput" title="Excluded Tags">
+                                <input id="acm_excludedInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                            </label>
+                            <div id="acm_excludedTags" class="tags"></div>
+                        </div>
+                    </div>
+                    <hr>
                     <div id="character-list"> </div>
                     <hr id="char-sep" style="display:none">
-                    <div id="char-details" style="display:none">
+                    <div id="char-details">
                         <div id="char-details-block">
                             <div class="char-details-summary">
-                                <div class="avatar" id="avatar_title">
+                                <div class="acm_avatar" id="avatar_title">
                                     <img id="avatar_img" class="char-details-img" src="" alt="Character Avatar" draggable="false">
                                     <label for="edit_avatar_button" title="Click to select a new avatar for this character" data-i18n="[title]Click to select a new avatar for this character">
                                         <span id="edit_icon">
@@ -53,13 +86,13 @@
                                         <div class="ch_infos_column">
                                             <span id="ch_infos_version" class="ch_infos_item"></span>
                                             <span id="ch_infos_date" class="ch_infos_item"></span>
-                                            <span id="ch_infos_tokens" class="ch_infos_item"></span>
+                                            <span id="ch_infos_tok" class="ch_infos_item"></span>
                                             <span id="ch_infos_lastchat" class="ch_infos_item"></span>
                                         </div>
                                         <div class="ch_infos_column">
                                             <span id="ch_infos_link"  class="ch_infos_item"></span>
                                             <span id="ch_infos_adddate" class="ch_infos_item"></span>
-                                            <span id="ch_infos_permtokens" class="ch_infos_item"></span>
+                                            <span id="ch_infos_permtok" class="ch_infos_item"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -173,7 +206,7 @@
             </div>
         </div>
     </div>
-    <div id="acm_popup_preview"></div>
+    <div id="acm_popup_preview" style="display:none"></div>
 </div>
 <div id="acm_export_format_popup" class="list-group" style="position: absolute; inset: 0 0 auto auto; margin: 0; transform: translate(-1920px);" data-popper-reference-hidden="" data-popper-escaped="" data-popper-placement="left">
     <div class="acm_export_format list-group-item" data-format="png">PNG</div>
@@ -381,13 +414,16 @@
         <form id="acm_form_create" action="javascript:voidnull;" method="post" enctype="multipart/form-data" style="display:flex;flex:1;">
             <div id="acm_left_panel" class="panel-transition">
                 <div class="avatar-and-name-block">
-                    <div class="flex-container flexFlowColumn expander flexNoGap">
-                        <div class="avatar_div buttons_block alignitemsflexstart justifySpaceBetween flexnowrap" style="display: flex;">
-                            <label class="add_avatar avatar" for="acm_add_avatar_button" title="Click to select a new avatar for this character">
-                                <img id="acm_create_avatar" src="img/ai4.png" alt="avatar">
-                                <input hidden="" type="file" id="acm_add_avatar_button" name="avatar" accept="image/*">
-                            </label>
-                        </div>
+                    <div class="acm_avatar" id="acm_create_avatar_wrapper">
+                        <img id="acm_create_avatar" class="char-details-img" src="img/ai4.png" alt="Character Avatar" draggable="false">
+                        <label for="acm_add_avatar_button" title="Click to select a new avatar for this character">
+                            <span id="acm_create_edit_icon">
+                                <i class="fas fa-edit"></i>
+                                <input id="acm_add_avatar_button" hidden="" type="file" name="avatar" accept="image/*">
+                            </span>
+                        </label>
+                    </div>
+                    <div class="char-details-summary-desc">
                         <label for="acm_create_name" title="Name this character">
                             <input id="acm_create_name" name="ch_name" class="text_pole" placeholder="Name this character" value="" autocomplete="off">
                         </label>

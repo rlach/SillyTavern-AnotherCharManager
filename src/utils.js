@@ -97,12 +97,23 @@ function compareIgnoreCaseAndAccents(a, b, comparisonFunction) {
     return comparisonFunction(normalizedA, normalizedB);
 }
 
-// Function to get the ID of a character using its avatar
+/**
+ * Retrieves the ID of a character based on their avatar.
+ *
+ * @param {string} avatar - The avatar image or identifier of the character.
+ * @return {string|undefined} The ID of the character as a string if found, otherwise undefined.
+ */
 export function getIdByAvatar(avatar){
     const index = characters.findIndex(character => character.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
 }
 
+/**
+ * Updates the token count displayed for a specific input field.
+ *
+ * @param {string} fieldId - The ID of the input field for which the token count will be updated.
+ * @return {Promise<void>} A promise that resolves once the token count has been updated and displayed.
+ */
 export async function updateTokenCount(fieldId) {
     const inputElement = $(fieldId);
     const tokenCountElement = $(`${fieldId}_tokens`);

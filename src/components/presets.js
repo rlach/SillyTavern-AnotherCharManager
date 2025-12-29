@@ -1,6 +1,6 @@
 import { getSetting } from "../services/settings-service.js";
-import { callPopup, POPUP_TYPE } from "../constants/context.js";
-import { createTagInputCat, displayTag } from "./tags.js";
+import { callGenericPopup, POPUP_TYPE } from "../constants/context.js";
+import { acmCreateTagInput, displayTag } from "./tags.js";
 import { updateDropdownPresetNames } from "./charactersList.js";
 import {
     addPresetCategory,
@@ -51,7 +51,7 @@ export async function manageCustomCategories(){
      </div>
 
     `);
-    await callPopup(html, POPUP_TYPE.TEXT, null, {okButton: "Close", allowVerticalScrolling: true });
+    await callGenericPopup(html, POPUP_TYPE.TEXT, '', {okButton: "Close", allowVerticalScrolling: true });
 }
 
 /**
@@ -78,7 +78,7 @@ export function printCategoriesList(presetID, init = false){
             const catHTML = `
                         <div data-catid="${index}">
                             <div class="acm_catList">
-                                <div class="drag-handle ui-sortable-handle" data-i18n="[title]Drag to reorder categoies">☰</div>
+                                <div class="drag-handle ui-sortable-handle" data-i18n="[title]Drag to reorder categories">☰</div>
                                 <h4>- ${cat.name} -</h4>
                                 <div style="display:flex;">
                                     <div class="menu_button fa-solid fa-edit cat_rename" title="Rename category"></div>
@@ -89,16 +89,18 @@ export function printCategoriesList(presetID, init = false){
                         </div>`;
             const catElement = $(catHTML);
             const catTagList = catElement.find(`#acm_catTagList_${index}`);
-            cat.tags.forEach(tag => {
-                catTagList.append(displayTag(tag, true));
-            });
+            if (cat.tags) {
+                cat.tags.forEach(tag => {
+                    catTagList.append(displayTag(tag, 'category'));
+                });
+            }
             catTagList.append(`<label for="input_cat_tag_${index}" title="Search or create a tag.">
                                     <input id="input_cat_tag_${index}" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
                                 </label>`);
             catTagList.append(`<i class="fa-solid fa-plus tag addCatTag"></i>`);
             catContainer.append(catElement);
             $('#acm_custom_categories').append(catContainer);
-            createTagInputCat(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } });
+            acmCreateTagInput(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } }, 'category');
         });
         makeCategoryDraggable("#catContainer");
     }
@@ -186,6 +188,14 @@ export function renameCategory(preset, category, newName) {
     printCategoriesList(preset);
 }
 
+/**
+ * Toggles the state of a tag button between "add" and "cancel" styles
+ * and shows or hides the associated category tag input field.
+ *
+ * @param {object} button The button element to be toggled.
+ * @param {string} selectedCat The identifier for the selected category.
+ * @return {string} The identifier of the toggled category.
+ */
 export function toggleTagButton(button, selectedCat) {
     if (button.hasClass('addCatTag')) {
         button
@@ -204,6 +214,12 @@ export function toggleTagButton(button, selectedCat) {
     }
 }
 
+/**
+ * Updates the content of the preset name element with the name of the specified preset.
+ *
+ * @param {string} newPreset - The identifier for the new preset whose name is to be displayed.
+ * @return {void} This function does not return a value.
+ */
 export function displayPresetName(newPreset) {
     $('#preset_name').html(getPreset(newPreset).name);
 }

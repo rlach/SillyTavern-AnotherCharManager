@@ -1,116 +1,74 @@
-import {tags} from "../../../../../tags.js";
-import {tagFilterstates} from "../constants/settings.js";
-import {tagList} from "../constants/context.js";
-import {refreshCharListDebounced} from "./charactersList.js";
-import {findTag} from "../services/tags-service.js";
-import {equalsIgnoreCaseAndAccents} from "../utils.js";
-import {addTagToCategory} from "../services/presets-service.js";
+import { tagList } from "../constants/context.js";
+import { refreshCharListDebounced } from "./charactersList.js";
+import { acmFindTagMulti, findTag } from "../services/tags-service.js";
+import { equalsIgnoreCaseAndAccents } from "../utils.js";
+import { addTagToCategory } from "../services/presets-service.js";
 
 /**
- * Renders a tag as an HTML string based on the provided tag ID and an optional category flag.
+ * Renders a tag as an HTML string based on the provided tag ID and an optional display mode.
  *
  * @param {string} tagId - The identifier of the tag to be displayed.
- * @param {boolean} [isFromCat=false] - Indicates whether the tag is from a category.
- * @return {string} The HTML string representation of the tag. Returns an empty string if the tag ID is not found in the tag list.
+ * @param {string} [mode='classic'] - The display mode: 'category', 'details', or 'classic'.
+ * @return {string} The HTML string representation of the tag. Returns an empty string if the tag ID is not found.
  */
-export function displayTag( tagId, isFromCat = false ){
-    const tagClass = isFromCat ? "fa-solid fa-circle-xmark tag_cat_remove" : "fa-solid fa-circle-xmark tag_remove";
-    if (tagList.find(tagList => tagList.id === tagId)) {
-        const name = tagList.find(tagList => tagList.id === tagId).name;
-        const color = tagList.find(tagList => tagList.id === tagId).color;
-        const color2 = tagList.find(tagList => tagList.id === tagId).color2;
+export function displayTag(tagId, mode = 'classic') {
+    let tagClass = "fa-solid fa-circle-xmark ";
+    let identityAttr = `data-tagid="${tagId}"`;
 
-        if (isFromCat) {
-            return `<span class="tag" style="background-color: ${color}; color: ${color2};" data-tagid="${tagId}">
-                        <span class="tag_name">${name}</span>
-                        <i class="${tagClass}"></i>
-                    </span>`;
-        }
-        else {
-            return `<span id="${tagId}" class="tag" style="background-color: ${color}; color: ${color2};">
-                        <span class="tag_name">${name}</span>
-                        <i class="${tagClass}"></i>
-                    </span>`;
-        }
+    switch (mode) {
+        case 'category':
+            tagClass += "tag_cat_remove";
+            break;
+        case 'details':
+            tagClass += "tag_remove";
+            identityAttr = `id="${tagId}"`;
+            break;
+        default:
+            tagClass += "tag_acm_remove";
+            break;
+    }
+
+    const tag = tagList.find(t => t.id === tagId);
+    if (tag) {
+        return `<span class="tag" style="background-color: ${tag.color}; color: ${tag.color2};" ${identityAttr}>
+                    <span class="tag_name">${tag.name}</span>
+                    <i class="${tagClass}"></i>
+                </span>`;
     }
     else { return ''; }
 }
 
 /**
- * Generates and displays an HTML block of sorted tags with specific styles and attributes
- * and initializes filter states for these tags.
+ * Handles the initialization of a tag input field with autocomplete functionality.
  *
- * @return {void} This function does not return a value.
+ * @param {string|string[]} inputSelector - Selector(s) for the input element.
+ * @param {string|string[]} listSelector - Selector(s) for the container where tags are displayed.
+ * @param {Object} [tagListOptions={}] - Optional configuration options.
+ * @param {string} [mode='classic'] - The behavior mode: 'classic', 'category', or 'multiple'.
  */
-export function generateTagFilter() {
-    let tagBlock='';
+export function acmCreateTagInput(inputSelector, listSelector, tagListOptions = {}, mode = 'classic') {
+    const inputs = Array.isArray(inputSelector) ? inputSelector : [inputSelector];
+    const lists = Array.isArray(listSelector) ? listSelector : [listSelector];
 
-    tagList.sort((a, b) => a.name.localeCompare(b.name));
-
-    tagList.forEach(tag => {
-        tagBlock += `<span id="${tag.id}" class="acm_tag" tabIndex="0" style="display: inline; background-color: ${tag.color}; color: ${tag.color2};">
-                                <span class="acm_tag_name">${tag.name}</span>
-                     </span>`;
+    inputs.forEach((selector, index) => {
+        $(selector)
+            // @ts-ignore
+            .autocomplete({
+                source: (i, o) => {
+                    if (mode === 'multiple') {
+                        return acmFindTagMulti(i, o, lists);
+                    }
+                    return findTag(i, o, lists[0]);
+                },
+                select: (e, u) => {
+                    // For 'multiple' mode, we pass the specific list that matches this input's index
+                    const targetList = mode === 'multiple' ? lists[index] : lists[0];
+                    return acmSelectTag(e, u, targetList, { tagListOptions, mode, allLists: lists });
+                },
+                minLength: 0,
+            })
+            .on('focus', onTagInputFocus);
     });
-
-    $('#tags-list').html(tagBlock);
-}
-
-/**
- * Handles the click event for a tag filter and updates its state accordingly.
- *
- * The method toggles the tag's state among three possible states:
- * 1 - Default state with no special indication.
- * 2 - Active state indicated by a checkmark and green border.
- * 3 - Disabled state indicated by a cross and red border.
- * Updates the visual representation of the tag and modifies its state in the tagFilterstates map.
- * Also triggers a refresh of the character list based on the updated state.
- *
- * @param {HTMLElement} tag The tag element being clicked. It must contain a child element with
- *                          the class 'acm_tag_name' and must have an id used to track its state.
- *
- * @return {void} This function does not return a value.
- */
-export function tagFilterClick(tag) {
-    const currentState = tagFilterstates.get(tag.id);
-    let newState;
-
-    if (currentState === 1) {
-        newState = 2;
-        tag.querySelector('.acm_tag_name').textContent = '✔️ ' + tag.querySelector('.acm_tag_name').textContent;
-        tag.style.borderColor = 'green';
-    } else if (currentState === 2) {
-        newState = 3;
-        tag.querySelector('.acm_tag_name').textContent = tag.querySelector('.acm_tag_name').textContent.replace('✔️ ', '');
-        tag.querySelector('.acm_tag_name').textContent = '❌ ' + tag.querySelector('.acm_tag_name').textContent;
-        tag.style.borderColor = 'red';
-    } else {
-        newState = 1;
-        tag.querySelector('.acm_tag_name').textContent = tag.querySelector('.acm_tag_name').textContent.replace(/✔️ |❌ /, '');
-        tag.style.borderColor = '';
-    }
-
-    tagFilterstates.set(tag.id, newState);
-    refreshCharListDebounced();
-}
-
-/**
- * Creates a tag input field with autocomplete functionality for categories.
- *
- * @param {string} inputSelector - The selector for the input field where tags can be entered.
- * @param {string} listSelector - The selector for the tag list element used for displaying autocomplete suggestions.
- * @param {Object} [tagListOptions={}] - Optional configuration object for customizing the tag list behavior.
- * @return {void} - This method does not return a value.
- */
-export function createTagInputCat(inputSelector, listSelector, tagListOptions = {}) {
-    $(inputSelector)
-        // @ts-ignore
-        .autocomplete({
-            source: (i, o) => findTag(i, o, listSelector),
-            select: (e, u) => selectCatTag(e, u, listSelector, { tagListOptions: tagListOptions }),
-            minLength: 0,
-        })
-        .focus(onTagInputFocus); // <== show a tag list on click
 }
 
 /**
@@ -126,31 +84,62 @@ function onTagInputFocus() {
 }
 
 /**
- * Select a tag and add it to the list. This function is (mostly) used as an event handler for the tag selector control.
+ * Handles the selection and assignment of tags based on user interaction.
+ * The method works with different modes to allow tags to be applied in specific contexts.
+ * Tags can be associated with categories, distributed across multiple lists, or handled in a classic manner.
  *
- * @param {*} event - The event that fired on autocomplete select
- * @param {*} ui - An Object with label and value properties for the selected option
- * @param {*} listSelector - The selector of the list to print/add to
- * @param {object} param1 - Optional parameters for this method call
- * @param {PrintTagListOptions} [param1.tagListOptions] - Optional parameters for printing the tag list. Can be set to be consistent with the expected behavior of tags in the list that was defined before.
- * @returns {boolean} <c>false</c>, to keep the input clear
+ * @param {Object} event - The event object triggered by the user interaction.
+ * @param {Object} ui - The UI interaction object containing details about the selected item.
+ * @param {string|Object} listSelector - The selector or jQuery object identifying the DOM element where the tag should be added.
+ * @param {Object} options - Additional configuration options for tag manipulation.
+ * @param {Object} [options.tagListOptions={}] - Optional override for tag list behavior.
+ * @param {string} [options.mode='classic'] - The operational mode determining how tags are managed (`classic`, `multiple`, `category`).
+ * @param {Array<string|Object>} [options.allLists=[]] - A collection of selectors or jQuery objects representing all lists that may be affected.
+ *
+ * @return {boolean} Always returns false to prevent default handling behaviors.
  */
-function selectCatTag(event, ui, listSelector, { tagListOptions = {} } = {}) {
+function acmSelectTag(event, ui, listSelector, { tagListOptions = {}, mode = 'classic', allLists = []} = {}) {
     let tagName = ui.item.value;
-    let tag = tags.find(t => equalsIgnoreCaseAndAccents(t.name, tagName));
-    const selectedPreset = $('#preset_selector option:selected').data('preset');
-    const selectedCat = $(listSelector).find('label').closest('[data-catid]').data('catid');
+    let tag = tagList.find(t => equalsIgnoreCaseAndAccents(t.name, tagName));
 
     if (!tag) {
         toastr.error("You can't create tag from this interface. Please use the tag editor instead.");
+        return false;
     }
 
-    // unfocus and clear the input
+    // Clear input
     $(event.target).val('').trigger('input');
 
-    $(listSelector).find('label').before(displayTag(tag.id, true));
-    addTagToCategory(selectedPreset, selectedCat, tag.id);
+    switch (mode) {
+        case 'category': {
+            const selectedPreset = $('#preset_selector option:selected').data('preset');
+            const selectedCat = $(listSelector).find('label').closest('[data-catid]').data('catid');
+            $(listSelector).find('label').before(displayTag(tag.id, 'category'));
+            addTagToCategory(selectedPreset, selectedCat, tag.id);
+            break;
+        }
+        case 'multiple': {
+            // Check if tag is already present in ANY of the associated lists
+            const isDuplicate = allLists.some(selector => {
+                return $(selector).find(`[data-tagid="${tag.id}"]`).length > 0;
+            });
 
-    // need to return false to keep the input clear
+            if (!isDuplicate) {
+                // Append ONLY to the list associated with the current input
+                $(listSelector).append(displayTag(tag.id));
+                refreshCharListDebounced();
+            } else {
+                toastr.warning("This tag is already assigned to one of the requirement lists.");
+            }
+            break;
+        }
+        case 'classic':
+        default: {
+            $(listSelector).append(displayTag(tag.id));
+            refreshCharListDebounced();
+            break;
+        }
+    }
+
     return false;
 }

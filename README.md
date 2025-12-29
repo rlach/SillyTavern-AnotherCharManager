@@ -13,7 +13,7 @@ I've decided to work on it to have something that better suits my needs, because
 * With ACM, you can sort by the number of tags characters have, for example, to find those without tags.
 * Editing tags on a character does not load their chat, so it won't change the chat recent history.
 * You can edit the description, first message, alternative greetings and Creator's notes.
-* You can rename, duplicate, delete, export and import characters.
+* You can create, rename, duplicate, delete, export and import characters.
 * Access the advanced definitions window.
 * Open a character chat.
 * Replace the avatar (check prerequisites)
@@ -40,7 +40,7 @@ But also in the extension menu next to the chat.
 
 Clicking on these buttons will open a pop-up window showing your characters and the number of tags they currently have.
 
-![02](https://github.com/user-attachments/assets/c4ebd6be-8b87-4e17-9f15-942a8dfd3c3c)
+<img width="948" height="304" alt="ST1" src="https://github.com/user-attachments/assets/d03acc85-762a-4097-99bc-de1f2d9f7f89" />
 
 * You can sort alphabetically, number of tags, recent chat or date added.<br/>
 * You also have access to a search bar, the Manage Tags menu and import buttons (file and URL).
@@ -49,7 +49,7 @@ Clicking on these buttons will open a pop-up window showing your characters and 
 When you select a character, basic information about the character is displayed at the bottom, including its tags, description and greetings(Alternative greetings are read-only).
 You can also rename, export, duplicate, delete the selected character among other functionalities.
 
-![03](https://github.com/user-attachments/assets/1bc4f441-7640-4004-9273-8a62459edc51)
+<img width="971" height="345" alt="ST2" src="https://github.com/user-attachments/assets/fd6859ae-b3f1-4337-81ae-28761cf76c83" />
 
 ## Unique Features
 
