@@ -6,9 +6,21 @@ import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
 import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { getPreset } from "../services/presets-service.js";
-import { imageLoader } from '../services/imageLoader.js';
+import { imageLoader } from '../classes/imageLoader.js';
+import VirtualScroller from '../classes/virtualScroller.js';
 
+let virtualScroller = null;
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
+
+const requestIdle = window.requestIdleCallback || (cb => {
+    return setTimeout(() => cb({ timeRemaining: () => 5 }), 1);
+});
+
+const cancelIdle = window.cancelIdleCallback || (id => {
+    clearTimeout(id);
+});
+
+let activeBatchHandle = null;
 
 /**
  * Creates and returns a character block element based on the provided avatar.
@@ -56,16 +68,6 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
     return div;
 }
 
-const requestIdle = window.requestIdleCallback || (cb => {
-    return setTimeout(() => cb({ timeRemaining: () => 5 }), 1);
-});
-
-const cancelIdle = window.cancelIdleCallback || (id => {
-    clearTimeout(id);
-});
-
-let activeBatchHandle = null;
-
 /**
  * Renders a batch-processed list of character elements into the HTML container element.
  * The method ensures the rendering process does not block the UI thread by processing elements
@@ -76,49 +78,48 @@ let activeBatchHandle = null;
  * @return {void} - Does not return a value. The method directly manipulates the DOM to render content.
  */
 function renderCharactersListHTML(sortedList) {
-    if (activeBatchHandle) {
-        cancelIdle(activeBatchHandle);
-        activeBatchHandle = null;
+    const container = document.getElementById('character-list');
+
+    if (!container) {
+        console.error('Container not found');
+        return;
     }
 
-    const container = $('#character-list')[0];
-    container.innerHTML = '';
-
-    const BATCH_SIZE = 20;
-    let currentIndex = 0;
-
-    function processBatch(deadline) {
-        const fragment = document.createDocumentFragment();
-        let batchCount = 0;
-
-        while (currentIndex < sortedList.length &&
-                batchCount < BATCH_SIZE &&
-                deadline.timeRemaining() > 0) {
-
-            const item = sortedList[currentIndex];
-            const useLazyLoading = currentIndex >= 100;
-            const charElement = createCharacterBlock(item.avatar, useLazyLoading);
-            fragment.appendChild(charElement);
-
-            currentIndex++;
-            batchCount++;
-        }
-
-        container.appendChild(fragment);
-
-        const newImages = container.querySelectorAll(`img[data-src]:not([data-observed])`);
-        newImages.forEach(img => {
-            img.dataset.observed = 'true';
-            imageLoader.observe(img);
-        });
-
-        if (currentIndex < sortedList.length) {
-            activeBatchHandle = requestIdle(processBatch);
-        } else {
-            activeBatchHandle = null;
-        }
+    // Détruire l'ancien scroller si existant
+    if (virtualScroller) {
+        virtualScroller.destroy();
     }
-    activeBatchHandle = requestIdle(processBatch);
+
+    // Calculer le nombre d'éléments par ligne selon la largeur
+    const containerWidth = container.clientWidth;
+    const itemWidth = 120; // Largeur approximative d'une carte + gap
+    const itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
+
+    // Créer le virtual scroller
+    virtualScroller = new VirtualScroller({
+        container: container,
+        items: sortedList,
+        renderItem: (item, index) => {
+            // Utiliser votre fonction existante SANS lazy loading
+            // car on ne crée que les éléments visibles
+            return createCharacterBlock(item.avatar, false);
+        },
+        itemHeight: 180, // Hauteur d'une ligne de cartes (ajuster selon votre CSS)
+        itemsPerRow: itemsPerRow,
+        buffer: 3 // Précharger 3 lignes avant/après
+    });
+}
+
+export function handleContainerResize() {
+    if (virtualScroller) {
+        const container = document.getElementById('character-list');
+        const containerWidth = container.clientWidth;
+        const itemWidth = 120;
+
+        // Mettre à jour et rafraîchir
+        virtualScroller.itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
+        virtualScroller.refresh();
+    }
 }
 
 /**
