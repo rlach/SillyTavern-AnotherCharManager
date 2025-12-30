@@ -49,7 +49,7 @@
     background-color: rgba(var(--SmartThemeBorderColor));
     box-shadow: 0 0 8px 6px rgba(80, 255, 240, 0.3);
     pointer-events: none;
-    z-index: 9999;
+    z-index: 9001;
     display: none;
     transition: var(--acm-transition-fast);
 }

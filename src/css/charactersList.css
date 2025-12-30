@@ -2,13 +2,12 @@
 .list-character-wrapper {
     display: flex;
     height: 100%;
+    min-height: 0;
 }
 
-#character-list,
-.character-list {
+#character-list {
     display: flex;
     flex-wrap: wrap;
-    flex-grow: 1;
     justify-content: space-around;
     align-content: flex-start;
     overflow-y: auto;
@@ -16,7 +15,9 @@
     padding-right: 10px;
     gap: 5px;
     flex-direction: row;
-    height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
     padding-top: 5px;
 }
 
