@@ -76,7 +76,7 @@ export function initializeModalEvents() {
         $preview.hide();
         updateSetting('popupWidth', newWidth);
 
-        // Rafraîchir le virtual scroller après le resize
+        // Refresh virtual scroller after resize
         requestAnimationFrame(() => {
             handleContainerResize();
         });

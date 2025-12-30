@@ -85,14 +85,14 @@ function renderCharactersListHTML(sortedList) {
         return;
     }
 
-    // Détruire l'ancien scroller si existant
+    // Destroy old scroller, if any
     if (virtualScroller) {
         virtualScroller.destroy();
     }
 
-    // Calculer le nombre d'éléments par ligne selon la largeur
+    // Calculate the number of elements per line according to width
     const containerWidth = container.clientWidth;
-    const itemWidth = 120; // Largeur approximative d'une carte + gap
+    const itemWidth = 120; // Approximate width of a card + gap
     const itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
 
     // Créer le virtual scroller
@@ -100,13 +100,13 @@ function renderCharactersListHTML(sortedList) {
         container: container,
         items: sortedList,
         renderItem: (item, index) => {
-            // Utiliser votre fonction existante SANS lazy loading
-            // car on ne crée que les éléments visibles
+            // Use your existing function WITHOUT lazy loading
+            // because only visible elements are created
             return createCharacterBlock(item.avatar, false);
         },
-        itemHeight: 180, // Hauteur d'une ligne de cartes (ajuster selon votre CSS)
+        itemHeight: 180, // Height of a line of cards (adjust according to your CSS)
         itemsPerRow: itemsPerRow,
-        buffer: 3 // Précharger 3 lignes avant/après
+        buffer: 3 // Preload 3 lines before/after
     });
 }
 
@@ -116,7 +116,7 @@ export function handleContainerResize() {
         const containerWidth = container.clientWidth;
         const itemWidth = 120;
 
-        // Mettre à jour et rafraîchir
+        // Update and refresh
         virtualScroller.itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
         virtualScroller.refresh();
     }

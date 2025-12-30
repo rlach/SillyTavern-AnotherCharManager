@@ -1,15 +1,15 @@
 /**
- * Gère l'affichage virtualisé d'une grande liste d'éléments.
- * Seuls les éléments visibles dans le viewport sont réellement créés dans le DOM.
+ * Manages the virtualized display of a large list of elements.
+ * Only elements visible in the viewport are actually created in the DOM.
  */
 class VirtualScroller {
     constructor(options = {}) {
         this.container = options.container;
         this.items = options.items || [];
-        this.renderItem = options.renderItem; // Fonction pour créer un élément
-        this.itemHeight = options.itemHeight || 150; // Hauteur estimée d'un élément
-        this.itemsPerRow = options.itemsPerRow || 5; // Nombre d'éléments par ligne (pour une grille)
-        this.buffer = options.buffer || 2; // Nombre de lignes à précharger avant/après
+        this.renderItem = options.renderItem; // Function to create an element
+        this.itemHeight = options.itemHeight || 150; // Estimated element height
+        this.itemsPerRow = options.itemsPerRow || 5; // Number of elements per line (for a grid)
+        this.buffer = options.buffer || 2; // Number of lines to be preloaded before/after
 
         this.contentWrapper = null;
         this.itemsContainer = null;
@@ -24,18 +24,18 @@ class VirtualScroller {
             return;
         }
 
-        // Créer la structure
+        // Create the structure
         this.container.innerHTML = '';
         this.container.style.position = 'relative';
         this.container.style.overflow = 'auto';
 
-        // Wrapper pour la hauteur totale (scrollbar)
+        // Wrapper for overall height (scrollbar)
         this.contentWrapper = document.createElement('div');
         this.contentWrapper.style.position = 'relative';
         this.contentWrapper.style.width = '100%';
         this.updateContentHeight();
 
-        // Conteneur pour les éléments visibles
+        // Container for visible elements
         this.itemsContainer = document.createElement('div');
         this.itemsContainer.style.position = 'absolute';
         this.itemsContainer.style.top = '0';
@@ -51,10 +51,10 @@ class VirtualScroller {
         this.contentWrapper.appendChild(this.itemsContainer);
         this.container.appendChild(this.contentWrapper);
 
-        // Écouter le scroll
+        // Listen to the scroll
         this.container.addEventListener('scroll', () => this.onScroll(), { passive: true });
 
-        // Render initial
+        // Initial render
         this.render();
     }
 
@@ -72,18 +72,18 @@ class VirtualScroller {
         const scrollTop = this.container.scrollTop;
         const containerHeight = this.container.clientHeight;
 
-        // Calculer les lignes visibles
+        // Calculate visible lines
         const startRow = Math.floor(scrollTop / this.itemHeight);
         const endRow = Math.ceil((scrollTop + containerHeight) / this.itemHeight);
 
-        // Ajouter le buffer
+        // Add buffer
         const bufferedStartRow = Math.max(0, startRow - this.buffer);
         const bufferedEndRow = Math.min(
             Math.ceil(this.items.length / this.itemsPerRow),
             endRow + this.buffer
         );
 
-        // Convertir en indices d'éléments
+        // Convert to element indices
         const start = bufferedStartRow * this.itemsPerRow;
         const end = Math.min(bufferedEndRow * this.itemsPerRow, this.items.length);
 
@@ -93,7 +93,7 @@ class VirtualScroller {
     render() {
         const newRange = this.calculateVisibleRange();
 
-        // Éviter les re-renders inutiles
+        // Avoid unnecessary re-renders
         if (newRange.start === this.visibleRange.start &&
             newRange.end === this.visibleRange.end) {
             return;
@@ -101,11 +101,11 @@ class VirtualScroller {
 
         this.visibleRange = newRange;
 
-        // Positionner le conteneur d'éléments
+        // Position element container
         const offsetTop = newRange.startRow * this.itemHeight;
         this.itemsContainer.style.transform = `translateY(${offsetTop}px)`;
 
-        // Créer les éléments visibles
+        // Create visible elements
         const fragment = document.createDocumentFragment();
 
         for (let i = newRange.start; i < newRange.end; i++) {
@@ -115,13 +115,13 @@ class VirtualScroller {
             }
         }
 
-        // Remplacer le contenu
+        // Replace content
         this.itemsContainer.innerHTML = '';
         this.itemsContainer.appendChild(fragment);
     }
 
     /**
-     * Met à jour la liste des éléments
+     * Updates the list of items
      */
     setItems(items) {
         this.items = items;
@@ -130,7 +130,7 @@ class VirtualScroller {
     }
 
     /**
-     * Rafraîchit l'affichage (utile après un resize)
+     * Refreshes display (useful after a resize)
      */
     refresh() {
         this.updateContentHeight();
@@ -138,7 +138,7 @@ class VirtualScroller {
     }
 
     /**
-     * Scroll vers un élément spécifique
+     * Scroll to a specific element
      */
     scrollToIndex(index) {
         const row = Math.floor(index / this.itemsPerRow);
@@ -146,7 +146,7 @@ class VirtualScroller {
     }
 
     /**
-     * Nettoie les ressources
+     * Cleans resources
      */
     destroy() {
         this.container.removeEventListener('scroll', this.onScroll);
