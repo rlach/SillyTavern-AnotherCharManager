@@ -10,9 +10,7 @@ class VirtualScroller {
         this.itemHeight = options.itemHeight || 150;
         this.itemsPerRow = options.itemsPerRow || 5;
         this.buffer = options.buffer || 2;
-
         this.visibleRange = { start: 0, end: 0 };
-
         this.init();
     }
 
@@ -24,10 +22,8 @@ class VirtualScroller {
 
         // Clear container
         this.container.innerHTML = '';
-
         // Listen to scroll on the container itself
         this.container.addEventListener('scroll', () => this.onScroll(), { passive: true });
-
         // Initial render
         this.render();
     }
@@ -61,11 +57,11 @@ class VirtualScroller {
     render() {
         const newRange = this.calculateVisibleRange();
 
-        // Avoid unnecessary re-renders
-        if (newRange.start === this.visibleRange.start &&
-            newRange.end === this.visibleRange.end) {
-            return;
-        }
+        // Avoid unnecessary re-renders, commented-out because it stops the displayed tag number to update
+        // if (newRange.start === this.visibleRange.start &&
+        //     newRange.end === this.visibleRange.end) {
+        //     return;
+        // }
 
         this.visibleRange = newRange;
 
@@ -85,7 +81,7 @@ class VirtualScroller {
         // Add visible items
         for (let i = newRange.start; i < newRange.end; i++) {
             if (this.items[i]) {
-                const element = this.renderItem(this.items[i], i);
+                const element = this.renderItem(this.items[i]);
                 fragment.appendChild(element);
             }
         }
@@ -122,12 +118,49 @@ class VirtualScroller {
     }
 
     /**
-     * Scrolls to a specific item
+     * Gets the index of an item by its avatar
+     * @param {string} avatar - The unique avatar identifier
+     * @returns {number} The index of the item, or -1 if not found
      */
-    scrollToIndex(index) {
+    getIndexByAvatar(avatar) {
+        return this.items.findIndex(item => item.avatar === avatar);
+    }
+
+    /**
+     * Checks if an item with the given avatar is currently visible
+     * @param {string} avatar - The unique avatar identifier
+     * @returns {boolean} True if the item is in the visible range
+     */
+    isAvatarVisible(avatar) {
+        const index = this.getIndexByAvatar(avatar);
+        if (index === -1) return false;
+
+        return index >= this.visibleRange.start && index < this.visibleRange.end;
+    }
+
+    /**
+     * Scrolls to a specific item by its avatar string
+     * @param {string} avatar - The unique avatar identifier of the item
+     * @param {string} behavior - Scroll behavior: 'auto' or 'smooth' (default: 'auto')
+     */
+    scrollToAvatar(avatar, behavior = 'auto') {
+        // Find the index of the item with this avatar
+        const index = this.getIndexByAvatar(avatar);
+
+        if (index === -1) {
+            console.warn(`Item with avatar "${avatar}" not found`);
+            return;
+        }
+
+        // Calculate which row this item is in
         const row = Math.floor(index / this.itemsPerRow);
         const scrollTop = row * this.itemHeight;
-        this.container.scrollTop = scrollTop;
+
+        // Scroll to position
+        this.container.scrollTo({
+            top: scrollTop,
+            behavior: behavior
+        });
     }
 
     /**

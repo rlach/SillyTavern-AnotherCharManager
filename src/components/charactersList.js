@@ -77,29 +77,32 @@ function renderCharactersListHTML(sortedList) {
         return;
     }
 
-    // Destroy old scroller, if any
+    // Update old scroller, if any
     if (virtualScroller) {
-        virtualScroller.destroy();
+        virtualScroller.setItems(sortedList);
+        virtualScroller.refresh();
+
+        // Scroll to selected character if exists
+        if (selectedChar) {
+            virtualScroller.scrollToAvatar(selectedChar);
+        }
     }
+    else {
+        // Calculate the number of elements per line according to width
+        const containerWidth = container.clientWidth;
+        const itemWidth = 120; // Approximate width of a card + gap
+        const itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
 
-    // Calculate the number of elements per line according to width
-    const containerWidth = container.clientWidth;
-    const itemWidth = 120; // Approximate width of a card + gap
-    const itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
-
-    // Créer le virtual scroller
-    virtualScroller = new VirtualScroller({
-        container: container,
-        items: sortedList,
-        renderItem: (item, index) => {
-            // Use your existing function WITHOUT lazy loading
-            // because only visible elements are created
-            return createCharacterBlock(item.avatar);
-        },
-        itemHeight: 180, // Height of a line of cards (adjust according to your CSS)
-        itemsPerRow: itemsPerRow,
-        buffer: 3 // Preload 3 lines before/after
-    });
+        // Create the virtual scroller
+        virtualScroller = new VirtualScroller({
+            container: container,
+            items: sortedList,
+            renderItem: (item) => { return createCharacterBlock(item.avatar); },
+            itemHeight: 180, // Height of a line of cards (adjust according to your CSS)
+            itemsPerRow: itemsPerRow,
+            buffer: 3 // Preload 3 lines before/after
+        });
+    }
 }
 
 export function handleContainerResize() {
