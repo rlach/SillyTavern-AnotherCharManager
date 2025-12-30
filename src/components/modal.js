@@ -113,7 +113,7 @@ export function openModal() {
 
     // Display the modal with our list layout
     $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
-    $('#acm_shadow_popup').css('display', 'block').transition({
+    $('#acm_popup').css('display', 'flex').transition({
         opacity: 1,
         duration: 125,
         easing: 'ease-in-out',
@@ -156,14 +156,15 @@ export function closeModal() {
     setMenuType(mem_menu);
     setMem_avatar(undefined);
 
-    $('#acm_shadow_popup').transition({
+    const $popup = $('#acm_popup');
+    $popup.transition({
         opacity: 0,
         duration: 125,
         easing: 'ease-in-out',
     });
     setTimeout(function () {
-        $('#acm_shadow_popup').css('display', 'none');
-        $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+        $popup.css('display', 'none');
+        $popup.removeClass('large_dialogue_popup wide_dialogue_popup');
     }, 125);
 }
 

@@ -252,13 +252,13 @@ export function openCharacterChat() {
     selectCharacterById(getIdByAvatar(selectedChar));
     closeDetails(false);
 
-    $('#acm_shadow_popup').transition({
+    $('#acm_popup').transition({
         opacity: 0,
         duration: 125,
         easing: 'ease-in-out',
     });
     setTimeout(function () {
-        $('#acm_shadow_popup').css('display', 'none');
+        $('#acm_popup').css('display', 'none');
         $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
     }, 125);
 }
