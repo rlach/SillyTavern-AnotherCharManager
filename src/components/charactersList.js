@@ -6,7 +6,6 @@ import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
 import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { getPreset } from "../services/presets-service.js";
-import { imageLoader } from '../classes/imageLoader.js';
 import VirtualScroller from '../classes/virtualScroller.js';
 
 let virtualScroller = null;
@@ -27,11 +26,10 @@ let activeBatchHandle = null;
  * The block includes styling and details such as the avatar image, name, and associated tags.
  *
  * @param {string} avatar - The identifier for the character avatar used to create the block.
- * @param useLazyLoading - Indicate if using lazy loading for the avatar image.
  * @return {HTMLDivElement} Returns a `div` element representing the character block, containing
  *         character information and a thumbnail of the avatar.
  */
-function createCharacterBlock(avatar, useLazyLoading = true) {
+function createCharacterBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
 
@@ -44,17 +42,11 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
     div.title = `[${characters[id].name} - Tags: ${tagMap[avatar]?.length ?? 0}]`;
     div.setAttribute('data-avatar', avatar);
 
-    const imgSrc = useLazyLoading
-        ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23e0e0e0' width='100' height='100'/%3E%3C/svg%3E"
-        : avatarThumb;
-    const dataSrcAttr = useLazyLoading ? `data-src="${avatarThumb}"` : '';
-
     div.innerHTML = `
         <!-- Media -->
         <div class="card__media">
             <img id="img_${avatar}"
-             src="${imgSrc}"
-             ${dataSrcAttr}
+             src="${avatarThumb}"
              alt="${characters[id].avatar}"
              draggable="false">
         </div>
@@ -102,7 +94,7 @@ function renderCharactersListHTML(sortedList) {
         renderItem: (item, index) => {
             // Use your existing function WITHOUT lazy loading
             // because only visible elements are created
-            return createCharacterBlock(item.avatar, false);
+            return createCharacterBlock(item.avatar);
         },
         itemHeight: 180, // Height of a line of cards (adjust according to your CSS)
         itemsPerRow: itemsPerRow,
@@ -314,7 +306,7 @@ function generateDropdownContent(sortedList, type, content){
                 });
             const container = document.createDocumentFragment();
             filteredCharacters.forEach(character => {
-                const block = createCharacterBlock(character.avatar, false);
+                const block = createCharacterBlock(character.avatar);
                 container.appendChild(block);
             });
             return container;
@@ -330,7 +322,7 @@ function generateDropdownContent(sortedList, type, content){
             });
             const container = document.createDocumentFragment();
             filteredCharacters.forEach(character => {
-                const block = createCharacterBlock(character.avatar, false);
+                const block = createCharacterBlock(character.avatar);
                 container.appendChild(block);
             });
             return container;
@@ -339,7 +331,7 @@ function generateDropdownContent(sortedList, type, content){
             const filteredCharacters = sortedList.filter(item => item.data.creator === content);
             const container = document.createDocumentFragment();
             filteredCharacters.forEach(character => {
-                const block = createCharacterBlock(character.avatar, false);
+                const block = createCharacterBlock(character.avatar);
                 container.appendChild(block);
             });
             return container;

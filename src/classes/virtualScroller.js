@@ -1,18 +1,16 @@
 /**
- * Manages the virtualized display of a large list of elements.
+ * Manages virtualized display of a large list of elements.
  * Only elements visible in the viewport are actually created in the DOM.
  */
 class VirtualScroller {
     constructor(options = {}) {
-        this.container = options.container;
+        this.container = options.container; // This should be #character-list
         this.items = options.items || [];
-        this.renderItem = options.renderItem; // Function to create an element
-        this.itemHeight = options.itemHeight || 150; // Estimated element height
-        this.itemsPerRow = options.itemsPerRow || 5; // Number of elements per line (for a grid)
-        this.buffer = options.buffer || 2; // Number of lines to be preloaded before/after
+        this.renderItem = options.renderItem;
+        this.itemHeight = options.itemHeight || 150;
+        this.itemsPerRow = options.itemsPerRow || 5;
+        this.buffer = options.buffer || 2;
 
-        this.contentWrapper = null;
-        this.itemsContainer = null;
         this.visibleRange = { start: 0, end: 0 };
 
         this.init();
@@ -24,44 +22,14 @@ class VirtualScroller {
             return;
         }
 
-        // Create the structure
+        // Clear container
         this.container.innerHTML = '';
-        this.container.style.position = 'relative';
-        this.container.style.overflow = 'auto';
 
-        // Wrapper for overall height (scrollbar)
-        this.contentWrapper = document.createElement('div');
-        this.contentWrapper.style.position = 'relative';
-        this.contentWrapper.style.width = '100%';
-        this.updateContentHeight();
-
-        // Container for visible elements
-        this.itemsContainer = document.createElement('div');
-        this.itemsContainer.style.position = 'absolute';
-        this.itemsContainer.style.top = '0';
-        this.itemsContainer.style.left = '0';
-        this.itemsContainer.style.right = '0';
-        this.itemsContainer.style.width = '100%';
-        this.itemsContainer.style.display = 'grid';
-        this.itemsContainer.style.gridTemplateColumns = `repeat(${this.itemsPerRow}, 1fr)`;
-        this.itemsContainer.style.gap = '16px';
-        this.itemsContainer.style.padding = '16px';
-        this.itemsContainer.style.boxSizing = 'border-box';
-
-        this.contentWrapper.appendChild(this.itemsContainer);
-        this.container.appendChild(this.contentWrapper);
-
-        // Listen to the scroll
+        // Listen to scroll on the container itself
         this.container.addEventListener('scroll', () => this.onScroll(), { passive: true });
 
         // Initial render
         this.render();
-    }
-
-    updateContentHeight() {
-        const totalRows = Math.ceil(this.items.length / this.itemsPerRow);
-        const totalHeight = totalRows * this.itemHeight;
-        this.contentWrapper.style.height = `${totalHeight}px`;
     }
 
     onScroll() {
@@ -72,7 +40,7 @@ class VirtualScroller {
         const scrollTop = this.container.scrollTop;
         const containerHeight = this.container.clientHeight;
 
-        // Calculate visible lines
+        // Calculate visible rows
         const startRow = Math.floor(scrollTop / this.itemHeight);
         const endRow = Math.ceil((scrollTop + containerHeight) / this.itemHeight);
 
@@ -83,11 +51,11 @@ class VirtualScroller {
             endRow + this.buffer
         );
 
-        // Convert to element indices
+        // Convert to item indices
         const start = bufferedStartRow * this.itemsPerRow;
         const end = Math.min(bufferedEndRow * this.itemsPerRow, this.items.length);
 
-        return { start, end, startRow: bufferedStartRow };
+        return { start, end };
     }
 
     render() {
@@ -101,13 +69,20 @@ class VirtualScroller {
 
         this.visibleRange = newRange;
 
-        // Position element container
-        const offsetTop = newRange.startRow * this.itemHeight;
-        this.itemsContainer.style.transform = `translateY(${offsetTop}px)`;
-
-        // Create visible elements
+        // Create visible elements with spacers to maintain scroll position
         const fragment = document.createDocumentFragment();
 
+        // Add top spacer
+        if (newRange.start > 0) {
+            const topSpacer = document.createElement('div');
+            const topRows = Math.floor(newRange.start / this.itemsPerRow);
+            topSpacer.style.height = `${topRows * this.itemHeight}px`;
+            topSpacer.style.width = '100%'; // Full width to force line break in flex
+            topSpacer.style.flexShrink = '0';
+            fragment.appendChild(topSpacer);
+        }
+
+        // Add visible items
         for (let i = newRange.start; i < newRange.end; i++) {
             if (this.items[i]) {
                 const element = this.renderItem(this.items[i], i);
@@ -115,9 +90,20 @@ class VirtualScroller {
             }
         }
 
+        // Add bottom spacer
+        const remainingItems = this.items.length - newRange.end;
+        if (remainingItems > 0) {
+            const bottomSpacer = document.createElement('div');
+            const bottomRows = Math.ceil(remainingItems / this.itemsPerRow);
+            bottomSpacer.style.height = `${bottomRows * this.itemHeight}px`;
+            bottomSpacer.style.width = '100%'; // Full width to force line break in flex
+            bottomSpacer.style.flexShrink = '0';
+            fragment.appendChild(bottomSpacer);
+        }
+
         // Replace content
-        this.itemsContainer.innerHTML = '';
-        this.itemsContainer.appendChild(fragment);
+        this.container.innerHTML = '';
+        this.container.appendChild(fragment);
     }
 
     /**
@@ -125,28 +111,27 @@ class VirtualScroller {
      */
     setItems(items) {
         this.items = items;
-        this.updateContentHeight();
         this.render();
     }
 
     /**
-     * Refreshes display (useful after a resize)
+     * Refreshes the display (useful after resize)
      */
     refresh() {
-        this.updateContentHeight();
         this.render();
     }
 
     /**
-     * Scroll to a specific element
+     * Scrolls to a specific item
      */
     scrollToIndex(index) {
         const row = Math.floor(index / this.itemsPerRow);
-        this.container.scrollTop = row * this.itemHeight;
+        const scrollTop = row * this.itemHeight;
+        this.container.scrollTop = scrollTop;
     }
 
     /**
-     * Cleans resources
+     * Cleans up resources
      */
     destroy() {
         this.container.removeEventListener('scroll', this.onScroll);
