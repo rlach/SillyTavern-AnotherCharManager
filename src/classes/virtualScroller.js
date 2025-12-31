@@ -1,6 +1,6 @@
 /**
- * Manages virtualized display of a large list of elements.
- * Only elements visible in the viewport are actually created in the DOM.
+ * A class for rendering a virtualized scrolling container, improving performance
+ * for large data sets by only rendering visible elements and placeholders.
  */
 class VirtualScroller {
     constructor(options = {}) {
@@ -54,16 +54,25 @@ class VirtualScroller {
         return { start, end };
     }
 
-    render() {
+   /**
+    * Renders the visible range of items within the container, while optionally preserving the scroll position.
+    * Generates spacers to maintain the correct layout and ensures only visible items are rendered for performance optimization.
+    *
+    * @param {boolean} preserveScroll - Indicates whether to preserve the current scroll position (default is true).
+    * @return {void} This method does not return a value.
+    */
+   render(preserveScroll = false) {
         const newRange = this.calculateVisibleRange();
 
-        // Avoid unnecessary re-renders, commented-out because it stops the displayed tag number to update
-        // if (newRange.start === this.visibleRange.start &&
-        //     newRange.end === this.visibleRange.end) {
-        //     return;
-        // }
+       // Avoid unnecessary re-renders
+       if (newRange.start === this.visibleRange.start &&
+           newRange.end === this.visibleRange.end) {
+           return;
+       }
 
         this.visibleRange = newRange;
+        // Save scroll position if we want to preserve it
+        const scrollTop = preserveScroll ? this.container.scrollTop : null;
 
         // Create visible elements with spacers to maintain scroll position
         const fragment = document.createDocumentFragment();
@@ -100,21 +109,30 @@ class VirtualScroller {
         // Replace content
         this.container.innerHTML = '';
         this.container.appendChild(fragment);
+
+        // Restore scroll position if needed
+        if (preserveScroll && scrollTop !== null) {
+           this.container.scrollTop = scrollTop;
+        }
     }
 
     /**
-     * Updates the list of items
+     * Updates the list of items and triggers re-rendering.
+     *
+     * @param {Array} items - The new array of items to be set.
+     * @param {boolean} [preserveScroll=false] - A flag indicating whether to preserve the current scroll position during rendering.
+     * @return {void}
      */
-    setItems(items) {
+    setItems(items, preserveScroll = false) {
         this.items = items;
-        this.render();
+        this.render(preserveScroll);
     }
 
     /**
      * Refreshes the display (useful after resize)
      */
     refresh() {
-        this.render();
+        this.render(true);
     }
 
     /**
@@ -124,18 +142,6 @@ class VirtualScroller {
      */
     getIndexByAvatar(avatar) {
         return this.items.findIndex(item => item.avatar === avatar);
-    }
-
-    /**
-     * Checks if an item with the given avatar is currently visible
-     * @param {string} avatar - The unique avatar identifier
-     * @returns {boolean} True if the item is in the visible range
-     */
-    isAvatarVisible(avatar) {
-        const index = this.getIndexByAvatar(avatar);
-        if (index === -1) return false;
-
-        return index >= this.visibleRange.start && index < this.visibleRange.end;
     }
 
     /**

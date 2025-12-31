@@ -9,17 +9,9 @@ import { getPreset } from "../services/presets-service.js";
 import VirtualScroller from '../classes/virtualScroller.js';
 
 let virtualScroller = null;
-export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
-
-const requestIdle = window.requestIdleCallback || (cb => {
-    return setTimeout(() => cb({ timeRemaining: () => 5 }), 1);
-});
-
-const cancelIdle = window.cancelIdleCallback || (id => {
-    clearTimeout(id);
-});
-
-let activeBatchHandle = null;
+export const refreshCharListDebounced = debounce((preserveScroll) => {
+    refreshCharList(preserveScroll);
+}, 200);
 
 /**
  * Creates and returns a character block element based on the provided avatar.
@@ -60,16 +52,16 @@ function createCharacterBlock(avatar) {
     return div;
 }
 
+
 /**
- * Renders a batch-processed list of character elements into the HTML container element.
- * The method ensures the rendering process does not block the UI thread by processing elements
- * in smaller chunks using requestAnimationFrame.
+ * Renders a list of characters as HTML using a virtual scroller mechanism to optimize performance.
  *
- * @param {Array} sortedList - The array of character data objects to be rendered. Each object should
- *                             contain properties like `avatar` used for creating character blocks.
- * @return {void} - Does not return a value. The method directly manipulates the DOM to render content.
+ * @param {Array} sortedList - The sorted list of character objects to be displayed.
+ * @param {boolean} [preserveScroll=false] - Optional parameter to indicate whether to preserve
+ * the current scroll position when updating the list.
+ * @return {void} This function does not return a value.
  */
-function renderCharactersListHTML(sortedList) {
+function renderCharactersListHTML(sortedList, preserveScroll = false) {
     const container = document.getElementById('character-list');
 
     if (!container) {
@@ -79,13 +71,7 @@ function renderCharactersListHTML(sortedList) {
 
     // Update old scroller, if any
     if (virtualScroller) {
-        virtualScroller.setItems(sortedList);
-        virtualScroller.refresh();
-
-        // Scroll to selected character if exists
-        if (selectedChar) {
-            virtualScroller.scrollToAvatar(selectedChar);
-        }
+        virtualScroller.setItems(sortedList, preserveScroll);
     }
     else {
         // Calculate the number of elements per line according to width
@@ -105,6 +91,16 @@ function renderCharactersListHTML(sortedList) {
     }
 }
 
+/**
+ * Adjusts the virtual scroller's items per row based on the container's current width
+ * and refreshes the virtual scroller to reflect the updates.
+ *
+ * The method calculates how many items can fit in a single row by dividing the
+ * container's width by the width of an individual item. If the container width is too
+ * small to fit even one item, the minimum value of 1 is used.
+ *
+ * @return {void} This function does not return a value.
+ */
 export function handleContainerResize() {
     if (virtualScroller) {
         const container = document.getElementById('character-list');
@@ -118,13 +114,13 @@ export function handleContainerResize() {
 }
 
 /**
- * Selects a character based on the provided avatar identifier and updates the UI to display the character's details.
- * Ensures that any previously selected character is deselected before selecting the new one.
+ * Selects a character avatar, updates character details, and adjusts the display accordingly.
  *
- * @param {string} avatar - The identifier for the avatar to be selected and displayed.
- * @return {void} This function does not return a value.
+ * @param {string} avatar - The identifier of the avatar to be selected.
+ * @param {boolean} [scrollTo=false] - Whether to scroll to the selected avatar in the virtual scroller.
+ * @return {Promise<void>} A promise that resolves when all character details have been updated.
  */
-export async function selectAndDisplay(avatar) {
+export async function selectAndDisplay(avatar, scrollTo = false) {
     // Check if a visible character is already selected
     if(typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null){
         document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
@@ -137,6 +133,9 @@ export async function selectAndDisplay(avatar) {
     await fillDetails(avatar);
     await fillAdvancedDefinitions(avatar);
     window.acmIsUpdatingDetails = false;
+    if(scrollTo) {
+        virtualScroller.scrollToAvatar(avatar);
+    }
 
     document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
@@ -150,7 +149,7 @@ export async function selectAndDisplay(avatar) {
  *
  * @return {void} This method does not return a value but updates the user interface and state variables.
  */
-function refreshCharList() {
+function refreshCharList(preserveScroll = false) {
     const filteredChars = searchAndFilter();
 
     if(filteredChars.length === 0){
@@ -180,7 +179,7 @@ function refreshCharList() {
                 });
             });
         } else {
-            renderCharactersListHTML(sortedList);
+            renderCharactersListHTML(sortedList, preserveScroll);
         }
     }
     $('#charNumber').empty().append(`Total characters : ${characters.length}`);

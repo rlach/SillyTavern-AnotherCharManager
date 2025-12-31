@@ -27,7 +27,7 @@ import {
     setSelectedChar,
 } from '../constants/settings.js';
 import { closeCreationPopup } from "../components/characterCreation.js";
-import { refreshCharListDebounced } from "../components/charactersList.js";
+import {refreshCharListDebounced, selectAndDisplay} from "../components/charactersList.js";
 
 // Create a debounced version of editChar
 export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
@@ -414,6 +414,7 @@ export async function createCharacter(formData) {
         closeCreationPopup();
         await getCharacters();
         refreshCharListDebounced();
+        await selectAndDisplay(avatarId, true);
     }
     catch (error) {
         console.error('Error creating character', error);
