@@ -112,7 +112,7 @@ export function openModal() {
     setMem_menu(menuType);
 
     // Display the modal with our list layout
-    $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
+    // $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
     $('#acm_popup').css('display', 'flex').transition({
         opacity: 1,
         duration: 125,
@@ -164,7 +164,7 @@ export function closeModal() {
     });
     setTimeout(function () {
         $popup.css('display', 'none');
-        $popup.removeClass('large_dialogue_popup wide_dialogue_popup');
+        // $popup.removeClass('large_dialogue_popup wide_dialogue_popup');
     }, 125);
 }
 

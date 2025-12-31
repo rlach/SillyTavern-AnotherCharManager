@@ -259,7 +259,7 @@ export function openCharacterChat() {
     });
     setTimeout(function () {
         $('#acm_popup').css('display', 'none');
-        $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+        // $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
     }, 125);
 }
 
