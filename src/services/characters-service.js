@@ -114,7 +114,7 @@ export async function replaceAvatar(newAvatar, id, crop_data = undefined) {
                     },
                 });
                 await getCharacters();
-                await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: id, character: characters[id] } });
+                await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: id, avatarReplaced: true, character: characters[id] } });
                 resolve();
             },
             error: function (jqXHR, exception) {
@@ -209,7 +209,6 @@ export async function renameChar(oldAvatar, charID, newName) {
 
                     // Async delay to update UI
                     await delay(1);
-                    await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: newChId, character: characters[newChId] } });
 
                     if (characterId === -1) {
                         throw new Error('New character not selected');

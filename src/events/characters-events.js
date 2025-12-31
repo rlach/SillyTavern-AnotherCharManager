@@ -77,7 +77,13 @@ export function initializeFieldUpdaters() {
  */
 export function initializeCharactersEvents() {
     // Add listener to refresh the display on characters edit
-    eventSource.on('character_edited', function () {
+    eventSource.on('character_edited', function (data) {
+        if (data.detail && data.detail.avatarReplaced) {
+            refreshCharListDebounced(true);
+        }
+    });
+    // Add listener to refresh the display when a character is renamed
+    eventSource.on('character_renamed', function () {
         refreshCharListDebounced(true);
     });
     // Add listener to refresh the display on characters delete

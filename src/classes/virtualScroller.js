@@ -63,17 +63,9 @@ class VirtualScroller {
     */
    render(preserveScroll = false) {
         const newRange = this.calculateVisibleRange();
-
-       // Avoid unnecessary re-renders
-       if (newRange.start === this.visibleRange.start &&
-           newRange.end === this.visibleRange.end) {
-           return;
-       }
-
         this.visibleRange = newRange;
         // Save scroll position if we want to preserve it
         const scrollTop = preserveScroll ? this.container.scrollTop : null;
-
         // Create visible elements with spacers to maintain scroll position
         const fragment = document.createDocumentFragment();
 
