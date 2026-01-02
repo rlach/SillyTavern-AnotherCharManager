@@ -1,7 +1,23 @@
 /* ===== MODAL COMPONENTS ===== */
 /* Main popup and overlay */
-#acm_shadow_popup {
+#acm_lock {
+    position: fixed;
+    margin: 0;
+    padding: 0;
+    top: 0;
+    left: 0;
+    z-index: 8999;
+    width: 100vw;
+    height: 100vh;
+    width: 100dvw;
+    height: 100dvh;
+    background: rgba(0,0,0,0.5);
+    pointer-events: all;
+    display: none;
+}
 
+#acm_lock.is-active {
+    display: block;
 }
 
 #acm_popup {
@@ -19,13 +35,12 @@
     backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
     -webkit-backdrop-filter: blur(calc(var(--SmartThemeBlurStrength) * 2));
     border-radius: var(--acm-border-radius-md);
-    height: 90svh;
+    height: 96svh;
     display: none;
     opacity: 0.0;
     flex-direction: column;
     overflow-y: hidden;
     transition: var(--acm-transition-fast);
-    width: 100%;
 }
 
 #acm_popup_preview {
@@ -108,25 +123,17 @@
 }
 
 .acm-popup-controls {
+    display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
 }
 
-.acm-popup-controls > div {
-    flex: 0 0 auto;
-}
-
-.acm-popup-controls > div:first-child {
-    text-align: left;
-}
-
-.acm-popup-controls > div:nth-child(2) {
-    text-align: center;
-}
-
-.acm-popup-controls > div:last-child {
-    text-align: right;
+.acm-popup-controls > .menu_button {
+    width: unset;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-font-smoothing: subpixel-antialiased;
 }
 
 #acm_widthSlider {

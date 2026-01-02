@@ -111,6 +111,8 @@ export function openModal() {
     }
     setMem_menu(menuType);
 
+    document.querySelector('#acm_lock').classList.add('is-active');
+
     // Display the modal with our list layout
     // $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
     $('#acm_popup').css('display', 'flex').transition({
@@ -155,6 +157,8 @@ export function closeModal() {
     setCharacterId(getIdByAvatar(mem_avatar));
     setMenuType(mem_menu);
     setMem_avatar(undefined);
+
+    document.querySelector('#acm_lock').classList.remove('is-active');
 
     const $popup = $('#acm_popup');
     $popup.transition({
