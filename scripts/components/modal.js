@@ -22,18 +22,18 @@ export async function initializeModal() {
     // Load the modal HTML template
     let modalHtml;
     try {
-        modalHtml = await renderExtensionTemplateAsync(`third-party/${extensionName}`, 'modal');
+        modalHtml = await renderExtensionTemplateAsync(`third-party/${extensionName}/templates`, 'modal');
     } catch (error) {
         console.error(`Error fetching modal.html. This is a normal error if you have the old folder name and you don't have to do anything.`);
         try {
-            modalHtml = await renderExtensionTemplateAsync(`third-party/${oldExtensionName}`, 'modal');
+            modalHtml = await renderExtensionTemplateAsync(`third-party/${oldExtensionName}/templates`, 'modal');
         } catch (secondError) {
             console.error(`Error fetching modal.html:`, secondError);
             return;
         }
     }
     // Load the extensionMenu button
-    const buttonHtml = await renderExtensionTemplateAsync('third-party/SillyTavern-AnotherCharManager', 'button');
+    const buttonHtml = await renderExtensionTemplateAsync('third-party/SillyTavern-AnotherCharManager/templates', 'button');
 
     // Add the extensionMenu button to the extensionsMenu
     $('#extensionsMenu').append(buttonHtml);
