@@ -1,4 +1,3 @@
-import { getSetting } from '../services/settings-service.js';
 import { callGenericPopup, POPUP_TYPE } from '../constants/context.js';
 import { acmCreateTagInput, displayTag } from './tags.js';
 import { updateDropdownPresetNames } from './charactersList.js';
@@ -9,6 +8,7 @@ import {
     updatePresetCategories,
     updatePresetName,
 } from '../services/presets-service.js';
+import { acmSettings } from '../../index.js';
 
 /**
  * Manages the custom categories interface in the application.
@@ -24,7 +24,7 @@ export async function manageCustomCategories(){
     const selectElement = $(`
         <select id="preset_selector" title="Preset Selector"></select>
     `);
-    getSetting('dropdownPresets').forEach((preset, index) => {
+    acmSettings.getSetting('dropdownPresets').forEach((preset, index) => {
         selectElement.append(`<option data-preset="${index}">${preset.name}</option>`);
     });
     html.append(`

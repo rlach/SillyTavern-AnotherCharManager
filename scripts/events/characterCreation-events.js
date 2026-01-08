@@ -5,7 +5,7 @@ import {
     initiateCharacterCreation,
 } from '../components/characterCreation.js';
 import { updateTokenCount } from '../utils.js';
-import { updateCreateData } from '../constants/settings.js';
+import { acmSettings } from '../../index.js';
 
 /**
  * Initializes event listeners for the character creation interface. Binds input events to update relevant character creation data and adds functionality for character creation operations such as creating a character, closing the popup, toggling the layout, and adding an avatar.
@@ -15,22 +15,22 @@ import { updateCreateData } from '../constants/settings.js';
 export function initializeCharacterCreationEvents() {
 
     const elementsToInitialize = {
-        '#acm_create_name': async function () { updateCreateData('name', String($('#acm_create_name').val())); await updateTokenCount('#acm_create_name');},
-        '#acm_create_desc': async function () { updateCreateData('description', String($('#acm_create_desc').val())); await updateTokenCount('#acm_create_desc');},
-        '#acm_creator_notes_textarea2': function () { updateCreateData('creator_notes', String($('#acm_creator_notes_textarea2').val())); },
-        '#acm_character_version_textarea2': function () { updateCreateData('character_version', String($('#acm_character_version_textarea2').val())); },
-        '#acm_create_system_prompt': async function () { updateCreateData('system_prompt', String($('#acm_create_system_prompt').val())); await updateTokenCount('#acm_create_system_prompt');},
-        '#acm_create_post_history_instructions': async function () { updateCreateData('post_history_instructions', String($('#acm_create_post_history_instructions').val())); await updateTokenCount('#acm_create_post_history_instructions');},
-        '#acm_creator_textarea2': function () { updateCreateData('creator', String($('#acm_creator_textarea2').val())); },
-        '#acm_tags_textarea2': function () { updateCreateData('tags', String($('#acm_tags_textarea2').val())); },
-        '#acm_create_personality': async function () { updateCreateData('personality', String($('#acm_create_personality').val())); await updateTokenCount('#acm_create_personality');},
-        '#acm_create_scenario': async function () { updateCreateData('scenario', String($('#acm_create_scenario').val())); await updateTokenCount('#acm_create_scenario');},
-        '#acm_create_mes_example': async function () { updateCreateData('mes_example', String($('#acm_create_mes_example').val())); await updateTokenCount('#acm_create_mes_example');},
-        '#acm_create_first': async function () { updateCreateData('first_message', String($('#acm_create_first').val())); await updateTokenCount('#acm_create_first');},
-        '#acm_talkativeness_slider2': function () { updateCreateData('talkativeness', Number($('#acm_talkativeness_slider2').val())); },
-        '#acm_create_depth_prompt': async function () { updateCreateData('depth_prompt_prompt', String($('#acm_create_depth_prompt').val())); await updateTokenCount('#acm_create_depth_prompt');},
-        '#acm_depth_prompt_depth2': function () { updateCreateData('depth_prompt_depth', Number($('#acm_depth_prompt_depth2').val())); },
-        '#acm_depth_prompt_role2': function () { updateCreateData('depth_prompt_role', String($('#acm_depth_prompt_role2').val())); },
+        '#acm_create_name': async function () { acmSettings.updateCreateData('name', String($('#acm_create_name').val())); await updateTokenCount('#acm_create_name');},
+        '#acm_create_desc': async function () { acmSettings.updateCreateData('description', String($('#acm_create_desc').val())); await updateTokenCount('#acm_create_desc');},
+        '#acm_creator_notes_textarea2': function () { acmSettings.updateCreateData('creator_notes', String($('#acm_creator_notes_textarea2').val())); },
+        '#acm_character_version_textarea2': function () { acmSettings.updateCreateData('character_version', String($('#acm_character_version_textarea2').val())); },
+        '#acm_create_system_prompt': async function () { acmSettings.updateCreateData('system_prompt', String($('#acm_create_system_prompt').val())); await updateTokenCount('#acm_create_system_prompt');},
+        '#acm_create_post_history_instructions': async function () { acmSettings.updateCreateData('post_history_instructions', String($('#acm_create_post_history_instructions').val())); await updateTokenCount('#acm_create_post_history_instructions');},
+        '#acm_creator_textarea2': function () { acmSettings.updateCreateData('creator', String($('#acm_creator_textarea2').val())); },
+        '#acm_tags_textarea2': function () { acmSettings.updateCreateData('tags', String($('#acm_tags_textarea2').val())); },
+        '#acm_create_personality': async function () { acmSettings.updateCreateData('personality', String($('#acm_create_personality').val())); await updateTokenCount('#acm_create_personality');},
+        '#acm_create_scenario': async function () { acmSettings.updateCreateData('scenario', String($('#acm_create_scenario').val())); await updateTokenCount('#acm_create_scenario');},
+        '#acm_create_mes_example': async function () { acmSettings.updateCreateData('mes_example', String($('#acm_create_mes_example').val())); await updateTokenCount('#acm_create_mes_example');},
+        '#acm_create_first': async function () { acmSettings.updateCreateData('first_message', String($('#acm_create_first').val())); await updateTokenCount('#acm_create_first');},
+        '#acm_talkativeness_slider2': function () { acmSettings.updateCreateData('talkativeness', Number($('#acm_talkativeness_slider2').val())); },
+        '#acm_create_depth_prompt': async function () { acmSettings.updateCreateData('depth_prompt_prompt', String($('#acm_create_depth_prompt').val())); await updateTokenCount('#acm_create_depth_prompt');},
+        '#acm_depth_prompt_depth2': function () { acmSettings.updateCreateData('depth_prompt_depth', Number($('#acm_depth_prompt_depth2').val())); },
+        '#acm_depth_prompt_role2': function () { acmSettings.updateCreateData('depth_prompt_role', String($('#acm_depth_prompt_role2').val())); },
     };
 
     Object.keys(elementsToInitialize).forEach(function (id) {

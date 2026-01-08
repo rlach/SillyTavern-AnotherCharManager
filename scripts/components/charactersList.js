@@ -1,12 +1,11 @@
 import { setCharacterId, setMenuType } from '/script.js';
 import { debounce, getIdByAvatar } from '../utils.js';
 import { characters, eventSource, getThumbnailUrl, tagList, tagMap } from '../constants/context.js';
-import { selectedChar, setSearchValue, setSelectedChar } from '../constants/settings.js';
 import { fillAdvancedDefinitions, fillDetails } from './characters.js';
 import { searchAndFilter, sortCharAR } from '../services/charactersList-service.js';
-import { getSetting, updateSetting } from '../services/settings-service.js';
 import { getPreset } from '../services/presets-service.js';
-import VirtualScroller from '../classes/virtualScroller.js';
+import VirtualScroller from '../classes/VirtualScroller.js';
+import { acmSettings } from '../../index.js';
 
 let virtualScroller = null;
 export const refreshCharListDebounced = debounce((preserveScroll) => {
@@ -25,7 +24,7 @@ function createCharacterBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
 
-    const parsedThis_avatar = selectedChar !== undefined ? selectedChar : undefined;
+    const parsedThis_avatar = acmSettings.selectedChar !== undefined ? acmSettings.selectedChar : undefined;
     const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
     const isFav = (characters[id].fav || characters[id].data.extensions.fav) ? 'fav' : '';
 
@@ -122,11 +121,11 @@ export function handleContainerResize() {
  */
 export async function selectAndDisplay(avatar, scrollTo = false) {
     // Check if a visible character is already selected
-    if(typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null){
-        document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
+    if(typeof acmSettings.selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${acmSettings.selectedChar}"]`) !== null){
+        document.querySelector(`[data-avatar="${acmSettings.selectedChar}"]`).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
-    setSelectedChar(avatar);
+    acmSettings.setSelectedChar(avatar);
     setCharacterId(getIdByAvatar(avatar));
     $('#acm_export_format_popup').hide();
     window.acmIsUpdatingDetails = true;
@@ -156,10 +155,10 @@ function refreshCharList(preserveScroll = false) {
         $('#character-list').html('<span>Hmm, it seems like the character you\'re looking for is hiding out in a secret lair. Try searching for someone else instead.</span>');
     }
     else {
-        const sortingField = getSetting('sortingField');
-        const sortingOrder = getSetting('sortingOrder');
-        const dropdownUI = getSetting('dropdownUI');
-        const dropdownMode = getSetting('dropdownMode');
+        const sortingField = acmSettings.getSetting('sortingField');
+        const sortingOrder = acmSettings.getSetting('sortingOrder');
+        const dropdownUI = acmSettings.getSetting('dropdownUI');
+        const dropdownMode = acmSettings.getSetting('dropdownMode');
         const sortedList = sortCharAR(filteredChars, sortingField, sortingOrder);
 
         if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
@@ -218,7 +217,7 @@ function generateDropdown(sortedList, type) {
             return tagDropdowns + noTagsDropdown;
         },
         custom: () => {
-            const preset = getSetting('presetId');
+            const preset = acmSettings.getSetting('presetId');
             const categories = getPreset(preset).categories;
             if (categories.length === 0) {
                 return 'Looks like our categories went on vacation! 🏖️ Check back when they\'re done sunbathing!';
@@ -389,8 +388,8 @@ export function toggleTagQueries() {
  * @return {void} This function does not return a value.
  */
 export function updateSortOrder(selectedOption) {
-    updateSetting('sortingField', selectedOption.data('field'));
-    updateSetting('sortingOrder', selectedOption.data('order'));
+    acmSettings.updateSetting('sortingField', selectedOption.data('field'));
+    acmSettings.updateSetting('sortingOrder', selectedOption.data('order'));
     refreshCharListDebounced();
 }
 
@@ -401,7 +400,7 @@ export function updateSortOrder(selectedOption) {
  * @return {void} This method does not return a value.
  */
 export function updateSearchFilter(searchText) {
-    setSearchValue(String(searchText).toLowerCase());
+    acmSettings.setSearchValue(String(searchText).toLowerCase());
     refreshCharListDebounced();
 }
 
@@ -412,7 +411,7 @@ export function updateSearchFilter(searchText) {
  * @return {void} This function does not return any value.
  */
 export function toggleFavoritesOnly(isChecked) {
-    updateSetting('favOnly', isChecked);
+    acmSettings.updateSetting('favOnly', isChecked);
     refreshCharListDebounced();
 }
 

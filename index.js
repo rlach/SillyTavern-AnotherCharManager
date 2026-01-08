@@ -1,12 +1,14 @@
 // An extension that allows you to manage characters.
 import { initializeTagInput } from './scripts/services/tags-service.js';
-import { initializeSettings, migrateDropdownPresets } from './scripts/services/settings-service.js';
 import { initializeModal } from './scripts/components/modal.js';
 import { initializeEventHandlers } from './scripts/events/global-events.js';
+import SettingsManager from './scripts/classes/SettingsManager.js';
+
+export const acmSettings = new SettingsManager();
 
 jQuery(async () => {
-    await initializeSettings();
-    migrateDropdownPresets();
+    await acmSettings.init();
+    acmSettings.migrateDropdownPresets();
     await initializeModal();
     initializeEventHandlers();
     initializeTagInput();

@@ -1,31 +1,8 @@
 // Default settings for the extension
-export const extensionName = 'SillyTavern-AnotherCharManager';
-export const oldExtensionName = 'SillyTavern-AnotherTagManager';
+export const EXTENSION_NAME = 'SillyTavern-AnotherCharManager';
+export const OLD_EXTENSION_NAME = 'SillyTavern-AnotherTagManager';
 
-export let selectedChar;
-export const setSelectedChar = (value) => {
-    selectedChar = value;
-};
-
-export let searchValue = '';
-export const setSearchValue = (value) => {
-    searchValue = value;
-};
-
-export let mem_menu, mem_avatar;
-export const setMem_menu = (value) => {
-    mem_menu = value;
-};
-export const setMem_avatar = (value) => {
-    mem_avatar = value;
-};
-
-export let acm_crop_data;
-export const setCrop_data = (value) => {
-    acm_crop_data = value;
-};
-
-export const defaultSettings = {
+export const defaultSettings = Object.freeze({
     popupWidth: 50,
     sortingField: 'name',
     sortingOrder: 'asc',
@@ -40,9 +17,9 @@ export const defaultSettings = {
         { name: 'Preset 4', categories: [] },
         { name: 'Preset 5', categories: [] },
     ],
-};
+});
 
-export let create_data = {
+export const create_data = Object.freeze({
     name: '',
     description: '',
     creator_notes: '',
@@ -64,36 +41,5 @@ export let create_data = {
     depth_prompt_role: 'system',
     extensions: {},
     extra_books: [],
-};
+});
 
-export const updateCreateData = (field, value) => {
-    if (Object.prototype.hasOwnProperty.call(create_data, field)) {
-        create_data[field] = value;
-    }
-};
-
-export const resetCreateData = () => {
-    create_data = {
-        name: '',
-        description: '',
-        creator_notes: '',
-        post_history_instructions: '',
-        character_version: '',
-        system_prompt: '',
-        tags: '',
-        creator: '',
-        personality: '',
-        first_message: '',
-        avatar: null,
-        scenario: '',
-        mes_example: '',
-        world: '',
-        talkativeness: 0.5,
-        alternate_greetings: [],
-        depth_prompt_prompt: '',
-        depth_prompt_depth: 4,
-        depth_prompt_role: 'system',
-        extensions: {},
-        extra_books: [],
-    };
-};

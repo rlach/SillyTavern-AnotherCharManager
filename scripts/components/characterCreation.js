@@ -1,13 +1,8 @@
 import { getBase64Async, updateTokenCount } from '../utils.js';
 import { callGenericPopup, POPUP_TYPE, power_user, t } from '../constants/context.js';
-import {
-    create_data,
-    resetCreateData,
-    setCrop_data,
-    updateCreateData,
-} from '../constants/settings.js';
 import { createCharacter } from '../services/characters-service.js';
 import { closeDetails } from './modal.js';
+import { acmSettings } from '../../index.js';
 
 /**
  * A mapping of field names to their corresponding CSS selectors.
@@ -39,24 +34,24 @@ export function toggleCharacterCreationPopup() {
 
         closeDetails();
         // Initialize all form fields with create_data values
-        $('#acm_create_name').val(create_data.name);
-        $('#acm_create_desc').val(create_data.description);
-        $('#acm_create_first').val(create_data.first_message);
-        $('#acm_create_system_prompt').val(create_data.system_prompt);
-        $('#acm_create_post_history_instructions').val(create_data.post_history_instructions);
-        $('#acm_create_personality').val(create_data.personality);
-        $('#acm_create_scenario').val(create_data.scenario);
-        $('#acm_create_depth_prompt').val(create_data.depth_prompt_prompt);
-        $('#acm_create_mes_example').val(create_data.mes_example);
+        $('#acm_create_name').val(acmSettings.create_data.name);
+        $('#acm_create_desc').val(acmSettings.create_data.description);
+        $('#acm_create_first').val(acmSettings.create_data.first_message);
+        $('#acm_create_system_prompt').val(acmSettings.create_data.system_prompt);
+        $('#acm_create_post_history_instructions').val(acmSettings.create_data.post_history_instructions);
+        $('#acm_create_personality').val(acmSettings.create_data.personality);
+        $('#acm_create_scenario').val(acmSettings.create_data.scenario);
+        $('#acm_create_depth_prompt').val(acmSettings.create_data.depth_prompt_prompt);
+        $('#acm_create_mes_example').val(acmSettings.create_data.mes_example);
         // Metadata fields
-        $('#acm_creator_textarea2').val(create_data.creator);
-        $('#acm_character_version_textarea2').val(create_data.character_version);
-        $('#acm_creator_notes_textarea2').val(create_data.creator_notes);
-        $('#acm_tags_textarea2').val(create_data.tags);
+        $('#acm_creator_textarea2').val(acmSettings.create_data.creator);
+        $('#acm_character_version_textarea2').val(acmSettings.create_data.character_version);
+        $('#acm_creator_notes_textarea2').val(acmSettings.create_data.creator_notes);
+        $('#acm_tags_textarea2').val(acmSettings.create_data.tags);
         // Numeric/select fields
-        $('#acm_depth_prompt_depth2').val(create_data.depth_prompt_depth);
-        $('#acm_depth_prompt_role2').val(create_data.depth_prompt_role);
-        $('#acm_talkativeness_slider2').val(create_data.talkativeness);
+        $('#acm_depth_prompt_depth2').val(acmSettings.create_data.depth_prompt_depth);
+        $('#acm_depth_prompt_role2').val(acmSettings.create_data.depth_prompt_role);
+        $('#acm_talkativeness_slider2').val(acmSettings.create_data.talkativeness);
         // Tags input field
         $('#acmTagInput').empty();
 
@@ -120,7 +115,7 @@ export function closeCreationPopup() {
     // Hide the popup after the transition is complete
     setTimeout(function () { $('#acm_create_popup').css('display', 'none'); }, 125);
     // Reset the character creation data to its default state
-    resetCreateData();
+    acmSettings.resetCreateData();
     // Update token counts for all fields in the form
     Object.values(FIELD_CONFIGURATIONS).forEach(selector => {
         updateTokenCount(`${selector}`);
@@ -147,9 +142,9 @@ export function closeCreationPopup() {
 export async function loadAvatar(input) {
     if (input.files && input.files[0]) {
         // Update the avatar data in the creation settings
-        updateCreateData('avatar', input.files);
+        acmSettings.updateCreateData('avatar', input.files);
         // Reset the crop data
-        setCrop_data(undefined);
+        acmSettings.setCrop_data(undefined);
         const file = input.files[0];
         const fileData = await getBase64Async(file);
         // Check if the user has disabled avatar resizing
@@ -162,7 +157,7 @@ export async function loadAvatar(input) {
                 return;
             }
             // Save the crop data and set the cropped image as the avatar
-            setCrop_data(dlg.cropData);
+            acmSettings.setCrop_data(dlg.cropData);
             $('#acm_create_avatar').attr('src', String(croppedImage));
         } else {
             // Directly set the Base64 image as the avatar
@@ -190,44 +185,44 @@ export async function initiateCharacterCreation(){
     }
     const formData = new FormData();
     // Add simple fields (string, number) to the form data
-    formData.append('ch_name', create_data.name || '');
-    formData.append('description', create_data.description || '');
-    formData.append('creator_notes', create_data.creator_notes || '');
-    formData.append('post_history_instructions', create_data.post_history_instructions || '');
-    formData.append('character_version', create_data.character_version || '');
-    formData.append('system_prompt', create_data.system_prompt || '');
-    formData.append('tags', create_data.tags || '');
-    formData.append('creator', create_data.creator || '');
-    formData.append('personality', create_data.personality || '');
-    formData.append('first_mes', create_data.first_message || '');
-    formData.append('scenario', create_data.scenario || '');
-    formData.append('mes_example', create_data.mes_example || '');
-    formData.append('world', create_data.world || '');
-    formData.append('talkativeness', create_data.talkativeness);
-    formData.append('depth_prompt_prompt', create_data.depth_prompt_prompt || '');
-    formData.append('depth_prompt_depth', create_data.depth_prompt_depth);
-    formData.append('depth_prompt_role', create_data.depth_prompt_role);
+    formData.append('ch_name', acmSettings.create_data.name || '');
+    formData.append('description', acmSettings.create_data.description || '');
+    formData.append('creator_notes', acmSettings.create_data.creator_notes || '');
+    formData.append('post_history_instructions', acmSettings.create_data.post_history_instructions || '');
+    formData.append('character_version', acmSettings.create_data.character_version || '');
+    formData.append('system_prompt', acmSettings.create_data.system_prompt || '');
+    formData.append('tags', acmSettings.create_data.tags || '');
+    formData.append('creator', acmSettings.create_data.creator || '');
+    formData.append('personality', acmSettings.create_data.personality || '');
+    formData.append('first_mes', acmSettings.create_data.first_message || '');
+    formData.append('scenario', acmSettings.create_data.scenario || '');
+    formData.append('mes_example', acmSettings.create_data.mes_example || '');
+    formData.append('world', acmSettings.create_data.world || '');
+    formData.append('talkativeness', acmSettings.create_data.talkativeness);
+    formData.append('depth_prompt_prompt', acmSettings.create_data.depth_prompt_prompt || '');
+    formData.append('depth_prompt_depth', acmSettings.create_data.depth_prompt_depth);
+    formData.append('depth_prompt_role', acmSettings.create_data.depth_prompt_role);
     formData.append('fav', false);
     formData.append('json_data', '');
     formData.append('chat', '');
     formData.append('create_date', '');
     formData.append('last_mes', '');
     formData.append('avatar_url', '');
-    // Add avatar file if it exists
-    if (create_data.avatar) {
-        if (create_data.avatar instanceof FileList) {
-            formData.append('avatar', create_data.avatar[0]);
-        } else if (create_data.avatar instanceof File) {
-            formData.append('avatar', create_data.avatar);
+    // Add an avatar file if it exists
+    if (acmSettings.create_data.avatar) {
+        if (acmSettings.create_data.avatar instanceof FileList) {
+            formData.append('avatar', acmSettings.create_data.avatar[0]);
+        } else if (acmSettings.create_data.avatar instanceof File) {
+            formData.append('avatar', acmSettings.create_data.avatar);
         }
     }
     // Add alternate greetings to the form data
-    for (const value of create_data.alternate_greetings) {
+    for (const value of acmSettings.create_data.alternate_greetings) {
         formData.append('alternate_greetings', value);
     }
     // Add extra books and extensions as JSON strings
-    formData.append('extra_books', JSON.stringify(create_data.extra_books));
-    formData.append('extensions', JSON.stringify(create_data.extensions));
+    formData.append('extra_books', JSON.stringify(acmSettings.create_data.extra_books));
+    formData.append('extensions', JSON.stringify(acmSettings.create_data.extensions));
     // Submit the form data to create the character
     await createCharacter(formData);
 }

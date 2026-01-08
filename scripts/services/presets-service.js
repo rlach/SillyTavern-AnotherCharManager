@@ -1,4 +1,4 @@
-import { getSetting, updateSetting } from './settings-service.js';
+import { acmSettings } from '../../index.js';
 
 /**
  * Gets a specific preset by index
@@ -6,10 +6,10 @@ import { getSetting, updateSetting } from './settings-service.js';
  * @returns {Object} - The preset object
  */
 export function getPreset(presetIndex) {
-    if (presetIndex < 0 || presetIndex >= getSetting('dropdownPresets').length) {
+    if (presetIndex < 0 || presetIndex >= acmSettings.getSetting('dropdownPresets').length) {
         throw new Error('Invalid preset index');
     }
-    return { ...getSetting('dropdownPresets')[presetIndex] };
+    return { ...acmSettings.getSetting('dropdownPresets')[presetIndex] };
 }
 
 /**
@@ -32,18 +32,18 @@ export function getCategory(presetIndex, categoryIndex) {
  * @param {string} name - The new name for the preset
  */
 export function updatePresetName(presetIndex, name) {
-    if (presetIndex < 0 || presetIndex >= getSetting('dropdownPresets').length) {
+    if (presetIndex < 0 || presetIndex >= acmSettings.getSetting('dropdownPresets').length) {
         throw new Error('Invalid preset index');
     }
     if (typeof name !== 'string' || name.trim() === '') {
         throw new Error('Preset name must be a non-empty string');
     }
-    const updatedPresets = [...getSetting('dropdownPresets')];
+    const updatedPresets = [...acmSettings.getSetting('dropdownPresets')];
     updatedPresets[presetIndex] = {
         ...updatedPresets[presetIndex],
         name: name,
     };
-    updateSetting('dropdownPresets', updatedPresets);
+    acmSettings.updateSetting('dropdownPresets', updatedPresets);
 }
 
 /**
@@ -52,7 +52,7 @@ export function updatePresetName(presetIndex, name) {
  * @param {Array} categories - The new array of categories
  */
 export function updatePresetCategories(presetIndex, categories) {
-    if (presetIndex < 0 || presetIndex >= getSetting('dropdownPresets').length) {
+    if (presetIndex < 0 || presetIndex >= acmSettings.getSetting('dropdownPresets').length) {
         throw new Error('Invalid preset index');
     }
     if (!Array.isArray(categories)) {
@@ -65,12 +65,12 @@ export function updatePresetCategories(presetIndex, categories) {
     )) {
         throw new Error('Invalid category format. Each category must have a name (string) and tags (array)');
     }
-    const updatedPresets = [...getSetting('dropdownPresets')];
+    const updatedPresets = [...acmSettings.getSetting('dropdownPresets')];
     updatedPresets[presetIndex] = {
         ...updatedPresets[presetIndex],
         categories: [...categories],
     };
-    updateSetting('dropdownPresets', updatedPresets);
+    acmSettings.updateSetting('dropdownPresets', updatedPresets);
 }
 
 /**
@@ -82,12 +82,12 @@ export function addPresetCategory(presetIndex, name) {
     if (typeof name !== 'string' || name.trim() === '') {
         throw new Error('Category name must be a non-empty string');
     }
-    const updatedPresets = [...getSetting('dropdownPresets')];
+    const updatedPresets = [...acmSettings.getSetting('dropdownPresets')];
     updatedPresets[presetIndex] = {
         ...updatedPresets[presetIndex],
         categories: [...updatedPresets[presetIndex].categories, { name, tags: [] }],
     };
-    updateSetting('dropdownPresets', updatedPresets);
+    acmSettings.updateSetting('dropdownPresets', updatedPresets);
 }
 
 /**
@@ -104,12 +104,12 @@ export function updateCategoryName(presetIndex, categoryIndex, name) {
     if (typeof name !== 'string' || name.trim() === '') {
         throw new Error('Category name must be a non-empty string');
     }
-    const updatedPresets = [...getSetting('dropdownPresets')];
+    const updatedPresets = [...acmSettings.getSetting('dropdownPresets')];
     updatedPresets[presetIndex].categories[categoryIndex] = {
         ...updatedPresets[presetIndex].categories[categoryIndex],
         name,
     };
-    updateSetting('dropdownPresets', updatedPresets);
+    acmSettings.updateSetting('dropdownPresets', updatedPresets);
 }
 
 /**
@@ -122,10 +122,10 @@ export function removePresetCategory(presetIndex, categoryIndex) {
     if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
         throw new Error('Invalid category index');
     }
-    const updatedPresets = [...getSetting('dropdownPresets')];
+    const updatedPresets = [...acmSettings.getSetting('dropdownPresets')];
     updatedPresets[presetIndex].categories = updatedPresets[presetIndex].categories
         .filter((_, index) => index !== categoryIndex);
-    updateSetting('dropdownPresets', updatedPresets);
+    acmSettings.updateSetting('dropdownPresets', updatedPresets);
 }
 
 /**
@@ -139,9 +139,9 @@ export function addTagToCategory(presetIndex, categoryIndex, tagId) {
     if (category.tags.includes(tagId)) {
         return; // Tag already exists in category
     }
-    const updatedPresets = [...getSetting('dropdownPresets')];
+    const updatedPresets = [...acmSettings.getSetting('dropdownPresets')];
     updatedPresets[presetIndex].categories[categoryIndex].tags.push(tagId);
-    updateSetting('dropdownPresets', updatedPresets);
+    acmSettings.updateSetting('dropdownPresets', updatedPresets);
 }
 
 /**
@@ -151,9 +151,9 @@ export function addTagToCategory(presetIndex, categoryIndex, tagId) {
  * @param {number} tagId - The ID of the tag to remove
  */
 export function removeTagFromCategory(presetIndex, categoryIndex, tagId) {
-    const updatedPresets = [...getSetting('dropdownPresets')];
+    const updatedPresets = [...acmSettings.getSetting('dropdownPresets')];
     updatedPresets[presetIndex].categories[categoryIndex].tags =
         updatedPresets[presetIndex].categories[categoryIndex].tags
             .filter(id => id !== tagId);
-    updateSetting('dropdownPresets', updatedPresets);
+    acmSettings.updateSetting('dropdownPresets', updatedPresets);
 }

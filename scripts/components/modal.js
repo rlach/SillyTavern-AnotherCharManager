@@ -1,20 +1,10 @@
-import {
-    extensionName,
-    mem_avatar,
-    mem_menu,
-    oldExtensionName,
-    selectedChar,
-    setMem_avatar,
-    setMem_menu,
-    setSelectedChar,
-} from '../constants/settings.js';
 import { characterId, characters, menuType, renderExtensionTemplateAsync } from '../constants/context.js';
-import { getSetting } from '../services/settings-service.js';
 import { getIdByAvatar } from '../utils.js';
 import { setCharacterId, setMenuType } from '/script.js';
 import { Popper } from '/lib.js';
 import { updateDropdownPresetNames } from './charactersList.js';
 import { updateLayout } from './characterCreation.js';
+import { acmSettings } from '../../index.js';
 
 /**
  * Initializes the modal component
@@ -23,11 +13,11 @@ export async function initializeModal() {
     // Load the modal HTML template
     let modalHtml;
     try {
-        modalHtml = await renderExtensionTemplateAsync(`third-party/${extensionName}/templates`, 'modal');
+        modalHtml = await renderExtensionTemplateAsync(`third-party/${acmSettings.extensionName}/templates`, 'modal');
     } catch (error) {
         console.error('Error fetching modal.html. This is a normal error if you have the old folder name and you don\'t have to do anything.');
         try {
-            modalHtml = await renderExtensionTemplateAsync(`third-party/${oldExtensionName}/templates`, 'modal');
+            modalHtml = await renderExtensionTemplateAsync(`third-party/${acmSettings.oldExtensionName}/templates`, 'modal');
         } catch (secondError) {
             console.error('Error fetching modal.html:', secondError);
             return;
@@ -42,7 +32,7 @@ export async function initializeModal() {
     // Add the modal HTML to the page
     $('#background_template').after(modalHtml);
 
-    const initialWidth = getSetting('popupWidth');
+    const initialWidth = acmSettings.getSetting('popupWidth');
     $('#acm_popup').css('width', initialWidth + '%');
     $('#acm_widthSlider').val(initialWidth);
 
@@ -106,11 +96,11 @@ export function openModal() {
 
     // Memorize some global variables
     if (characterId !== undefined && characterId >= 0) {
-        setMem_avatar(characters[characterId].avatar);
+        acmSettings.setMem_avatar(characters[characterId].avatar);
     } else {
-        setMem_avatar(undefined);
+        acmSettings.setMem_avatar(undefined);
     }
-    setMem_menu(menuType);
+    acmSettings.setMem_menu(menuType);
 
     document.querySelector('#acm_lock').classList.add('is-active');
 
@@ -127,9 +117,9 @@ export function openModal() {
         const field = option.getAttribute('data-field');
         const order = option.getAttribute('data-order');
 
-        option.selected = field === getSetting('sortingField') && order === getSetting('sortingOrder');
+        option.selected = field === acmSettings.getSetting('sortingField') && order === acmSettings.getSetting('sortingOrder');
     });
-    document.getElementById('favOnly_checkbox').checked = getSetting('favOnly');
+    document.getElementById('favOnly_checkbox').checked = acmSettings.getSetting('favOnly');
 }
 
 /**
@@ -139,13 +129,13 @@ export function openModal() {
  * @return {void} Does not return a value.
  */
 export function closeDetails( reset = true ) {
-    if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
+    if(reset){ setCharacterId(getIdByAvatar(acmSettings.mem_avatar)); }
 
     $('#acm_export_format_popup').hide();
-    document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected','char_select');
+    document.querySelector(`[data-avatar="${acmSettings.selectedChar}"]`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').classList.remove('open');
     document.getElementById('char-sep').style.display = 'none';
-    setSelectedChar(undefined);
+    acmSettings.setSelectedChar(undefined);
 }
 
 /**
@@ -155,9 +145,9 @@ export function closeDetails( reset = true ) {
  */
 export function closeModal() {
     closeDetails();
-    setCharacterId(getIdByAvatar(mem_avatar));
-    setMenuType(mem_menu);
-    setMem_avatar(undefined);
+    setCharacterId(getIdByAvatar(acmSettings.mem_avatar));
+    setMenuType(acmSettings.mem_menu);
+    acmSettings.setMem_avatar(undefined);
 
     document.querySelector('#acm_lock').classList.remove('is-active');
 

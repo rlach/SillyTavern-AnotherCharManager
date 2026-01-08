@@ -20,14 +20,9 @@ import {
 } from '../constants/context.js';
 import { debounce, delay } from '../utils.js';
 import { renameTagKey } from './tags-service.js';
-import {
-    acm_crop_data,
-    selectedChar,
-    setCrop_data,
-    setSelectedChar,
-} from '../constants/settings.js';
 import { closeCreationPopup } from '../components/characterCreation.js';
 import { refreshCharListDebounced, selectAndDisplay } from '../components/charactersList.js';
+import { acmSettings } from '../../index.js';
 
 // Create a debounced version of editChar
 export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
@@ -205,7 +200,7 @@ export async function renameChar(oldAvatar, charID, newName) {
                 if (newChId !== -1) {
                     // Select the character after the renaming
                     setCharacterId(newChId);
-                    setSelectedChar(newAvatar);
+                    acmSettings.setSelectedChar(newAvatar);
 
                     // Async delay to update UI
                     await delay(1);
@@ -356,7 +351,7 @@ function generateGreetingArray() {
 export async function saveAltGreetings(event = null){
     const greetings = generateGreetingArray();
     const update = {
-        avatar: selectedChar,
+        avatar: acmSettings.selectedChar,
         data: {
             alternate_greetings: greetings,
         },
@@ -387,8 +382,8 @@ export async function createCharacter(formData) {
     try {
         let url = '/api/characters/create';
         const headers = getRequestHeaders({ omitContentType: true });
-        if (acm_crop_data != undefined) {
-            url += `?crop=${encodeURIComponent(JSON.stringify(acm_crop_data))}`;
+        if (acmSettings.acm_crop_data != undefined) {
+            url += `?crop=${encodeURIComponent(JSON.stringify(acmSettings.acm_crop_data))}`;
         }
         const rawFile = formData.get('avatar');
         if (rawFile instanceof File) {
@@ -408,7 +403,7 @@ export async function createCharacter(formData) {
 
         const avatarId = await fetchResult.text();
         createTagMapFromList('#acmTagList', avatarId);
-        setCrop_data(undefined);
+        acmSettings.setCrop_data(undefined);
         await delay(500);
         closeCreationPopup();
         await getCharacters();

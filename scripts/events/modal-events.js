@@ -6,9 +6,9 @@ import {
     openModal,
     toggleDropdownMenus,
 } from '../components/modal.js';
-import { getSetting, updateSetting } from '../services/settings-service.js';
 import { handleContainerResize, refreshCharListDebounced } from '../components/charactersList.js';
 import { manageCustomCategories, printCategoriesList } from '../components/presets.js';
+import { acmSettings } from '../../index.js';
 
 /**
  * Initializes external menu events by attaching event listeners to specified menu elements.
@@ -74,7 +74,7 @@ export function initializeModalEvents() {
         const newWidth = $(this).val();
         $popup.css('width', newWidth + '%');
         $preview.hide();
-        updateSetting('popupWidth', newWidth);
+        acmSettings.updateSetting('popupWidth', newWidth);
 
         // Refresh virtual scroller after resize
         requestAnimationFrame(() => {
@@ -103,41 +103,41 @@ export function initializeUIMenuEvents() {
 
     const menuActions = {
         '#acm_switch_classic': () => {
-            if (getSetting('dropdownUI')) {
-                updateSetting('dropdownUI', false);
+            if (acmSettings.getSetting('dropdownUI')) {
+                acmSettings.updateSetting('dropdownUI', false);
                 refreshCharListDebounced();
             }
         },
         '#acm_switch_alltags': () => {
-            if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'allTags')) {
-                updateSetting('dropdownUI', true);
-                updateSetting('dropdownMode', 'allTags');
+            if (!acmSettings.getSetting('dropdownUI') || (acmSettings.getSetting('dropdownUI') && acmSettings.getSetting('dropdownMode') !== 'allTags')) {
+                acmSettings.updateSetting('dropdownUI', true);
+                acmSettings.updateSetting('dropdownMode', 'allTags');
                 refreshCharListDebounced();
             }
         },
         '#acm_switch_creators': () => {
-            if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'creators')) {
-                updateSetting('dropdownUI', true);
-                updateSetting('dropdownMode', 'creators');
+            if (!acmSettings.getSetting('dropdownUI') || (acmSettings.getSetting('dropdownUI') && acmSettings.getSetting('dropdownMode') !== 'creators')) {
+                acmSettings.updateSetting('dropdownUI', true);
+                acmSettings.updateSetting('dropdownMode', 'creators');
                 refreshCharListDebounced();
             }
         },
         '#acm_manage_categories': () => {
             manageCustomCategories();
             const selectedPreset = $('#preset_selector option:selected').data('preset');
-            if (getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom') {
+            if (acmSettings.getSetting('dropdownUI') && acmSettings.getSetting('dropdownMode') === 'custom') {
                 $('.popup-button-ok').on('click', refreshCharListDebounced);
             }
             printCategoriesList(selectedPreset, true);
         },
         '[data-ui="preset"]': function() {
             const presetId = $(this).data('preset');
-            if (!getSetting('dropdownUI') ||
-                (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'custom') ||
-                (getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom' && getSetting('presetId') !== presetId)) {
-                updateSetting('dropdownUI', true);
-                updateSetting('dropdownMode', 'custom');
-                updateSetting('presetId', presetId);
+            if (!acmSettings.getSetting('dropdownUI') ||
+                (acmSettings.getSetting('dropdownUI') && acmSettings.getSetting('dropdownMode') !== 'custom') ||
+                (acmSettings.getSetting('dropdownUI') && acmSettings.getSetting('dropdownMode') === 'custom' && acmSettings.getSetting('presetId') !== presetId)) {
+                acmSettings.updateSetting('dropdownUI', true);
+                acmSettings.updateSetting('dropdownMode', 'custom');
+                acmSettings.updateSetting('presetId', presetId);
                 refreshCharListDebounced();
             }
         },

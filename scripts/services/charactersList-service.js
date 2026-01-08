@@ -1,8 +1,6 @@
-// import { Fuse } from '/lib.js';
-import { getSetting } from './settings-service.js';
 import { characters, tagList, tagMap } from '../constants/context.js';
-import { searchValue } from '../constants/settings.js';
 const { Fuse } = SillyTavern.libs;
+import { acmSettings } from '../../index.js';
 /**
  * Filters and searches through a list of characters based on user-defined criteria such as tags, favorites,
  * and a search query. The method utilizes settings, tag filters, and fuzzy search to return a filtered list
@@ -18,7 +16,7 @@ const { Fuse } = SillyTavern.libs;
  */
 export function searchAndFilter(){
     let filteredChars = [];
-    const charactersCopy = getSetting('favOnly')
+    const charactersCopy = acmSettings.getSetting('favOnly')
         ? [...characters].filter(character => character.fav === true || character.data.extensions.fav === true)
         : [...characters];
 
@@ -51,8 +49,8 @@ export function searchAndFilter(){
         return true;
     });
 
-    if (searchValue !== '') {
-        const searchValueTrimmed = searchValue.trim();
+    if (acmSettings.searchValue !== '') {
+        const searchValueTrimmed = acmSettings.searchValue.trim();
         const searchField = $('#search_filter_dropdown').val();
 
         let fuseOptions;

@@ -18,7 +18,6 @@ import {
     tagMap,
     unshallowCharacter,
 } from '../constants/context.js';
-import { selectedChar, setMem_avatar } from '../constants/settings.js';
 import {
     dupeChar,
     editCharDebounced,
@@ -29,6 +28,7 @@ import {
 } from '../services/characters-service.js';
 import { addAltGreetingsTrigger } from '../events/characters-events.js';
 import { closeDetails } from './modal.js';
+import { acmSettings } from '../../index.js';
 
 /**
  * Fills the character details in the user interface based on the provided avatar.
@@ -133,12 +133,12 @@ export async function fillAdvancedDefinitions(avatar) {
  */
 export function toggleFavoriteStatus() {
     // Retrieve the ID of the currently selected character
-    const id = getIdByAvatar(selectedChar);
+    const id = getIdByAvatar(acmSettings.selectedChar);
     // Determine the current favorite status of the character
     const isFavorite = characters[id].fav || characters[id].data.extensions.fav;
     // Prepare the updated data object with the toggled favorite status
     const update = {
-        avatar: selectedChar,
+        avatar: acmSettings.selectedChar,
         fav: !isFavorite,
         data: {
             extensions: {
@@ -166,7 +166,7 @@ export function toggleFavoriteStatus() {
  * @return {void} This function does not return a value.
  */
 export function exportCharacter(format) {
-    exportChar(format, selectedChar);
+    exportChar(format, acmSettings.selectedChar);
 }
 
 /**
@@ -178,7 +178,7 @@ export function exportCharacter(format) {
  * @return {Promise<void>} A promise that resolves once the character duplication process is complete.
  */
 export async function duplicateCharacter() {
-    if (!selectedChar) {
+    if (!acmSettings.selectedChar) {
         // Display a warning if no character is selected
         toastr.warning('You must first select a character to duplicate!');
         return;
@@ -191,7 +191,7 @@ export async function duplicateCharacter() {
         return;
     }
     // Duplicate the selected character
-    await dupeChar(selectedChar);
+    await dupeChar(acmSettings.selectedChar);
 }
 
 /**
@@ -233,9 +233,9 @@ export async function showRenameDialog(characterAvatar) {
  * @return {Promise<void>} A promise that resolves once the character's name has been successfully updated.
  */
 export async function renameCharacter() {
-    const charID = getIdByAvatar(selectedChar);
-    const newName = await showRenameDialog(selectedChar);
-    await renameChar(selectedChar, charID, newName);
+    const charID = getIdByAvatar(acmSettings.selectedChar);
+    const newName = await showRenameDialog(acmSettings.selectedChar);
+    await renameChar(acmSettings.selectedChar, charID, newName);
 }
 
 /**
@@ -248,8 +248,8 @@ export async function renameCharacter() {
  */
 export function openCharacterChat() {
     setCharacterId(undefined);
-    setMem_avatar(undefined);
-    selectCharacterById(getIdByAvatar(selectedChar));
+    acmSettings.setMem_avatar(undefined);
+    selectCharacterById(getIdByAvatar(acmSettings.selectedChar));
     closeDetails(false);
 
     $('#acm_popup').transition({
@@ -332,22 +332,22 @@ export async function update_avatar(input){
 
             try {
                 // Replace the avatar with the cropped image
-                await replaceAvatar(file, getIdByAvatar(selectedChar), crop_data);
+                await replaceAvatar(file, getIdByAvatar(acmSettings.selectedChar), crop_data);
                 // Update the avatar image in the UI with a cache-busting timestamp
-                const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
+                const newImageUrl = getThumbnailUrl('avatar', acmSettings.selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
+                $(`[data-avatar="${acmSettings.selectedChar}"]`).attr('src', newImageUrl);
             } catch {
                 toastr.error('Something went wrong.'); // Display an error message if the update fails
             }
         } else {
             try {
                 // Replace the avatar without cropping
-                await replaceAvatar(file, getIdByAvatar(selectedChar));
+                await replaceAvatar(file, getIdByAvatar(acmSettings.selectedChar));
                 // Update the avatar image in the UI with a cache-busting timestamp
-                const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
+                const newImageUrl = getThumbnailUrl('avatar', acmSettings.selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
+                $(`[data-avatar="${acmSettings.selectedChar}"]`).attr('src', newImageUrl);
             } catch {
                 toastr.error('Something went wrong.'); // Display an error message if the update fails
             }
