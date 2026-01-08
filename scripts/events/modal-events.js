@@ -1,14 +1,14 @@
-import { resetScrollHeight } from "../utils.js";
+import { resetScrollHeight } from '../utils.js';
 import {
     closeDetails,
     closeModal,
     initializeDropdownClickOutside,
     openModal,
-    toggleDropdownMenus
-} from "../components/modal.js";
-import { getSetting, updateSetting } from "../services/settings-service.js";
-import { handleContainerResize, refreshCharListDebounced } from "../components/charactersList.js";
-import { manageCustomCategories, printCategoriesList } from "../components/presets.js";
+    toggleDropdownMenus,
+} from '../components/modal.js';
+import { getSetting, updateSetting } from '../services/settings-service.js';
+import { handleContainerResize, refreshCharListDebounced } from '../components/charactersList.js';
+import { manageCustomCategories, printCategoriesList } from '../components/presets.js';
 
 /**
  * Initializes external menu events by attaching event listeners to specified menu elements.
@@ -52,7 +52,7 @@ export function initializeModalEvents() {
     });
 
     // Trigger when the modal is closed to reset some global parameters
-    $('#acm_popup_close').on("click", function () {
+    $('#acm_popup_close').on('click', function () {
         closeModal();
     });
 
@@ -68,7 +68,7 @@ export function initializeModalEvents() {
     $slider.on('input', function () {
         $preview.show().css({
             'width': $(this).val() + '%',
-            'height': $popup.outerHeight() + 'px'
+            'height': $popup.outerHeight() + 'px',
         });
     }).on('change', function () {
         const newWidth = $(this).val();
@@ -91,13 +91,13 @@ export function initializeModalEvents() {
  * @return {void} This method does not return a value.
  */
 export function initializeUIMenuEvents() {
-    $('#acm_switch_ui').on("click", () => {
+    $('#acm_switch_ui').on('click', () => {
         toggleDropdownMenus({ menuToToggle: 'main' });
     });
-    $('#acm_dropdown_sub').on("click", () => {
+    $('#acm_dropdown_sub').on('click', () => {
         toggleDropdownMenus({ menuToToggle: 'sub' });
     });
-    $('#acm_dropdown_cat').on("click", () => {
+    $('#acm_dropdown_cat').on('click', () => {
         toggleDropdownMenus({ menuToToggle: 'preset' });
     });
 
@@ -111,14 +111,14 @@ export function initializeUIMenuEvents() {
         '#acm_switch_alltags': () => {
             if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'allTags')) {
                 updateSetting('dropdownUI', true);
-                updateSetting('dropdownMode', "allTags");
+                updateSetting('dropdownMode', 'allTags');
                 refreshCharListDebounced();
             }
         },
         '#acm_switch_creators': () => {
             if (!getSetting('dropdownUI') || (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'creators')) {
                 updateSetting('dropdownUI', true);
-                updateSetting('dropdownMode', "creators");
+                updateSetting('dropdownMode', 'creators');
                 refreshCharListDebounced();
             }
         },
@@ -136,11 +136,11 @@ export function initializeUIMenuEvents() {
                 (getSetting('dropdownUI') && getSetting('dropdownMode') !== 'custom') ||
                 (getSetting('dropdownUI') && getSetting('dropdownMode') === 'custom' && getSetting('presetId') !== presetId)) {
                 updateSetting('dropdownUI', true);
-                updateSetting('dropdownMode', "custom");
+                updateSetting('dropdownMode', 'custom');
                 updateSetting('presetId', presetId);
                 refreshCharListDebounced();
             }
-        }
+        },
     };
 
     Object.entries(menuActions).forEach(([selector, action]) => {

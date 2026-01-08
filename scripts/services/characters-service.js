@@ -16,8 +16,8 @@ import {
     getTokenCountAsync,
     POPUP_TYPE,
     saveSettingsDebounced,
-    substituteParams, t
-} from "../constants/context.js";
+    substituteParams, t,
+} from '../constants/context.js';
 import { debounce, delay } from '../utils.js';
 import { renameTagKey } from './tags-service.js';
 import {
@@ -26,8 +26,8 @@ import {
     setCrop_data,
     setSelectedChar,
 } from '../constants/settings.js';
-import { closeCreationPopup } from "../components/characterCreation.js";
-import {refreshCharListDebounced, selectAndDisplay} from "../components/charactersList.js";
+import { closeCreationPopup } from '../components/characterCreation.js';
+import { refreshCharListDebounced, selectAndDisplay } from '../components/charactersList.js';
 
 // Create a debounced version of editChar
 export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
@@ -39,7 +39,7 @@ export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
  */
 export async function checkApiAvailability() {
     try {
-        const response = await fetch('/api/plugins/avataredit/probe', {method: 'POST', headers: getRequestHeaders()});
+        const response = await fetch('/api/plugins/avataredit/probe', { method: 'POST', headers: getRequestHeaders() });
         return response.status === 204;
     } catch (err) {
         console.error('Error checking API availability:', err);
@@ -120,7 +120,7 @@ export async function replaceAvatar(newAvatar, id, crop_data = undefined) {
             error: function (jqXHR, exception) {
                 toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format. Double check that the image is not a webp.');
                 reject();
-            }
+            },
         });
     });
 }

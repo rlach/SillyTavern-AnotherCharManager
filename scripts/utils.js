@@ -1,4 +1,4 @@
-import { characters, getTokenCountAsync, substituteParams } from "./constants/context.js";
+import { characters, getTokenCountAsync, substituteParams } from './constants/context.js';
 
 /**
  * Creates a debounced version of the provided function that delays its execution

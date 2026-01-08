@@ -1,7 +1,7 @@
 // import { Fuse } from '/lib.js';
-import { getSetting } from "./settings-service.js";
-import { characters, tagList, tagMap } from "../constants/context.js";
-import { searchValue } from "../constants/settings.js";
+import { getSetting } from './settings-service.js';
+import { characters, tagList, tagMap } from '../constants/context.js';
+import { searchValue } from '../constants/settings.js';
 const { Fuse } = SillyTavern.libs;
 /**
  * Filters and searches through a list of characters based on user-defined criteria such as tags, favorites,
@@ -79,7 +79,7 @@ export function searchAndFilter(){
                     includeScore: true,
                 };
                 break;
-            case 'tags':
+            case 'tags': {
                 // For tags, we'll search tag names first, then filter characters
                 const tagFuseOptions = {
                     keys: ['name'],
@@ -94,6 +94,7 @@ export function searchAndFilter(){
                     return (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
                 });
                 return filteredChars;
+            }
         }
 
         const fuse = new Fuse(tagfilteredChars, fuseOptions);

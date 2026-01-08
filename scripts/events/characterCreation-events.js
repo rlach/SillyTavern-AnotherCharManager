@@ -1,10 +1,11 @@
 import {
     closeCreationPopup,
     updateLayout,
-    loadAvatar, initiateCharacterCreation
-} from "../components/characterCreation.js";
-import { updateTokenCount } from "../utils.js";
-import { updateCreateData} from "../constants/settings.js";
+    loadAvatar,
+    initiateCharacterCreation,
+} from '../components/characterCreation.js';
+import { updateTokenCount } from '../utils.js';
+import { updateCreateData } from '../constants/settings.js';
 
 /**
  * Initializes event listeners for the character creation interface. Binds input events to update relevant character creation data and adds functionality for character creation operations such as creating a character, closing the popup, toggling the layout, and adding an avatar.
@@ -39,12 +40,12 @@ export function initializeCharacterCreationEvents() {
     });
 
     // Create the character
-    $('#acm_create_popup_create').on("click", function () {
+    $('#acm_create_popup_create').on('click', function () {
         initiateCharacterCreation();
     });
 
     // Close character creation popup
-    $('#acm_create_popup_close').on("click", function () {
+    $('#acm_create_popup_close').on('click', function () {
         closeCreationPopup();
     });
 

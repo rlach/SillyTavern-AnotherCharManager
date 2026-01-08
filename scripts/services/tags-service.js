@@ -3,10 +3,10 @@ import {
     tagList,
     tagMap,
     power_user,
-    saveSettingsDebounced
-} from "../constants/context.js";
+    saveSettingsDebounced,
+} from '../constants/context.js';
 import { createTagInput } from '/scripts/tags.js';
-import { acmCreateTagInput } from "../components/tags.js";
+import { acmCreateTagInput } from '../components/tags.js';
 
 
 /**
@@ -22,12 +22,12 @@ export function initializeTagInput() {
     const multiInputs = [
         '#acm_mandatoryInput',
         '#acm_facultativeInput',
-        '#acm_excludedInput'
+        '#acm_excludedInput',
     ];
     const multiLists = [
         '#acm_mandatoryTags',
         '#acm_facultativeTags',
-        '#acm_excludedTags'
+        '#acm_excludedTags',
     ];
 
     acmCreateTagInput(multiInputs, multiLists, { tagOptions: { removable: true } }, 'multiple');

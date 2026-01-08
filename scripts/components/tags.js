@@ -1,8 +1,8 @@
-import { tagList } from "../constants/context.js";
-import { refreshCharListDebounced } from "./charactersList.js";
-import { acmFindTagMulti, findTag } from "../services/tags-service.js";
-import { equalsIgnoreCaseAndAccents } from "../utils.js";
-import { addTagToCategory } from "../services/presets-service.js";
+import { tagList } from '../constants/context.js';
+import { refreshCharListDebounced } from './charactersList.js';
+import { acmFindTagMulti, findTag } from '../services/tags-service.js';
+import { equalsIgnoreCaseAndAccents } from '../utils.js';
+import { addTagToCategory } from '../services/presets-service.js';
 
 /**
  * Renders a tag as an HTML string based on the provided tag ID and an optional display mode.
@@ -12,19 +12,19 @@ import { addTagToCategory } from "../services/presets-service.js";
  * @return {string} The HTML string representation of the tag. Returns an empty string if the tag ID is not found.
  */
 export function displayTag(tagId, mode = 'classic') {
-    let tagClass = "fa-solid fa-circle-xmark ";
+    let tagClass = 'fa-solid fa-circle-xmark ';
     let identityAttr = `data-tagid="${tagId}"`;
 
     switch (mode) {
         case 'category':
-            tagClass += "tag_cat_remove";
+            tagClass += 'tag_cat_remove';
             break;
         case 'details':
-            tagClass += "tag_remove";
+            tagClass += 'tag_remove';
             identityAttr = `id="${tagId}"`;
             break;
         default:
-            tagClass += "tag_acm_remove";
+            tagClass += 'tag_acm_remove';
             break;
     }
 
@@ -98,12 +98,12 @@ function onTagInputFocus() {
  *
  * @return {boolean} Always returns false to prevent default handling behaviors.
  */
-function acmSelectTag(event, ui, listSelector, { tagListOptions = {}, mode = 'classic', allLists = []} = {}) {
+function acmSelectTag(event, ui, listSelector, { tagListOptions = {}, mode = 'classic', allLists = [] } = {}) {
     let tagName = ui.item.value;
     let tag = tagList.find(t => equalsIgnoreCaseAndAccents(t.name, tagName));
 
     if (!tag) {
-        toastr.error("You can't create tag from this interface. Please use the tag editor instead.");
+        toastr.error('You can\'t create tag from this interface. Please use the tag editor instead.');
         return false;
     }
 
@@ -129,7 +129,7 @@ function acmSelectTag(event, ui, listSelector, { tagListOptions = {}, mode = 'cl
                 $(listSelector).append(displayTag(tag.id));
                 refreshCharListDebounced();
             } else {
-                toastr.warning("This tag is already assigned to one of the requirement lists.");
+                toastr.warning('This tag is already assigned to one of the requirement lists.');
             }
             break;
         }

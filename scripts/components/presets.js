@@ -1,14 +1,14 @@
-import { getSetting } from "../services/settings-service.js";
-import { callGenericPopup, POPUP_TYPE } from "../constants/context.js";
-import { acmCreateTagInput, displayTag } from "./tags.js";
-import { updateDropdownPresetNames } from "./charactersList.js";
+import { getSetting } from '../services/settings-service.js';
+import { callGenericPopup, POPUP_TYPE } from '../constants/context.js';
+import { acmCreateTagInput, displayTag } from './tags.js';
+import { updateDropdownPresetNames } from './charactersList.js';
 import {
     addPresetCategory,
     getPreset,
     removePresetCategory, updateCategoryName,
     updatePresetCategories,
-    updatePresetName
-} from "../services/presets-service.js";
+    updatePresetName,
+} from '../services/presets-service.js';
 
 /**
  * Manages the custom categories interface in the application.
@@ -51,7 +51,7 @@ export async function manageCustomCategories(){
      </div>
 
     `);
-    await callGenericPopup(html, POPUP_TYPE.TEXT, '', {okButton: "Close", allowVerticalScrolling: true });
+    await callGenericPopup(html, POPUP_TYPE.TEXT, '', { okButton: 'Close', allowVerticalScrolling: true });
 }
 
 /**
@@ -66,11 +66,11 @@ export async function manageCustomCategories(){
 export function printCategoriesList(presetID, init = false){
     const catContainer = init
         ? $('<div id="catContainer"></div>')
-        : $("#catContainer").empty() && $("#catContainer");
+        : $('#catContainer').empty() && $('#catContainer');
 
     const preset = getPreset(presetID);
     if(preset.categories.length === 0){
-        catContainer.append("No category defined");
+        catContainer.append('No category defined');
         $('#acm_custom_categories').append(catContainer);
     }
     else {
@@ -97,12 +97,12 @@ export function printCategoriesList(presetID, init = false){
             catTagList.append(`<label for="input_cat_tag_${index}" title="Search or create a tag.">
                                     <input id="input_cat_tag_${index}" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
                                 </label>`);
-            catTagList.append(`<i class="fa-solid fa-plus tag addCatTag"></i>`);
+            catTagList.append('<i class="fa-solid fa-plus tag addCatTag"></i>');
             catContainer.append(catElement);
             $('#acm_custom_categories').append(catContainer);
             acmCreateTagInput(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } }, 'category');
         });
-        makeCategoryDraggable("#catContainer");
+        makeCategoryDraggable('#catContainer');
     }
 }
 
@@ -116,14 +116,14 @@ export function printCategoriesList(presetID, init = false){
  */
 function makeCategoryDraggable(containerSelector) {
     $(containerSelector).sortable({
-        handle: ".drag-handle",
-        items: "> div",
-        tolerance: "pointer",
-        placeholder: "sortable-placeholder",
+        handle: '.drag-handle',
+        items: '> div',
+        tolerance: 'pointer',
+        placeholder: 'sortable-placeholder',
         update: function () {
             const newOrder = [];
-            $(containerSelector).children("div").each(function () {
-                newOrder.push($(this).data("catid"));
+            $(containerSelector).children('div').each(function () {
+                newOrder.push($(this).data('catid'));
             });
             const presetID = $('#preset_selector option:selected').data('preset');
             const currentCategories = getPreset(presetID).categories;
@@ -131,9 +131,9 @@ function makeCategoryDraggable(containerSelector) {
         },
     });
 
-    $(".drag-handle")
-        .on('mousedown',function () { $(this).css("cursor", "grabbing"); })
-        .on('mouseup', function () { $(this).css("cursor", "grab"); }
+    $('.drag-handle')
+        .on('mousedown',function () { $(this).css('cursor', 'grabbing'); })
+        .on('mouseup', function () { $(this).css('cursor', 'grab'); },
         );
 }
 
@@ -147,7 +147,7 @@ function makeCategoryDraggable(containerSelector) {
 export function renamePreset(preset, newName) {
     updatePresetName(preset, newName);
     $('#preset_name').html(newName);
-    $(`#preset_selector option`).filter((_, element) => $(element).data('preset') === preset).text(newName);
+    $('#preset_selector option').filter((_, element) => $(element).data('preset') === preset).text(newName);
     updateDropdownPresetNames();
 }
 

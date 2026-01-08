@@ -44,7 +44,7 @@ class VirtualScroller {
         const bufferedStartRow = Math.max(0, startRow - this.buffer);
         const bufferedEndRow = Math.min(
             Math.ceil(this.items.length / this.itemsPerRow),
-            endRow + this.buffer
+            endRow + this.buffer,
         );
 
         // Convert to item indices
@@ -54,19 +54,19 @@ class VirtualScroller {
         return { start, end };
     }
 
-   /**
+    /**
     * Renders the visible range of items within the container, while optionally preserving the scroll position.
     * Generates spacers to maintain the correct layout and ensures only visible items are rendered for performance optimization.
     *
     * @param {boolean} preserveScroll - Indicates whether to preserve the current scroll position (default is true).
     * @return {void} This method does not return a value.
     */
-   render(preserveScroll = false) {
+    render(preserveScroll = false) {
         const newRange = this.calculateVisibleRange();
         this.visibleRange = newRange;
-        // Save scroll position if we want to preserve it
+        // Save the scroll position if we want to preserve it
         const scrollTop = preserveScroll ? this.container.scrollTop : null;
-        // Create visible elements with spacers to maintain scroll position
+        // Create visible elements with spacers to maintain the scroll position
         const fragment = document.createDocumentFragment();
 
         // Add top spacer
@@ -102,9 +102,9 @@ class VirtualScroller {
         this.container.innerHTML = '';
         this.container.appendChild(fragment);
 
-        // Restore scroll position if needed
+        // Restore the scroll position if needed
         if (preserveScroll && scrollTop !== null) {
-           this.container.scrollTop = scrollTop;
+            this.container.scrollTop = scrollTop;
         }
     }
 
@@ -157,7 +157,7 @@ class VirtualScroller {
         // Scroll to position
         this.container.scrollTo({
             top: scrollTop,
-            behavior: behavior
+            behavior: behavior,
         });
     }
 

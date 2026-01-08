@@ -1,4 +1,4 @@
-import { eventSource } from "../constants/context.js";
+import { eventSource } from '../constants/context.js';
 import {
     addAltGreeting,
     closeCharacterPopup,
@@ -9,13 +9,13 @@ import {
     renameCharacter,
     toggleAdvancedDefinitionsPopup,
     toggleFavoriteStatus,
-    update_avatar
-} from "../components/characters.js";
-import { closeDetails } from "../components/modal.js";
-import { checkApiAvailability, editCharDebounced, saveAltGreetings } from "../services/characters-service.js";
-import { refreshCharListDebounced } from "../components/charactersList.js";
-import { selectedChar } from "../constants/settings.js";
-import { updateTokenCount } from "../utils.js";
+    update_avatar,
+} from '../components/characters.js';
+import { closeDetails } from '../components/modal.js';
+import { checkApiAvailability, editCharDebounced, saveAltGreetings } from '../services/characters-service.js';
+import { refreshCharListDebounced } from '../components/charactersList.js';
+import { selectedChar } from '../constants/settings.js';
+import { updateTokenCount } from '../utils.js';
 
 /**
  * Initializes a set of field updaters for designated DOM elements, enabling dynamic updates
@@ -28,15 +28,15 @@ import { updateTokenCount } from "../utils.js";
  */
 export function initializeFieldUpdaters() {
     const elementsToInitialize = {
-        '#acm_description': async function () {const descZone=$('#acm_description');const update={avatar:selectedChar,description:String(descZone.val()),data:{description:String(descZone.val()),},};editCharDebounced(update);await updateTokenCount('#acm_description');},
-        '#acm_firstMess': async function () {const firstMesZone=$('#acm_firstMess');const update={avatar:selectedChar,first_mes:String(firstMesZone.val()),data:{first_mes:String(firstMesZone.val()),},};editCharDebounced(update);await updateTokenCount('#acm_firstMess');},
+        '#acm_description': async function () {const descZone = $('#acm_description');const update = { avatar:selectedChar,description:String(descZone.val()),data:{ description:String(descZone.val()) } };editCharDebounced(update);await updateTokenCount('#acm_description');},
+        '#acm_firstMess': async function () {const firstMesZone = $('#acm_firstMess');const update = { avatar:selectedChar,first_mes:String(firstMesZone.val()),data:{ first_mes:String(firstMesZone.val()) } };editCharDebounced(update);await updateTokenCount('#acm_firstMess');},
         '#acm_creatornotes': function () {
             const creatorNotes = $('#acm_creatornotes');
             $('#acm_creator_notes_textarea').val(String(creatorNotes.val()));
             const update = {
                 avatar: selectedChar,
                 creatorcomment: String(creatorNotes.val()),
-                data: {creator_notes: String(creatorNotes.val()),},
+                data: { creator_notes: String(creatorNotes.val()) },
             };
             editCharDebounced(update);
         },
@@ -46,22 +46,22 @@ export function initializeFieldUpdaters() {
             const update = {
                 avatar: selectedChar,
                 creatorcomment: String(creatorNotes.val()),
-                data: {creator_notes: String(creatorNotes.val()),},
+                data: { creator_notes: String(creatorNotes.val()) },
             };
             editCharDebounced(update);
         },
-        '#acm_character_version_textarea': function () { const update = {avatar:selectedChar,data:{character_version:String($('#acm_character_version_textarea').val()),},};editCharDebounced(update);},
-        '#acm_system_prompt': async function () {const sysPrompt=$('#acm_system_prompt');const update={avatar:selectedChar,data:{system_prompt:String(sysPrompt.val()),},};editCharDebounced(update);await updateTokenCount('#acm_system_prompt');},
-        '#acm_post_history_prompt': async function () {const postHistory=$('#acm_post_history_prompt');const update={avatar:selectedChar,data:{post_history_instructions:String(postHistory.val()),},};editCharDebounced(update);await updateTokenCount('#acm_post_history_prompt');},
-        '#acm_creator_textarea': function () {const update={ avatar:selectedChar,data:{creator:String($('#acm_creator_textarea').val()),},};editCharDebounced(update);},
-        '#acm_personality': async function () {const personality=$('#acm_personality');const update={avatar:selectedChar,personality:String(personality.val()),data:{personality:String(personality.val()),},};editCharDebounced(update);await updateTokenCount('#acm_personality');},
-        '#acm_scenario': async function () {const scenario=$('#acm_scenario');const update={avatar:selectedChar,scenario: String(scenario.val()),data:{scenario:String(scenario.val()),},};editCharDebounced(update);await updateTokenCount('#acm_scenario');},
-        '#acm_character_notes': async function () {const depthPrompt=$('#acm_character_notes');const update={avatar:selectedChar,data:{ extensions:{depth_prompt:{prompt:String(depthPrompt.val()),}}},};editCharDebounced(update);await updateTokenCount('#acm_character_notes');},
-        '#acm_character_notes_depth': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{depth:$('#acm_character_notes_depth').val(),}}},};editCharDebounced(update);},
-        '#acm_character_notes_role': function () {const update={avatar:selectedChar,data:{extensions:{depth_prompt:{role:String($('#acm_character_notes_role').val()),}}},};editCharDebounced(update);},
-        '#acm_talkativeness_slider': function () {const talkativeness=$('#acm_talkativeness_slider');const update={avatar:selectedChar,talkativeness:String(talkativeness.val()),data:{extensions:{talkativeness:String(talkativeness.val()),}}};editCharDebounced(update);},
-        '#acm_mes_examples': async function () {const example=$('#acm_mes_examples');const update={avatar:selectedChar,mes_example:String(example.val()),data:{mes_example:String(example.val()),},};editCharDebounced(update);await updateTokenCount('#acm_mes_examples');},
-        '#acm_tags_textarea': function () {const tagZone=$('#acm_tags_textarea');const update={avatar:selectedChar,tags:tagZone.val().split(', '),data:{tags:tagZone.val().split(', '), },};editCharDebounced(update);}
+        '#acm_character_version_textarea': function () { const update = { avatar:selectedChar,data:{ character_version:String($('#acm_character_version_textarea').val()) } };editCharDebounced(update);},
+        '#acm_system_prompt': async function () {const sysPrompt = $('#acm_system_prompt');const update = { avatar:selectedChar,data:{ system_prompt:String(sysPrompt.val()) } };editCharDebounced(update);await updateTokenCount('#acm_system_prompt');},
+        '#acm_post_history_prompt': async function () {const postHistory = $('#acm_post_history_prompt');const update = { avatar:selectedChar,data:{ post_history_instructions:String(postHistory.val()) } };editCharDebounced(update);await updateTokenCount('#acm_post_history_prompt');},
+        '#acm_creator_textarea': function () {const update = { avatar:selectedChar,data:{ creator:String($('#acm_creator_textarea').val()) } };editCharDebounced(update);},
+        '#acm_personality': async function () {const personality = $('#acm_personality');const update = { avatar:selectedChar,personality:String(personality.val()),data:{ personality:String(personality.val()) } };editCharDebounced(update);await updateTokenCount('#acm_personality');},
+        '#acm_scenario': async function () {const scenario = $('#acm_scenario');const update = { avatar:selectedChar,scenario: String(scenario.val()),data:{ scenario:String(scenario.val()) } };editCharDebounced(update);await updateTokenCount('#acm_scenario');},
+        '#acm_character_notes': async function () {const depthPrompt = $('#acm_character_notes');const update = { avatar:selectedChar,data:{ extensions:{ depth_prompt:{ prompt:String(depthPrompt.val()) } } } };editCharDebounced(update);await updateTokenCount('#acm_character_notes');},
+        '#acm_character_notes_depth': function () {const update = { avatar:selectedChar,data:{ extensions:{ depth_prompt:{ depth:$('#acm_character_notes_depth').val() } } } };editCharDebounced(update);},
+        '#acm_character_notes_role': function () {const update = { avatar:selectedChar,data:{ extensions:{ depth_prompt:{ role:String($('#acm_character_notes_role').val()) } } } };editCharDebounced(update);},
+        '#acm_talkativeness_slider': function () {const talkativeness = $('#acm_talkativeness_slider');const update = { avatar:selectedChar,talkativeness:String(talkativeness.val()),data:{ extensions:{ talkativeness:String(talkativeness.val()) } } };editCharDebounced(update);},
+        '#acm_mes_examples': async function () {const example = $('#acm_mes_examples');const update = { avatar:selectedChar,mes_example:String(example.val()),data:{ mes_example:String(example.val()) } };editCharDebounced(update);await updateTokenCount('#acm_mes_examples');},
+        '#acm_tags_textarea': function () {const tagZone = $('#acm_tags_textarea');const update = { avatar:selectedChar,tags:tagZone.val().split(', '),data:{ tags:tagZone.val().split(', ') } };editCharDebounced(update);},
     };
 
     Object.keys(elementsToInitialize).forEach(function (id) {
@@ -106,7 +106,7 @@ export function initializeCharactersEvents() {
     $('#acm_favorite_button').on('click', toggleFavoriteStatus);
 
     // Export character
-    $('#acm_export_button').on("click", function () {
+    $('#acm_export_button').on('click', function () {
         $('#acm_export_format_popup').toggle();
         window.acmPoppers.Export.update();
     });
@@ -119,11 +119,11 @@ export function initializeCharactersEvents() {
     });
 
     // Duplicate character
-    $('#acm_dupe_button').on("click", duplicateCharacter);
+    $('#acm_dupe_button').on('click', duplicateCharacter);
 
     // Delete character
-    $('#acm_delete_button').on("click", function () {
-        $('#delete_button').trigger("click");
+    $('#acm_delete_button').on('click', function () {
+        $('#delete_button').trigger('click');
     });
 
     // Edit a character avatar
@@ -137,15 +137,15 @@ export function initializeCharactersEvents() {
     });
 
     // Rename character
-    $('#acm_rename_button').on("click", renameCharacter);
+    $('#acm_rename_button').on('click', renameCharacter);
 
     // Trigger when the Open Chat button is clicked
     $('#acm_open_chat').on('click', openCharacterChat);
 
     // Display Advanced Definitions popup
-    $('#acm_advanced_div').on("click", toggleAdvancedDefinitionsPopup);
+    $('#acm_advanced_div').on('click', toggleAdvancedDefinitionsPopup);
 
-    $('#acm_character_cross').on("click", closeCharacterPopup);
+    $('#acm_character_cross').on('click', closeCharacterPopup);
 
     // Add a new alternative greetings
     $(document).on('click', '.fa-circle-plus', async function (event) {

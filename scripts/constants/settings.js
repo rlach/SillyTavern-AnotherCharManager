@@ -27,19 +27,19 @@ export const setCrop_data = (value) => {
 
 export const defaultSettings = {
     popupWidth: 50,
-    sortingField: "name",
-    sortingOrder: "asc",
+    sortingField: 'name',
+    sortingOrder: 'asc',
     favOnly: false,
     dropdownUI: false,
-    dropdownMode: "allTags",
+    dropdownMode: 'allTags',
     presetId: 0,
     dropdownPresets: [
-        { name: "Preset 1", categories: [] },
-        { name: "Preset 2", categories: [] },
-        { name: "Preset 3", categories: [] },
-        { name: "Preset 4", categories: [] },
-        { name: "Preset 5", categories: [] }
-    ]
+        { name: 'Preset 1', categories: [] },
+        { name: 'Preset 2', categories: [] },
+        { name: 'Preset 3', categories: [] },
+        { name: 'Preset 4', categories: [] },
+        { name: 'Preset 5', categories: [] },
+    ],
 };
 
 export let create_data = {
@@ -67,7 +67,7 @@ export let create_data = {
 };
 
 export const updateCreateData = (field, value) => {
-    if (create_data.hasOwnProperty(field)) {
+    if (Object.prototype.hasOwnProperty.call(create_data, field)) {
         create_data[field] = value;
     }
 };

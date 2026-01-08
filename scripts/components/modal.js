@@ -7,13 +7,14 @@ import {
     setMem_avatar,
     setMem_menu,
     setSelectedChar,
-} from "../constants/settings.js";
-import { characterId, characters, menuType, renderExtensionTemplateAsync } from "../constants/context.js";
-import { getSetting } from "../services/settings-service.js";
-import { getIdByAvatar } from "../utils.js";
+} from '../constants/settings.js';
+import { characterId, characters, menuType, renderExtensionTemplateAsync } from '../constants/context.js';
+import { getSetting } from '../services/settings-service.js';
+import { getIdByAvatar } from '../utils.js';
 import { setCharacterId, setMenuType } from '/script.js';
-import { updateDropdownPresetNames } from "./charactersList.js";
-import { updateLayout } from "./characterCreation.js";
+import { Popper } from '/lib.js';
+import { updateDropdownPresetNames } from './charactersList.js';
+import { updateLayout } from './characterCreation.js';
 
 /**
  * Initializes the modal component
@@ -24,11 +25,11 @@ export async function initializeModal() {
     try {
         modalHtml = await renderExtensionTemplateAsync(`third-party/${extensionName}/templates`, 'modal');
     } catch (error) {
-        console.error(`Error fetching modal.html. This is a normal error if you have the old folder name and you don't have to do anything.`);
+        console.error('Error fetching modal.html. This is a normal error if you have the old folder name and you don\'t have to do anything.');
         try {
             modalHtml = await renderExtensionTemplateAsync(`third-party/${oldExtensionName}/templates`, 'modal');
         } catch (secondError) {
-            console.error(`Error fetching modal.html:`, secondError);
+            console.error('Error fetching modal.html:', secondError);
             return;
         }
     }
@@ -65,25 +66,25 @@ function initializePoppers() {
     const Export = Popper.createPopper(
         document.getElementById('acm_export_button'),
         document.getElementById('acm_export_format_popup'),
-        { placement: 'left' }
+        { placement: 'left' },
     );
 
     const UI = Popper.createPopper(
         document.getElementById('acm_switch_ui'),
         document.getElementById('dropdown-ui-menu'),
-        { placement: 'top' }
+        { placement: 'top' },
     );
 
     const UISub = Popper.createPopper(
         document.getElementById('acm_dropdown_sub'),
         document.getElementById('dropdown-submenu'),
-        { placement: 'right' }
+        { placement: 'right' },
     );
 
     const UIPreset = Popper.createPopper(
         document.getElementById('acm_dropdown_cat'),
         document.getElementById('preset-submenu'),
-        { placement: 'right' }
+        { placement: 'right' },
     );
 
     // Store poppers for later use
@@ -91,7 +92,7 @@ function initializePoppers() {
         Export,
         UI,
         UISub,
-        UIPreset
+        UIPreset,
     };
 }
 
@@ -142,7 +143,7 @@ export function closeDetails( reset = true ) {
 
     $('#acm_export_format_popup').hide();
     document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected','char_select');
-    document.getElementById('char-details').classList.remove("open");
+    document.getElementById('char-details').classList.remove('open');
     document.getElementById('char-sep').style.display = 'none';
     setSelectedChar(undefined);
 }
@@ -186,27 +187,27 @@ export function toggleDropdownMenus(options = {}) {
     const {
         closeAll = false,
         menuToToggle = null,
-        updatePoppers = true
+        updatePoppers = true,
     } = options;
 
     // Éléments de menu
     const menus = {
         main: {
             element: '#dropdown-ui-menu',
-            popper: 'UI'
+            popper: 'UI',
         },
         sub: {
             element: '#dropdown-submenu',
-            popper: 'UISub'
+            popper: 'UISub',
         },
         preset: {
             element: '#preset-submenu',
-            popper: 'UIPreset'
+            popper: 'UIPreset',
         },
         export: {
             element: '#acm_export_format_popup',
-            popper: 'Export'
-        }
+            popper: 'Export',
+        },
     };
 
     if (closeAll) {
@@ -244,8 +245,8 @@ export function initializeDropdownClickOutside() {
         'preset-submenu',
         'acm_switch_ui',
         'acm_export_format_popup',
-        'acm_export_button'
-    ].map(id => document.getElementById(id));
+        'acm_export_button']
+        .map(id => document.getElementById(id));
 
     return function handleClickOutside(event) {
         if (!excludedElements.some(element => element?.contains(event.target))) {

@@ -1,11 +1,11 @@
 import { setCharacterId, setMenuType } from '/script.js';
-import { debounce, getIdByAvatar } from "../utils.js";
-import { characters, eventSource, getThumbnailUrl, tagList, tagMap } from "../constants/context.js";
-import { selectedChar, setSearchValue, setSelectedChar } from "../constants/settings.js";
-import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
-import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
-import { getSetting, updateSetting } from "../services/settings-service.js";
-import { getPreset } from "../services/presets-service.js";
+import { debounce, getIdByAvatar } from '../utils.js';
+import { characters, eventSource, getThumbnailUrl, tagList, tagMap } from '../constants/context.js';
+import { selectedChar, setSearchValue, setSelectedChar } from '../constants/settings.js';
+import { fillAdvancedDefinitions, fillDetails } from './characters.js';
+import { searchAndFilter, sortCharAR } from '../services/charactersList-service.js';
+import { getSetting, updateSetting } from '../services/settings-service.js';
+import { getPreset } from '../services/presets-service.js';
 import VirtualScroller from '../classes/virtualScroller.js';
 
 let virtualScroller = null;
@@ -86,7 +86,7 @@ function renderCharactersListHTML(sortedList, preserveScroll = false) {
             renderItem: (item) => { return createCharacterBlock(item.avatar); },
             itemHeight: 180, // Height of a line of cards (adjust according to your CSS)
             itemsPerRow: itemsPerRow,
-            buffer: 3 // Preload 3 lines before/after
+            buffer: 3, // Preload 3 lines before/after
         });
     }
 }
@@ -139,7 +139,7 @@ export async function selectAndDisplay(avatar, scrollTo = false) {
 
     document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
-    document.getElementById('char-details').classList.add("open");
+    document.getElementById('char-details').classList.add('open');
 }
 
 /**
@@ -153,7 +153,7 @@ function refreshCharList(preserveScroll = false) {
     const filteredChars = searchAndFilter();
 
     if(filteredChars.length === 0){
-        $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
+        $('#character-list').html('<span>Hmm, it seems like the character you\'re looking for is hiding out in a secret lair. Try searching for someone else instead.</span>');
     }
     else {
         const sortingField = getSetting('sortingField');
@@ -221,7 +221,7 @@ function generateDropdown(sortedList, type) {
             const preset = getSetting('presetId');
             const categories = getPreset(preset).categories;
             if (categories.length === 0) {
-                return "Looks like our categories went on vacation! 🏖️ Check back when they're done sunbathing!";
+                return 'Looks like our categories went on vacation! 🏖️ Check back when they\'re done sunbathing!';
             }
             return categories.map(category => {
                 const members = category.tags;
@@ -233,7 +233,7 @@ function generateDropdown(sortedList, type) {
                     category.name,
                     charactersForCat.length,
                     'custom',
-                    category.tags.join(',')
+                    category.tags.join(','),
                 );
             }).join('');
         },
@@ -259,10 +259,10 @@ function generateDropdown(sortedList, type) {
                         creatorName,
                         avatars.length,
                         'creator',
-                        creator
+                        creator,
                     );
                 }).join('');
-        }
+        },
     };
     return generators[type]?.() || '';
 }
@@ -296,7 +296,7 @@ function createDropdownContainer(title, count, type, content) {
  * @return {DocumentFragment|string} The generated dropdown content in the form of a DocumentFragment or an empty string if the type is invalid or not matched.
  */
 function generateDropdownContent(sortedList, type, content){
-    const dropdownContent ={
+    const dropdownContent = {
         allTags: () => {
             const filteredCharacters = sortedList
                 .filter(item => {
@@ -337,7 +337,7 @@ function generateDropdownContent(sortedList, type, content){
                 container.appendChild(block);
             });
             return container;
-        }
+        },
     };
     return dropdownContent[type]?.() || '';
 }

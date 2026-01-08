@@ -12,7 +12,7 @@ export async function initializeSettings() {
 
     // Add default settings for any missing keys
     for (const key in defaultSettings) {
-        if (!extensionSettings.acm.hasOwnProperty(key)) {
+        if (!Object.prototype.hasOwnProperty.call(extensionSettings.acm, key)) {
             extensionSettings.acm[key] = defaultSettings[key];
         }
     }
@@ -36,7 +36,7 @@ export function getSetting(key) {
  * @param {any} value - The new value for the setting
  */
 export function updateSetting(key, value) {
-    if (extensionSettings.acm.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(extensionSettings.acm, key)) {
         extensionSettings.acm[key] = value;
         saveSettingsDebounced();
     }

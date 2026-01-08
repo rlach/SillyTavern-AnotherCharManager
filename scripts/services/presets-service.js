@@ -1,4 +1,4 @@
-import { getSetting, updateSetting } from "./settings-service.js";
+import { getSetting, updateSetting } from './settings-service.js';
 
 /**
  * Gets a specific preset by index
@@ -9,7 +9,7 @@ export function getPreset(presetIndex) {
     if (presetIndex < 0 || presetIndex >= getSetting('dropdownPresets').length) {
         throw new Error('Invalid preset index');
     }
-    return {...getSetting('dropdownPresets')[presetIndex]};
+    return { ...getSetting('dropdownPresets')[presetIndex] };
 }
 
 /**
@@ -23,7 +23,7 @@ export function getCategory(presetIndex, categoryIndex) {
     if (categoryIndex < 0 || categoryIndex >= preset.categories.length) {
         throw new Error('Invalid category index');
     }
-    return {...preset.categories[categoryIndex]};
+    return { ...preset.categories[categoryIndex] };
 }
 
 /**
@@ -41,7 +41,7 @@ export function updatePresetName(presetIndex, name) {
     const updatedPresets = [...getSetting('dropdownPresets')];
     updatedPresets[presetIndex] = {
         ...updatedPresets[presetIndex],
-        name: name
+        name: name,
     };
     updateSetting('dropdownPresets', updatedPresets);
 }
@@ -61,14 +61,14 @@ export function updatePresetCategories(presetIndex, categories) {
     if (!categories.every(category =>
         typeof category === 'object' &&
         typeof category.name === 'string' &&
-        Array.isArray(category.tags)
+        Array.isArray(category.tags),
     )) {
         throw new Error('Invalid category format. Each category must have a name (string) and tags (array)');
     }
     const updatedPresets = [...getSetting('dropdownPresets')];
     updatedPresets[presetIndex] = {
         ...updatedPresets[presetIndex],
-        categories: [...categories]
+        categories: [...categories],
     };
     updateSetting('dropdownPresets', updatedPresets);
 }
@@ -85,7 +85,7 @@ export function addPresetCategory(presetIndex, name) {
     const updatedPresets = [...getSetting('dropdownPresets')];
     updatedPresets[presetIndex] = {
         ...updatedPresets[presetIndex],
-        categories: [...updatedPresets[presetIndex].categories, { name, tags: [] }]
+        categories: [...updatedPresets[presetIndex].categories, { name, tags: [] }],
     };
     updateSetting('dropdownPresets', updatedPresets);
 }
@@ -107,7 +107,7 @@ export function updateCategoryName(presetIndex, categoryIndex, name) {
     const updatedPresets = [...getSetting('dropdownPresets')];
     updatedPresets[presetIndex].categories[categoryIndex] = {
         ...updatedPresets[presetIndex].categories[categoryIndex],
-        name
+        name,
     };
     updateSetting('dropdownPresets', updatedPresets);
 }

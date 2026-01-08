@@ -1,13 +1,13 @@
-import { getBase64Async, updateTokenCount } from "../utils.js";
-import { callGenericPopup, POPUP_TYPE, power_user, t } from "../constants/context.js";
+import { getBase64Async, updateTokenCount } from '../utils.js';
+import { callGenericPopup, POPUP_TYPE, power_user, t } from '../constants/context.js';
 import {
     create_data,
     resetCreateData,
     setCrop_data,
-    updateCreateData
-} from "../constants/settings.js";
-import { createCharacter } from "../services/characters-service.js";
-import { closeDetails } from "./modal.js";
+    updateCreateData,
+} from '../constants/settings.js';
+import { createCharacter } from '../services/characters-service.js';
+import { closeDetails } from './modal.js';
 
 /**
  * A mapping of field names to their corresponding CSS selectors.
@@ -23,7 +23,7 @@ const FIELD_CONFIGURATIONS = {
     'personality': '#acm_create_personality',
     'scenario': '#acm_create_scenario',
     'depthPrompt': '#acm_create_depth_prompt',
-    'messageExample': '#acm_create_mes_example'
+    'messageExample': '#acm_create_mes_example',
 };
 
 /**

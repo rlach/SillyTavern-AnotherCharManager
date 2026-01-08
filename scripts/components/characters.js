@@ -2,7 +2,7 @@ import {
     depth_prompt_depth_default,
     depth_prompt_role_default,
     setCharacterId,
-    talkativeness_default
+    talkativeness_default,
 } from '/script.js';
 import { displayTag } from './tags.js';
 import { getBase64Async, getIdByAvatar } from '../utils.js';
@@ -17,18 +17,18 @@ import {
     substituteParams,
     tagMap,
     unshallowCharacter,
-} from "../constants/context.js";
-import { selectedChar, setMem_avatar } from "../constants/settings.js";
+} from '../constants/context.js';
+import { selectedChar, setMem_avatar } from '../constants/settings.js';
 import {
     dupeChar,
     editCharDebounced,
     exportChar,
     renameChar,
     replaceAvatar,
-    saveAltGreetings
-} from "../services/characters-service.js";
-import { addAltGreetingsTrigger } from "../events/characters-events.js";
-import { closeDetails } from "./modal.js";
+    saveAltGreetings,
+} from '../services/characters-service.js';
+import { addAltGreetingsTrigger } from '../events/characters-events.js';
+import { closeDetails } from './modal.js';
 
 /**
  * Fills the character details in the user interface based on the provided avatar.
@@ -46,15 +46,15 @@ export async function fillDetails(avatar) {
     $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', avatarThumb);
     $('#ch_name_details').text(char.name);
-    $('#ch_infos_creator').text(`Creator: ${char.data.creator ? char.data.creator : (char.data.extensions.chub?.full_path?.split('/')[0] ?? " - ")}`);
-    $('#ch_infos_version').text(`Version: ${char.data.character_version ?? " - "}`);
-    const dateString = char.create_date?.split("@")[0] ?? " - ";
-    const [year, month, day] = dateString.split("-");
-    const formattedDateString = year === " - " ? " - " : `${year}-${month.padStart(2, "0")}-${day.trim().padStart(2, "0")}`;
+    $('#ch_infos_creator').text(`Creator: ${char.data.creator ? char.data.creator : (char.data.extensions.chub?.full_path?.split('/')[0] ?? ' - ')}`);
+    $('#ch_infos_version').text(`Version: ${char.data.character_version ?? ' - '}`);
+    const dateString = char.create_date?.split('@')[0] ?? ' - ';
+    const [year, month, day] = dateString.split('-');
+    const formattedDateString = year === ' - ' ? ' - ' : `${year}-${month.padStart(2, '0')}-${day.trim().padStart(2, '0')}`;
     $('#ch_infos_date').text(`Created: ${formattedDateString}`);
-    $('#ch_infos_lastchat').text(`Last chat: ${char.date_last_chat ? new Date(char.date_last_chat).toISOString().substring(0, 10) : " - "}`);
-    $('#ch_infos_adddate').text(`Added: ${char.date_added ? new Date(char.date_added).toISOString().substring(0, 10) : " - "}`);
-    $('#ch_infos_link').html(char.data.extensions.chub?.full_path ? `Link: <a href="https://chub.ai/${char.data.extensions.chub.full_path}" target="_blank">Chub</a>` : "Link: -");
+    $('#ch_infos_lastchat').text(`Last chat: ${char.date_last_chat ? new Date(char.date_last_chat).toISOString().substring(0, 10) : ' - '}`);
+    $('#ch_infos_adddate').text(`Added: ${char.date_added ? new Date(char.date_added).toISOString().substring(0, 10) : ' - '}`);
+    $('#ch_infos_link').html(char.data.extensions.chub?.full_path ? `Link: <a href="https://chub.ai/${char.data.extensions.chub.full_path}" target="_blank">Chub</a>` : 'Link: -');
     const text = substituteParams(
         char.name +
         char.description +
@@ -64,7 +64,7 @@ export async function fillDetails(avatar) {
         char.personality +
         char.scenario +
         (char.data?.extensions?.depth_prompt?.prompt ?? '') +
-        char.mes_example
+        char.mes_example,
     );
     const tokens = await getTokenCountAsync(text);
     $('#ch_infos_tok').text(`Tokens: ${tokens}`);
@@ -73,7 +73,7 @@ export async function fillDetails(avatar) {
         char.description +
         char.personality +
         char.scenario +
-        (char.data?.extensions?.depth_prompt?.prompt ?? '')
+        (char.data?.extensions?.depth_prompt?.prompt ?? ''),
     );
     const permTokens = await getTokenCountAsync(permText);
     $('#ch_infos_permtok').text(`Perm. Tokens: ${permTokens}`);
@@ -88,7 +88,7 @@ export async function fillDetails(avatar) {
         $('#altGreetings_content').html(html);
     });
     $('#acm_favorite_button').toggleClass('fav_on', char.fav || char.data.extensions.fav).toggleClass('fav_off', !(char.fav || char.data.extensions.fav));
-    addAltGreetingsTrigger()
+    addAltGreetingsTrigger();
 }
 
 /**
@@ -142,9 +142,9 @@ export function toggleFavoriteStatus() {
         fav: !isFavorite,
         data: {
             extensions: {
-                fav: !isFavorite
-            }
-        }
+                fav: !isFavorite,
+            },
+        },
     };
     // Apply the update using a debounced function to avoid excessive updates
     editCharDebounced(update);
@@ -338,7 +338,7 @@ export async function update_avatar(input){
                 $('#avatar_img').attr('src', newImageUrl);
                 $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
             } catch {
-                toast.error("Something went wrong."); // Display an error message if the update fails
+                toastr.error('Something went wrong.'); // Display an error message if the update fails
             }
         } else {
             try {
@@ -349,7 +349,7 @@ export async function update_avatar(input){
                 $('#avatar_img').attr('src', newImageUrl);
                 $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
             } catch {
-                toast.error("Something went wrong."); // Display an error message if the update fails
+                toastr.error('Something went wrong.'); // Display an error message if the update fails
             }
         }
     }
@@ -389,7 +389,7 @@ export function addAltGreeting(){
     $('#chicken').empty();
     drawerContainer.appendChild(altGreetingDiv);
     // Add the event on the textarea
-    altGreetingDiv.querySelector(`.altGreeting_zone`).addEventListener('input', (event) => {
+    altGreetingDiv.querySelector('.altGreeting_zone').addEventListener('input', (event) => {
         saveAltGreetings(event);
     });
     // Save it

@@ -2,9 +2,9 @@ import {
     refreshCharListDebounced,
     selectAndDisplay, toggleFavoritesOnly, toggleTagQueries,
     updateSearchFilter,
-    updateSortOrder
-} from "../components/charactersList.js";
-import { toggleCharacterCreationPopup } from "../components/characterCreation.js";
+    updateSortOrder,
+} from '../components/charactersList.js';
+import { toggleCharacterCreationPopup } from '../components/characterCreation.js';
 
 /**
  * Initializes events for the characters list.
@@ -45,21 +45,21 @@ export function initializeToolbarEvents() {
         updateSearchFilter($(this).val());
     });
 
-    $('#favOnly_checkbox').on("change", function () {
+    $('#favOnly_checkbox').on('change', function () {
         toggleFavoritesOnly(this.checked);
     });
 
-    $('#acm_character_import_button').on("click", function () {
-        $('#character_import_file').trigger("click");
+    $('#acm_character_import_button').on('click', function () {
+        $('#character_import_file').trigger('click');
     });
 
-    $('#acm_external_import_button').on("click", function () {
-        $('#external_import_button').trigger("click");
+    $('#acm_external_import_button').on('click', function () {
+        $('#external_import_button').trigger('click');
     });
 
-    $('#acm_character_create_button').on("click", toggleCharacterCreationPopup);
+    $('#acm_character_create_button').on('click', toggleCharacterCreationPopup);
 
-    $(document).on("click", ".tag_acm_remove", function () {
+    $(document).on('click', '.tag_acm_remove', function () {
         $(this).closest('[data-tagid]').remove();
         refreshCharListDebounced(true);
     });
