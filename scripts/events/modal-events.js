@@ -7,7 +7,7 @@ import {
     toggleDropdownMenus
 } from "../components/modal.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
-import { refreshCharListDebounced } from "../components/charactersList.js";
+import { handleContainerResize, refreshCharListDebounced } from "../components/charactersList.js";
 import { manageCustomCategories, printCategoriesList } from "../components/presets.js";
 
 /**
@@ -75,6 +75,11 @@ export function initializeModalEvents() {
         $popup.css('width', newWidth + '%');
         $preview.hide();
         updateSetting('popupWidth', newWidth);
+
+        // Refresh virtual scroller after resize
+        requestAnimationFrame(() => {
+            handleContainerResize();
+        });
     });
 }
 

@@ -6,20 +6,22 @@ import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
 import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { getPreset } from "../services/presets-service.js";
-import { imageLoader } from '../services/imageLoader.js';
+import VirtualScroller from '../classes/virtualScroller.js';
 
-export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
+let virtualScroller = null;
+export const refreshCharListDebounced = debounce((preserveScroll) => {
+    refreshCharList(preserveScroll);
+}, 200);
 
 /**
  * Creates and returns a character block element based on the provided avatar.
  * The block includes styling and details such as the avatar image, name, and associated tags.
  *
  * @param {string} avatar - The identifier for the character avatar used to create the block.
- * @param useLazyLoading - Indicate if using lazy loading for the avatar image.
  * @return {HTMLDivElement} Returns a `div` element representing the character block, containing
  *         character information and a thumbnail of the avatar.
  */
-function createCharacterBlock(avatar, useLazyLoading = true) {
+function createCharacterBlock(avatar) {
     const id = getIdByAvatar(avatar);
     const avatarThumb = getThumbnailUrl('avatar', avatar);
 
@@ -32,17 +34,11 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
     div.title = `[${characters[id].name} - Tags: ${tagMap[avatar]?.length ?? 0}]`;
     div.setAttribute('data-avatar', avatar);
 
-    const imgSrc = useLazyLoading
-        ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23e0e0e0' width='100' height='100'/%3E%3C/svg%3E"
-        : avatarThumb;
-    const dataSrcAttr = useLazyLoading ? `data-src="${avatarThumb}"` : '';
-
     div.innerHTML = `
         <!-- Media -->
         <div class="card__media">
             <img id="img_${avatar}"
-             src="${imgSrc}"
-             ${dataSrcAttr}
+             src="${avatarThumb}"
              alt="${characters[id].avatar}"
              draggable="false">
         </div>
@@ -56,79 +52,75 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
     return div;
 }
 
-const requestIdle = window.requestIdleCallback || (cb => {
-    return setTimeout(() => cb({ timeRemaining: () => 5 }), 1);
-});
-
-const cancelIdle = window.cancelIdleCallback || (id => {
-    clearTimeout(id);
-});
-
-let activeBatchHandle = null;
 
 /**
- * Renders a batch-processed list of character elements into the HTML container element.
- * The method ensures the rendering process does not block the UI thread by processing elements
- * in smaller chunks using requestAnimationFrame.
+ * Renders a list of characters as HTML using a virtual scroller mechanism to optimize performance.
  *
- * @param {Array} sortedList - The array of character data objects to be rendered. Each object should
- *                             contain properties like `avatar` used for creating character blocks.
- * @return {void} - Does not return a value. The method directly manipulates the DOM to render content.
+ * @param {Array} sortedList - The sorted list of character objects to be displayed.
+ * @param {boolean} [preserveScroll=false] - Optional parameter to indicate whether to preserve
+ * the current scroll position when updating the list.
+ * @return {void} This function does not return a value.
  */
-function renderCharactersListHTML(sortedList) {
-    if (activeBatchHandle) {
-        cancelIdle(activeBatchHandle);
-        activeBatchHandle = null;
+function renderCharactersListHTML(sortedList, preserveScroll = false) {
+    const container = document.getElementById('character-list');
+
+    if (!container) {
+        console.error('Container not found');
+        return;
     }
 
-    const container = $('#character-list')[0];
-    container.innerHTML = '';
+    // Update old scroller, if any
+    if (virtualScroller) {
+        virtualScroller.setItems(sortedList, preserveScroll);
+    }
+    else {
+        // Calculate the number of elements per line according to width
+        const containerWidth = container.clientWidth;
+        const itemWidth = 120; // Approximate width of a card + gap
+        const itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
 
-    const BATCH_SIZE = 20;
-    let currentIndex = 0;
-
-    function processBatch(deadline) {
-        const fragment = document.createDocumentFragment();
-        let batchCount = 0;
-
-        while (currentIndex < sortedList.length &&
-                batchCount < BATCH_SIZE &&
-                deadline.timeRemaining() > 0) {
-
-            const item = sortedList[currentIndex];
-            const useLazyLoading = currentIndex >= 100;
-            const charElement = createCharacterBlock(item.avatar, useLazyLoading);
-            fragment.appendChild(charElement);
-
-            currentIndex++;
-            batchCount++;
-        }
-
-        container.appendChild(fragment);
-
-        const newImages = container.querySelectorAll(`img[data-src]:not([data-observed])`);
-        newImages.forEach(img => {
-            img.dataset.observed = 'true';
-            imageLoader.observe(img);
+        // Create the virtual scroller
+        virtualScroller = new VirtualScroller({
+            container: container,
+            items: sortedList,
+            renderItem: (item) => { return createCharacterBlock(item.avatar); },
+            itemHeight: 180, // Height of a line of cards (adjust according to your CSS)
+            itemsPerRow: itemsPerRow,
+            buffer: 3 // Preload 3 lines before/after
         });
-
-        if (currentIndex < sortedList.length) {
-            activeBatchHandle = requestIdle(processBatch);
-        } else {
-            activeBatchHandle = null;
-        }
     }
-    activeBatchHandle = requestIdle(processBatch);
 }
 
 /**
- * Selects a character based on the provided avatar identifier and updates the UI to display the character's details.
- * Ensures that any previously selected character is deselected before selecting the new one.
+ * Adjusts the virtual scroller's items per row based on the container's current width
+ * and refreshes the virtual scroller to reflect the updates.
  *
- * @param {string} avatar - The identifier for the avatar to be selected and displayed.
+ * The method calculates how many items can fit in a single row by dividing the
+ * container's width by the width of an individual item. If the container width is too
+ * small to fit even one item, the minimum value of 1 is used.
+ *
  * @return {void} This function does not return a value.
  */
-export async function selectAndDisplay(avatar) {
+export function handleContainerResize() {
+    if (virtualScroller) {
+        const container = document.getElementById('character-list');
+        const containerWidth = container.clientWidth;
+        const itemWidth = 120;
+
+        // Update and refresh
+        virtualScroller.itemsPerRow = Math.floor(containerWidth / itemWidth) || 1;
+        virtualScroller.refresh();
+    }
+}
+
+/**
+ * Selects a character avatar, updates character details, and adjusts the display accordingly.
+ *
+ * @param {string} avatar - The identifier of the avatar to be selected.
+ * @param {boolean} [scrollTo=false] - Whether to scroll to the selected avatar in the virtual scroller.
+ * @return {Promise<void>} A promise that resolves when all character details have been updated.
+ */
+export async function selectAndDisplay(avatar, scrollTo = false) {
     // Check if a visible character is already selected
     if(typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null){
         document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
@@ -141,6 +133,9 @@ export async function selectAndDisplay(avatar) {
     await fillDetails(avatar);
     await fillAdvancedDefinitions(avatar);
     window.acmIsUpdatingDetails = false;
+    if(scrollTo) {
+        virtualScroller.scrollToAvatar(avatar);
+    }
 
     document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
@@ -154,7 +149,7 @@ export async function selectAndDisplay(avatar) {
  *
  * @return {void} This method does not return a value but updates the user interface and state variables.
  */
-function refreshCharList() {
+function refreshCharList(preserveScroll = false) {
     const filteredChars = searchAndFilter();
 
     if(filteredChars.length === 0){
@@ -184,7 +179,7 @@ function refreshCharList() {
                 });
             });
         } else {
-            renderCharactersListHTML(sortedList);
+            renderCharactersListHTML(sortedList, preserveScroll);
         }
     }
     $('#charNumber').empty().append(`Total characters : ${characters.length}`);
@@ -313,7 +308,7 @@ function generateDropdownContent(sortedList, type, content){
                 });
             const container = document.createDocumentFragment();
             filteredCharacters.forEach(character => {
-                const block = createCharacterBlock(character.avatar, false);
+                const block = createCharacterBlock(character.avatar);
                 container.appendChild(block);
             });
             return container;
@@ -329,7 +324,7 @@ function generateDropdownContent(sortedList, type, content){
             });
             const container = document.createDocumentFragment();
             filteredCharacters.forEach(character => {
-                const block = createCharacterBlock(character.avatar, false);
+                const block = createCharacterBlock(character.avatar);
                 container.appendChild(block);
             });
             return container;
@@ -338,7 +333,7 @@ function generateDropdownContent(sortedList, type, content){
             const filteredCharacters = sortedList.filter(item => item.data.creator === content);
             const container = document.createDocumentFragment();
             filteredCharacters.forEach(character => {
-                const block = createCharacterBlock(character.avatar, false);
+                const block = createCharacterBlock(character.avatar);
                 container.appendChild(block);
             });
             return container;

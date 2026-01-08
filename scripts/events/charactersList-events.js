@@ -61,6 +61,6 @@ export function initializeToolbarEvents() {
 
     $(document).on("click", ".tag_acm_remove", function () {
         $(this).closest('[data-tagid]').remove();
-        refreshCharListDebounced();
+        refreshCharListDebounced(true);
     });
 }

@@ -1,9 +1,8 @@
 // An extension that allows you to manage characters.
-import { initializeTagInput} from './src/services/tags-service.js';
-import { initializeSettings, migrateDropdownPresets } from "./src/services/settings-service.js";
-import { initializeModal } from "./src/components/modal.js";
-import { initializeEventHandlers } from "./src/events/global-events.js";
-import { initializeCharacterModule } from "./src/services/imageLoader.js";
+import { initializeTagInput} from './scripts/services/tags-service.js';
+import { initializeSettings, migrateDropdownPresets } from "./scripts/services/settings-service.js";
+import { initializeModal } from "./scripts/components/modal.js";
+import { initializeEventHandlers } from "./scripts/events/global-events.js";
 
 jQuery(async () => {
     await initializeSettings();
@@ -11,5 +10,4 @@ jQuery(async () => {
     await initializeModal();
     initializeEventHandlers();
     initializeTagInput();
-    initializeCharacterModule();
 });

@@ -136,7 +136,7 @@ function acmSelectTag(event, ui, listSelector, { tagListOptions = {}, mode = 'cl
         case 'classic':
         default: {
             $(listSelector).append(displayTag(tag.id));
-            refreshCharListDebounced();
+            refreshCharListDebounced(true);
             break;
         }
     }

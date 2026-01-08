@@ -77,8 +77,14 @@ export function initializeFieldUpdaters() {
  */
 export function initializeCharactersEvents() {
     // Add listener to refresh the display on characters edit
-    eventSource.on('character_edited', function () {
-        refreshCharListDebounced();
+    eventSource.on('character_edited', function (data) {
+        if (data.detail && data.detail.avatarReplaced) {
+            refreshCharListDebounced(true);
+        }
+    });
+    // Add listener to refresh the display when a character is renamed
+    eventSource.on('character_renamed', function () {
+        refreshCharListDebounced(true);
     });
     // Add listener to refresh the display on characters delete
     eventSource.on('characterDeleted', function () {
@@ -86,11 +92,11 @@ export function initializeCharactersEvents() {
         if (charDetailsState.style.display !== 'none') {
             closeDetails();
         }
-        refreshCharListDebounced();
+        refreshCharListDebounced(true);
     });
     // Add listener to refresh the display on characters duplication
     eventSource.on('character_duplicated', function () {
-        refreshCharListDebounced();
+        refreshCharListDebounced(true);
     });
 
     // Adding textarea trigger on input
@@ -157,7 +163,7 @@ export function initializeCharactersEvents() {
 
     const tagListObserver = new MutationObserver(function () {
         if (window.acmIsUpdatingDetails) return;
-        refreshCharListDebounced();
+        refreshCharListDebounced(true);
     });
 
     const tagListElement = document.getElementById('tag_List');

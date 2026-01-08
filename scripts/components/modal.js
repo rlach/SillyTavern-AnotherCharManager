@@ -22,18 +22,18 @@ export async function initializeModal() {
     // Load the modal HTML template
     let modalHtml;
     try {
-        modalHtml = await renderExtensionTemplateAsync(`third-party/${extensionName}`, 'modal');
+        modalHtml = await renderExtensionTemplateAsync(`third-party/${extensionName}/templates`, 'modal');
     } catch (error) {
         console.error(`Error fetching modal.html. This is a normal error if you have the old folder name and you don't have to do anything.`);
         try {
-            modalHtml = await renderExtensionTemplateAsync(`third-party/${oldExtensionName}`, 'modal');
+            modalHtml = await renderExtensionTemplateAsync(`third-party/${oldExtensionName}/templates`, 'modal');
         } catch (secondError) {
             console.error(`Error fetching modal.html:`, secondError);
             return;
         }
     }
     // Load the extensionMenu button
-    const buttonHtml = await renderExtensionTemplateAsync('third-party/SillyTavern-AnotherCharManager', 'button');
+    const buttonHtml = await renderExtensionTemplateAsync('third-party/SillyTavern-AnotherCharManager/templates', 'button');
 
     // Add the extensionMenu button to the extensionsMenu
     $('#extensionsMenu').append(buttonHtml);
@@ -111,9 +111,11 @@ export function openModal() {
     }
     setMem_menu(menuType);
 
+    document.querySelector('#acm_lock').classList.add('is-active');
+
     // Display the modal with our list layout
-    $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
-    $('#acm_shadow_popup').css('display', 'block').transition({
+    // $('#acm_popup').toggleClass('wide_dialogue_popup large_dialogue_popup');
+    $('#acm_popup').css('display', 'flex').transition({
         opacity: 1,
         duration: 125,
         easing: 'ease-in-out',
@@ -156,14 +158,17 @@ export function closeModal() {
     setMenuType(mem_menu);
     setMem_avatar(undefined);
 
-    $('#acm_shadow_popup').transition({
+    document.querySelector('#acm_lock').classList.remove('is-active');
+
+    const $popup = $('#acm_popup');
+    $popup.transition({
         opacity: 0,
         duration: 125,
         easing: 'ease-in-out',
     });
     setTimeout(function () {
-        $('#acm_shadow_popup').css('display', 'none');
-        $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+        $popup.css('display', 'none');
+        // $popup.removeClass('large_dialogue_popup wide_dialogue_popup');
     }, 125);
 }
 
