@@ -1,4 +1,4 @@
-import { characters, getTokenCountAsync, substituteParams } from './constants/context.js';
+import { acm } from '../index.js';
 
 /**
  * Creates a debounced version of the provided function that delays its execution
@@ -104,7 +104,7 @@ function compareIgnoreCaseAndAccents(a, b, comparisonFunction) {
  * @return {string|undefined} The ID of the character as a string if found, otherwise undefined.
  */
 export function getIdByAvatar(avatar){
-    const index = characters.findIndex(character => character.avatar === avatar);
+    const index = acm.st.characters.findIndex(character => character.avatar === avatar);
     return index !== -1 ? String(index) : undefined;
 }
 
@@ -118,6 +118,6 @@ export async function updateTokenCount(fieldId) {
     const inputElement = $(fieldId);
     const tokenCountElement = $(`${fieldId}_tokens`);
     const inputValue = String(inputElement.val());
-    const tokenCount = await getTokenCountAsync(substituteParams(inputValue));
+    const tokenCount = await acm.st.getTokenCountAsync(acm.st.substituteParams(inputValue));
     tokenCountElement.html(`Tokens: ${tokenCount}`);
 }

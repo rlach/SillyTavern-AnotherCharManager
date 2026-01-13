@@ -4,11 +4,12 @@ import {
     defaultSettings,
     create_data,
 } from '../constants/settings.js';
-import { extensionSettings, saveSettingsDebounced } from '../constants/context.js';
 
+export class SettingsManager {
+    constructor({ extensionSettings, saveSettingsDebounced }) {
+        this.extensionSettings = extensionSettings;
+        this.saveSettingsDebounced = saveSettingsDebounced;
 
-class SettingsManager {
-    constructor(options = {}) {
         this.default = defaultSettings;
         this.create_data = structuredClone(create_data);
 
@@ -24,12 +25,12 @@ class SettingsManager {
 
     async init(){
         // Create the settings if they don't exist
-        extensionSettings.acm = extensionSettings.acm || {};
+        this.extensionSettings.acm = this.extensionSettings.acm || {};
 
         // Add default settings for any missing keys
         for (const key in this.default) {
-            if (!Object.prototype.hasOwnProperty.call(extensionSettings.acm, key)) {
-                extensionSettings.acm[key] = this.default[key];
+            if (!Object.prototype.hasOwnProperty.call(this.extensionSettings.acm, key)) {
+                this.extensionSettings.acm[key] = this.default[key];
             }
         }
     }
@@ -55,13 +56,13 @@ class SettingsManager {
     }
 
     getSetting(key) {
-        return extensionSettings.acm[key];
+        return this.extensionSettings.acm[key];
     }
 
     updateSetting(key, value) {
-        if (Object.prototype.hasOwnProperty.call(extensionSettings.acm, key)) {
-            extensionSettings.acm[key] = value;
-            saveSettingsDebounced();
+        if (Object.prototype.hasOwnProperty.call(this.extensionSettings.acm, key)) {
+            this.extensionSettings.acm[key] = value;
+            this.saveSettingsDebounced();
         }
     }
 
@@ -76,18 +77,18 @@ class SettingsManager {
     }
 
     resetSettings() {
-        extensionSettings.acm = { ...this.default };
-        saveSettingsDebounced();
+        this.extensionSettings.acm = { ...this.default };
+        this.saveSettingsDebounced();
     }
 
     migrateDropdownPresets() {
-        if (!Array.isArray(extensionSettings.acm.dropdownPresets)) {
+        if (!Array.isArray(this.extensionSettings.acm.dropdownPresets)) {
             return;
         }
 
         let hasChanges = false;
 
-        extensionSettings.acm.dropdownPresets.forEach(preset => {
+        this.extensionSettings.acm.dropdownPresets.forEach(preset => {
             if (Array.isArray(preset.categories)) {
                 preset.categories.forEach(category => {
                     if (Array.isArray(category.members) && !category.tags) {
@@ -100,9 +101,7 @@ class SettingsManager {
         });
 
         if (hasChanges) {
-            saveSettingsDebounced();
+            this.saveSettingsDebounced();
         }
     }
 }
-
-export default SettingsManager;

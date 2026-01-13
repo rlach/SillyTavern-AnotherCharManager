@@ -8,7 +8,7 @@ import {
 } from '../components/modal.js';
 import { handleContainerResize, refreshCharListDebounced } from '../components/charactersList.js';
 import { manageCustomCategories, printCategoriesList } from '../components/presets.js';
-import { acmSettings } from '../../index.js';
+import { acm } from '../../index.js';
 
 /**
  * Initializes external menu events by attaching event listeners to specified menu elements.
@@ -74,7 +74,7 @@ export function initializeModalEvents() {
         const newWidth = $(this).val();
         $popup.css('width', newWidth + '%');
         $preview.hide();
-        acmSettings.updateSetting('popupWidth', newWidth);
+        acm.settings.updateSetting('popupWidth', newWidth);
 
         // Refresh virtual scroller after resize
         requestAnimationFrame(() => {
@@ -103,41 +103,41 @@ export function initializeUIMenuEvents() {
 
     const menuActions = {
         '#acm_switch_classic': () => {
-            if (acmSettings.getSetting('dropdownUI')) {
-                acmSettings.updateSetting('dropdownUI', false);
+            if (acm.settings.getSetting('dropdownUI')) {
+                acm.settings.updateSetting('dropdownUI', false);
                 refreshCharListDebounced();
             }
         },
         '#acm_switch_alltags': () => {
-            if (!acmSettings.getSetting('dropdownUI') || (acmSettings.getSetting('dropdownUI') && acmSettings.getSetting('dropdownMode') !== 'allTags')) {
-                acmSettings.updateSetting('dropdownUI', true);
-                acmSettings.updateSetting('dropdownMode', 'allTags');
+            if (!acm.settings.getSetting('dropdownUI') || (acm.settings.getSetting('dropdownUI') && acm.settings.getSetting('dropdownMode') !== 'allTags')) {
+                acm.settings.updateSetting('dropdownUI', true);
+                acm.settings.updateSetting('dropdownMode', 'allTags');
                 refreshCharListDebounced();
             }
         },
         '#acm_switch_creators': () => {
-            if (!acmSettings.getSetting('dropdownUI') || (acmSettings.getSetting('dropdownUI') && acmSettings.getSetting('dropdownMode') !== 'creators')) {
-                acmSettings.updateSetting('dropdownUI', true);
-                acmSettings.updateSetting('dropdownMode', 'creators');
+            if (!acm.settings.getSetting('dropdownUI') || (acm.settings.getSetting('dropdownUI') && acm.settings.getSetting('dropdownMode') !== 'creators')) {
+                acm.settings.updateSetting('dropdownUI', true);
+                acm.settings.updateSetting('dropdownMode', 'creators');
                 refreshCharListDebounced();
             }
         },
         '#acm_manage_categories': () => {
             manageCustomCategories();
             const selectedPreset = $('#preset_selector option:selected').data('preset');
-            if (acmSettings.getSetting('dropdownUI') && acmSettings.getSetting('dropdownMode') === 'custom') {
+            if (acm.settings.getSetting('dropdownUI') && acm.settings.getSetting('dropdownMode') === 'custom') {
                 $('.popup-button-ok').on('click', refreshCharListDebounced);
             }
             printCategoriesList(selectedPreset, true);
         },
         '[data-ui="preset"]': function() {
             const presetId = $(this).data('preset');
-            if (!acmSettings.getSetting('dropdownUI') ||
-                (acmSettings.getSetting('dropdownUI') && acmSettings.getSetting('dropdownMode') !== 'custom') ||
-                (acmSettings.getSetting('dropdownUI') && acmSettings.getSetting('dropdownMode') === 'custom' && acmSettings.getSetting('presetId') !== presetId)) {
-                acmSettings.updateSetting('dropdownUI', true);
-                acmSettings.updateSetting('dropdownMode', 'custom');
-                acmSettings.updateSetting('presetId', presetId);
+            if (!acm.settings.getSetting('dropdownUI') ||
+                (acm.settings.getSetting('dropdownUI') && acm.settings.getSetting('dropdownMode') !== 'custom') ||
+                (acm.settings.getSetting('dropdownUI') && acm.settings.getSetting('dropdownMode') === 'custom' && acm.settings.getSetting('presetId') !== presetId)) {
+                acm.settings.updateSetting('dropdownUI', true);
+                acm.settings.updateSetting('dropdownMode', 'custom');
+                acm.settings.updateSetting('presetId', presetId);
                 refreshCharListDebounced();
             }
         },

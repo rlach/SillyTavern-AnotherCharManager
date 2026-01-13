@@ -2,7 +2,7 @@
  * A class for rendering a virtualized scrolling container, improving performance
  * for large data sets by only rendering visible elements and placeholders.
  */
-class VirtualScroller {
+export class VirtualScroller {
     constructor(options = {}) {
         this.container = options.container; // This should be #character-list
         this.items = options.items || [];
@@ -169,5 +169,3 @@ class VirtualScroller {
         this.container.innerHTML = '';
     }
 }
-
-export default VirtualScroller;

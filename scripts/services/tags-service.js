@@ -1,12 +1,7 @@
 import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from '../utils.js';
-import {
-    tagList,
-    tagMap,
-    power_user,
-    saveSettingsDebounced,
-} from '../constants/context.js';
 import { createTagInput } from '/scripts/tags.js';
 import { acmCreateTagInput } from '../components/tags.js';
+import { acm } from '../../index.js';
 
 
 /**
@@ -42,10 +37,10 @@ export function initializeTagInput() {
  * @return {object} tag - Returns the updated tag map after the rename operation.
  */
 export function renameTagKey(oldKey, newKey) {
-    const value = tagMap[oldKey];
-    tagMap[newKey] = value || [];
-    delete tagMap[oldKey];
-    saveSettingsDebounced();
+    const value = acm.st.tagMap[oldKey];
+    acm.st.tagMap[newKey] = value || [];
+    delete acm.st.tagMap[oldKey];
+    acm.st.saveSettingsDebounced();
 }
 
 /**
@@ -58,7 +53,7 @@ export function renameTagKey(oldKey, newKey) {
  */
 export function findTag(request, resolve, listSelector) {
     const skipIds = [...($(listSelector).find('.tag').map((_, el) => $(el).data('tagid')))];
-    const haystack = tagList
+    const haystack = acm.st.tagList
         .filter(t => !skipIds.includes(t.id))
         .sort(compareTagsForSort)
         .map(t => t.name);
@@ -86,7 +81,7 @@ export function acmFindTagMulti(request, resolve, listSelectors) {
         });
     });
 
-    const haystack = tagList
+    const haystack = acm.st.tagList
         .filter(t => !skipIds.includes(t.id))
         .sort(compareTagsForSort)
         .map(t => t.name);
@@ -105,7 +100,7 @@ export function acmFindTagMulti(request, resolve, listSelectors) {
  */
 function compareTagsForSort(a, b) {
     const defaultSort = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
-    if (power_user.auto_sort_tags) {
+    if (acm.st.power_user.auto_sort_tags) {
         return defaultSort;
     }
 

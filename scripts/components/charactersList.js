@@ -1,11 +1,10 @@
 import { setCharacterId, setMenuType } from '/script.js';
 import { debounce, getIdByAvatar } from '../utils.js';
-import { characters, eventSource, getThumbnailUrl, tagList, tagMap } from '../constants/context.js';
 import { fillAdvancedDefinitions, fillDetails } from './characters.js';
 import { searchAndFilter, sortCharAR } from '../services/charactersList-service.js';
 import { getPreset } from '../services/presets-service.js';
-import VirtualScroller from '../classes/VirtualScroller.js';
-import { acmSettings } from '../../index.js';
+import { VirtualScroller } from '../classes/VirtualScroller.js';
+import { acm } from '../../index.js';
 
 let virtualScroller = null;
 export const refreshCharListDebounced = debounce((preserveScroll) => {
@@ -22,15 +21,15 @@ export const refreshCharListDebounced = debounce((preserveScroll) => {
  */
 function createCharacterBlock(avatar) {
     const id = getIdByAvatar(avatar);
-    const avatarThumb = getThumbnailUrl('avatar', avatar);
+    const avatarThumb = acm.st.getThumbnailUrl('avatar', avatar);
 
-    const parsedThis_avatar = acmSettings.selectedChar !== undefined ? acmSettings.selectedChar : undefined;
+    const parsedThis_avatar = acm.settings.selectedChar !== undefined ? acm.settings.selectedChar : undefined;
     const charClass = (parsedThis_avatar !== undefined && parsedThis_avatar === avatar) ? 'char_selected' : 'char_select';
-    const isFav = (characters[id].fav || characters[id].data.extensions.fav) ? 'fav' : '';
+    const isFav = (acm.st.characters[id].fav || acm.st.characters[id].data.extensions.fav) ? 'fav' : '';
 
     const div = document.createElement('div');
     div.className = `card ${charClass} ${isFav}`;
-    div.title = `[${characters[id].name} - Tags: ${tagMap[avatar]?.length ?? 0}]`;
+    div.title = `[${acm.st.characters[id].name} - Tags: ${acm.st.tagMap[avatar]?.length ?? 0}]`;
     div.setAttribute('data-avatar', avatar);
 
     div.innerHTML = `
@@ -38,13 +37,13 @@ function createCharacterBlock(avatar) {
         <div class="card__media">
             <img id="img_${avatar}"
              src="${avatarThumb}"
-             alt="${characters[id].avatar}"
+             alt="${acm.st.characters[id].avatar}"
              draggable="false">
         </div>
         <!-- Header -->
         <div class="card__header">
-            <h3 class="card__header-title">${characters[id].name}</h3>
-            <p class="card__header-meta">Tags: ${tagMap[avatar]?.length ?? 0}</p>
+            <h3 class="card__header-title">${acm.st.characters[id].name}</h3>
+            <p class="card__header-meta">Tags: ${acm.st.tagMap[avatar]?.length ?? 0}</p>
         </div>
     `;
 
@@ -121,11 +120,11 @@ export function handleContainerResize() {
  */
 export async function selectAndDisplay(avatar, scrollTo = false) {
     // Check if a visible character is already selected
-    if(typeof acmSettings.selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${acmSettings.selectedChar}"]`) !== null){
-        document.querySelector(`[data-avatar="${acmSettings.selectedChar}"]`).classList.replace('char_selected','char_select');
+    if(typeof acm.settings.selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${acm.settings.selectedChar}"]`) !== null){
+        document.querySelector(`[data-avatar="${acm.settings.selectedChar}"]`).classList.replace('char_selected','char_select');
     }
     setMenuType('character_edit');
-    acmSettings.setSelectedChar(avatar);
+    acm.settings.setSelectedChar(avatar);
     setCharacterId(getIdByAvatar(avatar));
     $('#acm_export_format_popup').hide();
     window.acmIsUpdatingDetails = true;
@@ -155,10 +154,10 @@ function refreshCharList(preserveScroll = false) {
         $('#character-list').html('<span>Hmm, it seems like the character you\'re looking for is hiding out in a secret lair. Try searching for someone else instead.</span>');
     }
     else {
-        const sortingField = acmSettings.getSetting('sortingField');
-        const sortingOrder = acmSettings.getSetting('sortingOrder');
-        const dropdownUI = acmSettings.getSetting('dropdownUI');
-        const dropdownMode = acmSettings.getSetting('dropdownMode');
+        const sortingField = acm.settings.getSetting('sortingField');
+        const sortingOrder = acm.settings.getSetting('sortingOrder');
+        const dropdownUI = acm.settings.getSetting('dropdownUI');
+        const dropdownMode = acm.settings.getSetting('dropdownMode');
         const sortedList = sortCharAR(filteredChars, sortingField, sortingOrder);
 
         if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
@@ -181,8 +180,8 @@ function refreshCharList(preserveScroll = false) {
             renderCharactersListHTML(sortedList, preserveScroll);
         }
     }
-    $('#charNumber').empty().append(`Total characters : ${characters.length}`);
-    eventSource.emit('character_list_refreshed');
+    $('#charNumber').empty().append(`Total characters : ${acm.st.characters.length}`);
+    acm.eventManager.emit('character_list_refreshed');
 }
 
 /**
@@ -201,15 +200,15 @@ function refreshCharList(preserveScroll = false) {
 function generateDropdown(sortedList, type) {
     const generators = {
         allTags: () => {
-            const tagDropdowns = tagList.map(tag => {
+            const tagDropdowns = acm.st.tagList.map(tag => {
                 const charactersForTag = sortedList
-                    .filter(item => tagMap[item.avatar]?.includes(tag.id))
+                    .filter(item => acm.st.tagMap[item.avatar]?.includes(tag.id))
                     .map(item => item.avatar);
                 if (charactersForTag.length === 0) return '';
                 return createDropdownContainer(tag.name, charactersForTag.length, 'allTags', tag.id);
             }).join('');
             const noTagsCharacters = sortedList
-                .filter(item => !tagMap[item.avatar] || tagMap[item.avatar].length === 0)
+                .filter(item => !acm.st.tagMap[item.avatar] || acm.st.tagMap[item.avatar].length === 0)
                 .map(item => item.avatar);
             const noTagsDropdown = noTagsCharacters.length > 0
                 ? createDropdownContainer('No Tags', noTagsCharacters.length, 'allTags', 'no-tags')
@@ -217,7 +216,7 @@ function generateDropdown(sortedList, type) {
             return tagDropdowns + noTagsDropdown;
         },
         custom: () => {
-            const preset = acmSettings.getSetting('presetId');
+            const preset = acm.settings.getSetting('presetId');
             const categories = getPreset(preset).categories;
             if (categories.length === 0) {
                 return 'Looks like our categories went on vacation! 🏖️ Check back when they\'re done sunbathing!';
@@ -225,7 +224,7 @@ function generateDropdown(sortedList, type) {
             return categories.map(category => {
                 const members = category.tags;
                 const charactersForCat = sortedList
-                    .filter(item => members.every(memberId => tagMap[item.avatar]?.includes(String(memberId))))
+                    .filter(item => members.every(memberId => acm.st.tagMap[item.avatar]?.includes(String(memberId))))
                     .map(item => item.avatar);
                 if (charactersForCat.length === 0) return '';
                 return createDropdownContainer(
@@ -300,9 +299,9 @@ function generateDropdownContent(sortedList, type, content){
             const filteredCharacters = sortedList
                 .filter(item => {
                     if (content === 'no-tags') {
-                        return !tagMap[item.avatar] || tagMap[item.avatar].length === 0;
+                        return !acm.st.tagMap[item.avatar] || acm.st.tagMap[item.avatar].length === 0;
                     }
-                    return tagMap[item.avatar]?.includes(content);
+                    return acm.st.tagMap[item.avatar]?.includes(content);
 
                 });
             const container = document.createDocumentFragment();
@@ -318,7 +317,7 @@ function generateDropdownContent(sortedList, type, content){
                 .map(t => t.trim())
                 .filter(t => t.length > 0);
             const filteredCharacters = sortedList.filter(item => {
-                const charTags = tagMap[item.avatar] || [];
+                const charTags = acm.st.tagMap[item.avatar] || [];
                 return tags.every(tag => charTags.includes(tag));
             });
             const container = document.createDocumentFragment();
@@ -388,8 +387,8 @@ export function toggleTagQueries() {
  * @return {void} This function does not return a value.
  */
 export function updateSortOrder(selectedOption) {
-    acmSettings.updateSetting('sortingField', selectedOption.data('field'));
-    acmSettings.updateSetting('sortingOrder', selectedOption.data('order'));
+    acm.settings.updateSetting('sortingField', selectedOption.data('field'));
+    acm.settings.updateSetting('sortingOrder', selectedOption.data('order'));
     refreshCharListDebounced();
 }
 
@@ -400,7 +399,7 @@ export function updateSortOrder(selectedOption) {
  * @return {void} This method does not return a value.
  */
 export function updateSearchFilter(searchText) {
-    acmSettings.setSearchValue(String(searchText).toLowerCase());
+    acm.settings.setSearchValue(String(searchText).toLowerCase());
     refreshCharListDebounced();
 }
 
@@ -411,7 +410,7 @@ export function updateSearchFilter(searchText) {
  * @return {void} This function does not return any value.
  */
 export function toggleFavoritesOnly(isChecked) {
-    acmSettings.updateSetting('favOnly', isChecked);
+    acm.settings.updateSetting('favOnly', isChecked);
     refreshCharListDebounced();
 }
 

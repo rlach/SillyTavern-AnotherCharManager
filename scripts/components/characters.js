@@ -7,18 +7,6 @@ import {
 import { displayTag } from './tags.js';
 import { getBase64Async, getIdByAvatar } from '../utils.js';
 import {
-    callGenericPopup,
-    characters,
-    getThumbnailUrl,
-    getTokenCountAsync,
-    POPUP_TYPE,
-    power_user,
-    selectCharacterById,
-    substituteParams,
-    tagMap,
-    unshallowCharacter,
-} from '../constants/context.js';
-import {
     dupeChar,
     editCharDebounced,
     exportChar,
@@ -28,7 +16,7 @@ import {
 } from '../services/characters-service.js';
 import { addAltGreetingsTrigger } from '../events/characters-events.js';
 import { closeDetails } from './modal.js';
-import { acmSettings } from '../../index.js';
+import { acm } from '../../index.js';
 
 /**
  * Fills the character details in the user interface based on the provided avatar.
@@ -37,11 +25,11 @@ import { acmSettings } from '../../index.js';
  * @return {Promise<void>} A promise that resolves when all character details have been successfully populated and updates are complete.
  */
 export async function fillDetails(avatar) {
-    if (typeof characters[getIdByAvatar(avatar)].data.alternate_greetings === 'undefined') {
-        await unshallowCharacter(getIdByAvatar(avatar));
+    if (typeof acm.st.characters[getIdByAvatar(avatar)].data.alternate_greetings === 'undefined') {
+        await acm.st.unshallowCharacter(getIdByAvatar(avatar));
     }
-    const char = characters[getIdByAvatar(avatar)];
-    const avatarThumb = getThumbnailUrl('avatar', char.avatar);
+    const char = acm.st.characters[getIdByAvatar(avatar)];
+    const avatarThumb = acm.st.getThumbnailUrl('avatar', char.avatar);
 
     $('#avatar_title').attr('title', char.avatar);
     $('#avatar_img').attr('src', avatarThumb);
@@ -55,7 +43,7 @@ export async function fillDetails(avatar) {
     $('#ch_infos_lastchat').text(`Last chat: ${char.date_last_chat ? new Date(char.date_last_chat).toISOString().substring(0, 10) : ' - '}`);
     $('#ch_infos_adddate').text(`Added: ${char.date_added ? new Date(char.date_added).toISOString().substring(0, 10) : ' - '}`);
     $('#ch_infos_link').html(char.data.extensions.chub?.full_path ? `Link: <a href="https://chub.ai/${char.data.extensions.chub.full_path}" target="_blank">Chub</a>` : 'Link: -');
-    const text = substituteParams(
+    const text = acm.st.substituteParams(
         char.name +
         char.description +
         char.first_mes +
@@ -66,24 +54,24 @@ export async function fillDetails(avatar) {
         (char.data?.extensions?.depth_prompt?.prompt ?? '') +
         char.mes_example,
     );
-    const tokens = await getTokenCountAsync(text);
+    const tokens = await acm.st.getTokenCountAsync(text);
     $('#ch_infos_tok').text(`Tokens: ${tokens}`);
-    const permText = substituteParams(
+    const permText = acm.st.substituteParams(
         char.name +
         char.description +
         char.personality +
         char.scenario +
         (char.data?.extensions?.depth_prompt?.prompt ?? ''),
     );
-    const permTokens = await getTokenCountAsync(permText);
+    const permTokens = await acm.st.getTokenCountAsync(permText);
     $('#ch_infos_permtok').text(`Perm. Tokens: ${permTokens}`);
-    $('#acm_description_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.description))}`);
+    $('#acm_description_tokens').text(`Tokens: ${await acm.st.getTokenCountAsync(acm.st.substituteParams(char.description))}`);
     $('#acm_description').val(char.description);
-    $('#acm_firstMess_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.first_mes))}`);
+    $('#acm_firstMess_tokens').text(`Tokens: ${await acm.st.getTokenCountAsync(acm.st.substituteParams(char.first_mes))}`);
     $('#acm_firstMess').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#acm_creatornotes').val(char.data?.creator_notes || char.creatorcomment);
-    $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag, 'details')).join('')}`);
+    $('#tag_List').html(`${acm.st.tagMap[char.avatar].map((tag) => displayTag(tag, 'details')).join('')}`);
     displayAltGreetings(char.data.alternate_greetings).then(html => {
         $('#altGreetings_content').html(html);
     });
@@ -101,27 +89,27 @@ export async function fillDetails(avatar) {
  *                         character data and token counts.
  */
 export async function fillAdvancedDefinitions(avatar) {
-    const char = characters[getIdByAvatar(avatar)];
+    const char = acm.st.characters[getIdByAvatar(avatar)];
     $('#acm_character_popup-button-h3').text(char.name);
     $('#acm_creator_notes_textarea').val(char.data?.creator_notes || char.creatorcomment);
     $('#acm_character_version_textarea').val(char.data?.character_version || '');
     $('#acm_system_prompt').val(char.data?.system_prompt || '');
-    $('#acm_system_prompt_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.data?.system_prompt || ''))}`);
+    $('#acm_system_prompt_tokens').text(`Tokens: ${await acm.st.getTokenCountAsync(acm.st.substituteParams(char.data?.system_prompt || ''))}`);
     $('#acm_post_history_prompt').val(char.data?.post_history_instructions || '');
-    $('#acm_post_history_prompt_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.data?.post_history_instructions || ''))}`);
+    $('#acm_post_history_prompt_tokens').text(`Tokens: ${await acm.st.getTokenCountAsync(acm.st.substituteParams(char.data?.post_history_instructions || ''))}`);
     $('#acm_tags_textarea').val(Array.isArray(char.data?.tags) ? char.data.tags.join(', ') : '');
     $('#acm_creator_textarea').val(char.data?.creator);
     $('#acm_personality').val(char.personality);
-    $('#acm_personality_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.personality))}`);
+    $('#acm_personality_tokens').text(`Tokens: ${await acm.st.getTokenCountAsync(acm.st.substituteParams(char.personality))}`);
     $('#acm_scenario').val(char.scenario);
-    $('#acm_scenario_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.scenario))}`);
+    $('#acm_scenario_tokens').text(`Tokens: ${await acm.st.getTokenCountAsync(acm.st.substituteParams(char.scenario))}`);
     $('#acm_character_notes').val(char.data?.extensions?.depth_prompt?.prompt ?? '');
-    $('#acm_character_notes_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''))}`);
+    $('#acm_character_notes_tokens').text(`Tokens: ${await acm.st.getTokenCountAsync(acm.st.substituteParams(char.data?.extensions?.depth_prompt?.prompt ?? ''))}`);
     $('#acm_character_notes_depth').val(char.data?.extensions?.depth_prompt?.depth ?? depth_prompt_depth_default);
     $('#acm_character_notes_role').val(char.data?.extensions?.depth_prompt?.role ?? depth_prompt_role_default);
     $('#acm_talkativeness_slider').val(char.talkativeness || talkativeness_default);
     $('#acm_mes_examples').val(char.mes_example);
-    $('#acm_messages_examples').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.mes_example))}`);
+    $('#acm_messages_examples').text(`Tokens: ${await acm.st.getTokenCountAsync(acm.st.substituteParams(char.mes_example))}`);
 }
 
 /**
@@ -133,12 +121,12 @@ export async function fillAdvancedDefinitions(avatar) {
  */
 export function toggleFavoriteStatus() {
     // Retrieve the ID of the currently selected character
-    const id = getIdByAvatar(acmSettings.selectedChar);
+    const id = getIdByAvatar(acm.settings.selectedChar);
     // Determine the current favorite status of the character
-    const isFavorite = characters[id].fav || characters[id].data.extensions.fav;
+    const isFavorite = acm.st.characters[id].fav || acm.st.characters[id].data.extensions.fav;
     // Prepare the updated data object with the toggled favorite status
     const update = {
-        avatar: acmSettings.selectedChar,
+        avatar: acm.settings.selectedChar,
         fav: !isFavorite,
         data: {
             extensions: {
@@ -166,7 +154,7 @@ export function toggleFavoriteStatus() {
  * @return {void} This function does not return a value.
  */
 export function exportCharacter(format) {
-    exportChar(format, acmSettings.selectedChar);
+    exportChar(format, acm.settings.selectedChar);
 }
 
 /**
@@ -178,7 +166,7 @@ export function exportCharacter(format) {
  * @return {Promise<void>} A promise that resolves once the character duplication process is complete.
  */
 export async function duplicateCharacter() {
-    if (!acmSettings.selectedChar) {
+    if (!acm.settings.selectedChar) {
         // Display a warning if no character is selected
         toastr.warning('You must first select a character to duplicate!');
         return;
@@ -191,7 +179,7 @@ export async function duplicateCharacter() {
         return;
     }
     // Duplicate the selected character
-    await dupeChar(acmSettings.selectedChar);
+    await dupeChar(acm.settings.selectedChar);
 }
 
 /**
@@ -206,7 +194,7 @@ export async function showDuplicateConfirmation() {
     const confirmMessage = `
         <h3>Are you sure you want to duplicate this character?</h3>
         <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
-    return await callGenericPopup(confirmMessage, POPUP_TYPE.CONFIRM);
+    return await acm.st.callGenericPopup(confirmMessage, acm.st.POPUP_TYPE.CONFIRM);
 }
 
 /**
@@ -220,7 +208,7 @@ export async function showDuplicateConfirmation() {
  */
 export async function showRenameDialog(characterAvatar) {
     const charID = getIdByAvatar(characterAvatar);
-    return await callGenericPopup('<h3>New name:</h3>', POPUP_TYPE.INPUT, characters[charID].name);
+    return await acm.st.callGenericPopup('<h3>New name:</h3>', acm.st.POPUP_TYPE.INPUT, acm.st.characters[charID].name);
 }
 
 /**
@@ -233,9 +221,9 @@ export async function showRenameDialog(characterAvatar) {
  * @return {Promise<void>} A promise that resolves once the character's name has been successfully updated.
  */
 export async function renameCharacter() {
-    const charID = getIdByAvatar(acmSettings.selectedChar);
-    const newName = await showRenameDialog(acmSettings.selectedChar);
-    await renameChar(acmSettings.selectedChar, charID, newName);
+    const charID = getIdByAvatar(acm.settings.selectedChar);
+    const newName = await showRenameDialog(acm.settings.selectedChar);
+    await renameChar(acm.settings.selectedChar, charID, newName);
 }
 
 /**
@@ -248,8 +236,8 @@ export async function renameCharacter() {
  */
 export function openCharacterChat() {
     setCharacterId(undefined);
-    acmSettings.setMem_avatar(undefined);
-    selectCharacterById(getIdByAvatar(acmSettings.selectedChar));
+    acm.settings.setMem_avatar(undefined);
+    acm.st.selectCharacterById(getIdByAvatar(acm.settings.selectedChar));
     closeDetails(false);
 
     $('#acm_popup').transition({
@@ -320,9 +308,9 @@ export async function update_avatar(input){
         const file = input.files[0];
         const fileData = await getBase64Async(file);
 
-        if (!power_user.never_resize_avatars) {
+        if (!acm.st.power_user.never_resize_avatars) {
             // Display a cropping dialog to the user
-            const dlg = callGenericPopup('Set the crop position of the avatar image', POPUP_TYPE.CROP, '', { cropImage: fileData });
+            const dlg = acm.st.callGenericPopup('Set the crop position of the avatar image', acm.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
             const croppedImage = await dlg.show();
 
             if (!croppedImage) {
@@ -332,22 +320,22 @@ export async function update_avatar(input){
 
             try {
                 // Replace the avatar with the cropped image
-                await replaceAvatar(file, getIdByAvatar(acmSettings.selectedChar), crop_data);
+                await replaceAvatar(file, getIdByAvatar(acm.settings.selectedChar), crop_data);
                 // Update the avatar image in the UI with a cache-busting timestamp
-                const newImageUrl = getThumbnailUrl('avatar', acmSettings.selectedChar) + '&t=' + new Date().getTime();
+                const newImageUrl = acm.st.getThumbnailUrl('avatar', acm.settings.selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`[data-avatar="${acmSettings.selectedChar}"]`).attr('src', newImageUrl);
+                $(`[data-avatar="${acm.settings.selectedChar}"]`).attr('src', newImageUrl);
             } catch {
                 toastr.error('Something went wrong.'); // Display an error message if the update fails
             }
         } else {
             try {
                 // Replace the avatar without cropping
-                await replaceAvatar(file, getIdByAvatar(acmSettings.selectedChar));
+                await replaceAvatar(file, getIdByAvatar(acm.settings.selectedChar));
                 // Update the avatar image in the UI with a cache-busting timestamp
-                const newImageUrl = getThumbnailUrl('avatar', acmSettings.selectedChar) + '&t=' + new Date().getTime();
+                const newImageUrl = acm.st.getThumbnailUrl('avatar', acm.settings.selectedChar) + '&t=' + new Date().getTime();
                 $('#avatar_img').attr('src', newImageUrl);
-                $(`[data-avatar="${acmSettings.selectedChar}"]`).attr('src', newImageUrl);
+                $(`[data-avatar="${acm.settings.selectedChar}"]`).attr('src', newImageUrl);
             } catch {
                 toastr.error('Something went wrong.'); // Display an error message if the update fails
             }
@@ -445,7 +433,7 @@ async function displayAltGreetings(item) {
                             Greeting #
                             <span class="greeting_index">${greetingNumber}</span>
                         </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: ${await getTokenCountAsync(substituteParams(item[i]))}</span>
+                        <span class="tokens_count drawer-header-item">Tokens: ${await acm.st.getTokenCountAsync(acm.st.substituteParams(item[i]))}</span>
                     </div>
                     <div class="altGreetings_buttons">
                         <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>

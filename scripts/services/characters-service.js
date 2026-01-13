@@ -3,26 +3,11 @@ import { ensureImageFormatSupported, getCharaFilename } from '/scripts/utils.js'
 import { renameGroupMember } from '/scripts/group-chats.js';
 import { world_info } from '/scripts/world-info.js';
 import { createTagMapFromList } from '/scripts/tags.js';
-import {
-    callGenericPopup,
-    characterId,
-    characters,
-    event_types,
-    eventSource,
-    extensionSettings,
-    getCharacters,
-    getRequestHeaders,
-    getThumbnailUrl,
-    getTokenCountAsync,
-    POPUP_TYPE,
-    saveSettingsDebounced,
-    substituteParams, t,
-} from '../constants/context.js';
 import { debounce, delay } from '../utils.js';
 import { renameTagKey } from './tags-service.js';
 import { closeCreationPopup } from '../components/characterCreation.js';
 import { refreshCharListDebounced, selectAndDisplay } from '../components/charactersList.js';
-import { acmSettings } from '../../index.js';
+import { acm } from '../../index.js';
 
 // Create a debounced version of editChar
 export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
@@ -34,7 +19,7 @@ export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
  */
 export async function checkApiAvailability() {
     try {
-        const response = await fetch('/api/plugins/avataredit/probe', { method: 'POST', headers: getRequestHeaders() });
+        const response = await fetch('/api/plugins/avataredit/probe', { method: 'POST', headers: acm.st.getRequestHeaders() });
         return response.status === 204;
     } catch (err) {
         console.error('Error checking API availability:', err);
@@ -54,14 +39,14 @@ async function editChar(update) {
 
     const response = await fetch(url, {
         method: 'POST',
-        headers: getRequestHeaders(),
+        headers: acm.st.getRequestHeaders(),
         body: JSON.stringify(update),
         cache: 'no-cache',
     });
 
     if (response.ok) {
-        await getCharacters();
-        await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: characterId, character: characters[characterId] } });
+        await acm.st.getCharacters();
+        await acm.st.eventSource.emit(acm.st.event_types.CHARACTER_EDITED, { detail: { id: acm.st.characterId, character: acm.st.characters[acm.st.characterId] } });
     } else {
         console.log('Error!');
     }
@@ -88,7 +73,7 @@ export async function replaceAvatar(newAvatar, id, crop_data = undefined) {
         formData.set('avatar', convertedFile);
     }
 
-    formData.set('avatar_url', characters[id].avatar);
+    formData.set('avatar_url', acm.st.characters[id].avatar);
 
     return new Promise((resolve, reject) => {
         jQuery.ajax({
@@ -100,7 +85,7 @@ export async function replaceAvatar(newAvatar, id, crop_data = undefined) {
             processData: false,
             success: async function () {
                 toastr.success('Avatar replaced successfully.');
-                await fetch(getThumbnailUrl('avatar', formData.get('avatar_url')), {
+                await fetch(acm.st.getThumbnailUrl('avatar', formData.get('avatar_url')), {
                     method: 'GET',
                     cache: 'no-cache',
                     headers: {
@@ -108,8 +93,8 @@ export async function replaceAvatar(newAvatar, id, crop_data = undefined) {
                         'cache-control': 'no-cache',
                     },
                 });
-                await getCharacters();
-                await eventSource.emit(event_types.CHARACTER_EDITED, { detail: { id: id, avatarReplaced: true, character: characters[id] } });
+                await acm.st.getCharacters();
+                await acm.st.eventSource.emit(acm.st.event_types.CHARACTER_EDITED, { detail: { id: id, avatarReplaced: true, character: acm.st.characters[id] } });
                 resolve();
             },
             error: function (jqXHR, exception) {
@@ -132,15 +117,15 @@ export async function dupeChar(avatar) {
     const body = { avatar_url: avatar };
     const response = await fetch('/api/characters/duplicate', {
         method: 'POST',
-        headers: getRequestHeaders(),
+        headers: acm.st.getRequestHeaders(),
         body: JSON.stringify(body),
     });
 
     if (response.ok) {
         toastr.success('Character Duplicated');
         const data = await response.json();
-        await eventSource.emit(event_types.CHARACTER_DUPLICATED, { oldAvatar: body.avatar_url, newAvatar: data.path });
-        await getCharacters();
+        await acm.st.eventSource.emit(acm.st.event_types.CHARACTER_DUPLICATED, { oldAvatar: body.avatar_url, newAvatar: data.path });
+        await acm.st.getCharacters();
     }
 }
 
@@ -156,11 +141,11 @@ export async function dupeChar(avatar) {
  *         associated data updated, and UI changes applied. Rejects if any operation fails during the process.
  */
 export async function renameChar(oldAvatar, charID, newName) {
-    if (newName && newName !== characters[charID].name) {
+    if (newName && newName !== acm.st.characters[charID].name) {
         const body = JSON.stringify({ avatar_url: oldAvatar, new_name: newName });
         const response = await fetch('/api/characters/rename', {
             method: 'POST',
-            headers: getRequestHeaders(),
+            headers: acm.st.getRequestHeaders(),
             body,
         });
 
@@ -177,43 +162,43 @@ export async function renameChar(oldAvatar, charID, newName) {
                 const charLore = world_info.charLore?.find(x => x.name == oldName);
                 if (charLore) {
                     charLore.name = newName;
-                    saveSettingsDebounced();
+                    acm.st.saveSettingsDebounced();
                 }
 
                 // Char-bound Author's Notes
-                const charNote = extensionSettings.note.chara?.find(x => x.name == oldName);
+                const charNote = acm.st.extensionSettings.note.chara?.find(x => x.name == oldName);
                 if (charNote) {
                     charNote.name = newName;
-                    saveSettingsDebounced();
+                    acm.st.saveSettingsDebounced();
                 }
 
-                await eventSource.emit(event_types.CHARACTER_RENAMED, oldAvatar, newAvatar);
+                await acm.st.eventSource.emit(acm.st.event_types.CHARACTER_RENAMED, oldAvatar, newAvatar);
 
                 // Unload current character
                 setCharacterId(undefined);
                 // Reload characters list
-                await getCharacters();
+                await acm.st.getCharacters();
 
                 // Find newly renamed character
-                const newChId = characters.findIndex(c => c.avatar == data.avatar);
+                const newChId = acm.st.characters.findIndex(c => c.avatar == data.avatar);
 
                 if (newChId !== -1) {
                     // Select the character after the renaming
                     setCharacterId(newChId);
-                    acmSettings.setSelectedChar(newAvatar);
+                    acm.settings.setSelectedChar(newAvatar);
 
                     // Async delay to update UI
                     await delay(1);
 
-                    if (characterId === -1) {
+                    if (acm.st.characterId === -1) {
                         throw new Error('New character not selected');
                     }
 
                     // Also rename as a group member
                     await renameGroupMember(oldAvatar, newAvatar, newName);
-                    const renamePastChatsConfirm = await callGenericPopup(`<h3>Character renamed!</h3>
+                    const renamePastChatsConfirm = await acm.st.callGenericPopup(`<h3>Character renamed!</h3>
                     <p>Past chats will still contain the old character name. Would you like to update the character name in previous chats as well?</p>
-                    <i><b>Sprites folder (if any) should be renamed manually.</b></i>`, POPUP_TYPE.CONFIRM);
+                    <i><b>Sprites folder (if any) should be renamed manually.</b></i>`, acm.st.POPUP_TYPE.CONFIRM);
 
                     if (renamePastChatsConfirm) {
                         await renamePastChats(newAvatar, newName);
@@ -230,7 +215,7 @@ export async function renameChar(oldAvatar, charID, newName) {
         }
         catch {
             // Reloading to prevent data corruption
-            await callGenericPopup('Something went wrong. The page will be reloaded.', POPUP_TYPE.TEXT);
+            await acm.st.callGenericPopup('Something went wrong. The page will be reloaded.', acm.st.POPUP_TYPE.TEXT);
             location.reload();
         }
     }
@@ -253,7 +238,7 @@ async function renamePastChats(newAvatar, newValue) {
             const fileNameWithoutExtension = file_name.replace('.jsonl', '');
             const getChatResponse = await fetch('/api/chats/get', {
                 method: 'POST',
-                headers: getRequestHeaders(),
+                headers: acm.st.getRequestHeaders(),
                 body: JSON.stringify({
                     ch_name: newValue,
                     file_name: fileNameWithoutExtension,
@@ -275,7 +260,7 @@ async function renamePastChats(newAvatar, newValue) {
 
                 const saveChatResponse = await fetch('/api/chats/save', {
                     method: 'POST',
-                    headers: getRequestHeaders(),
+                    headers: acm.st.getRequestHeaders(),
                     body: JSON.stringify({
                         ch_name: newValue,
                         file_name: fileNameWithoutExtension,
@@ -308,7 +293,7 @@ export async function exportChar(format, avatar) {
 
     const response = await fetch('/api/characters/export', {
         method: 'POST',
-        headers: getRequestHeaders(),
+        headers: acm.st.getRequestHeaders(),
         body: JSON.stringify(body),
     });
 
@@ -351,7 +336,7 @@ function generateGreetingArray() {
 export async function saveAltGreetings(event = null){
     const greetings = generateGreetingArray();
     const update = {
-        avatar: acmSettings.selectedChar,
+        avatar: acm.settings.selectedChar,
         data: {
             alternate_greetings: greetings,
         },
@@ -362,7 +347,7 @@ export async function saveAltGreetings(event = null){
     if (event) {
         const textarea = event.target;
         const tokensSpan = textarea.closest('.inline-drawer-content').previousElementSibling.querySelector('.tokens_count');
-        tokensSpan.textContent = `Tokens: ${await getTokenCountAsync(substituteParams(textarea.value))}`;
+        tokensSpan.textContent = `Tokens: ${await acm.st.getTokenCountAsync(acm.st.substituteParams(textarea.value))}`;
     }
 
     // Edit the Alt Greetings number on the main drawer
@@ -381,9 +366,9 @@ export async function saveAltGreetings(event = null){
 export async function createCharacter(formData) {
     try {
         let url = '/api/characters/create';
-        const headers = getRequestHeaders({ omitContentType: true });
-        if (acmSettings.acm_crop_data != undefined) {
-            url += `?crop=${encodeURIComponent(JSON.stringify(acmSettings.acm_crop_data))}`;
+        const headers = acm.st.getRequestHeaders({ omitContentType: true });
+        if (acm.settings.acm_crop_data != undefined) {
+            url += `?crop=${encodeURIComponent(JSON.stringify(acm.settings.acm_crop_data))}`;
         }
         const rawFile = formData.get('avatar');
         if (rawFile instanceof File) {
@@ -403,15 +388,15 @@ export async function createCharacter(formData) {
 
         const avatarId = await fetchResult.text();
         createTagMapFromList('#acmTagList', avatarId);
-        acmSettings.setCrop_data(undefined);
+        acm.settings.setCrop_data(undefined);
         await delay(500);
         closeCreationPopup();
-        await getCharacters();
+        await acm.st.getCharacters();
         refreshCharListDebounced();
         await selectAndDisplay(avatarId, true);
     }
     catch (error) {
         console.error('Error creating character', error);
-        toastr.error(t`Failed to create character`);
+        toastr.error(acm.st.t`Failed to create character`);
     }
 }

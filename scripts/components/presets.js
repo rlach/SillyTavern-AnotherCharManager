@@ -1,4 +1,3 @@
-import { callGenericPopup, POPUP_TYPE } from '../constants/context.js';
 import { acmCreateTagInput, displayTag } from './tags.js';
 import { updateDropdownPresetNames } from './charactersList.js';
 import {
@@ -8,7 +7,7 @@ import {
     updatePresetCategories,
     updatePresetName,
 } from '../services/presets-service.js';
-import { acmSettings } from '../../index.js';
+import { acm } from '../../index.js';
 
 /**
  * Manages the custom categories interface in the application.
@@ -24,7 +23,7 @@ export async function manageCustomCategories(){
     const selectElement = $(`
         <select id="preset_selector" title="Preset Selector"></select>
     `);
-    acmSettings.getSetting('dropdownPresets').forEach((preset, index) => {
+    acm.settings.getSetting('dropdownPresets').forEach((preset, index) => {
         selectElement.append(`<option data-preset="${index}">${preset.name}</option>`);
     });
     html.append(`
@@ -51,7 +50,7 @@ export async function manageCustomCategories(){
      </div>
 
     `);
-    await callGenericPopup(html, POPUP_TYPE.TEXT, '', { okButton: 'Close', allowVerticalScrolling: true });
+    await acm.st.callGenericPopup(html, acm.st.POPUP_TYPE.TEXT, '', { okButton: 'Close', allowVerticalScrolling: true });
 }
 
 /**

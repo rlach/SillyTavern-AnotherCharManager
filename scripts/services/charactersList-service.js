@@ -1,6 +1,5 @@
-import { characters, tagList, tagMap } from '../constants/context.js';
 const { Fuse } = SillyTavern.libs;
-import { acmSettings } from '../../index.js';
+import { acm } from '../../index.js';
 /**
  * Filters and searches through a list of characters based on user-defined criteria such as tags, favorites,
  * and a search query. The method utilizes settings, tag filters, and fuzzy search to return a filtered list
@@ -16,9 +15,9 @@ import { acmSettings } from '../../index.js';
  */
 export function searchAndFilter(){
     let filteredChars = [];
-    const charactersCopy = acmSettings.getSetting('favOnly')
-        ? [...characters].filter(character => character.fav === true || character.data.extensions.fav === true)
-        : [...characters];
+    const charactersCopy = acm.settings.getSetting('favOnly')
+        ? [...acm.st.characters].filter(character => character.fav === true || character.data.extensions.fav === true)
+        : [...acm.st.characters];
 
     const excludedTags = $('#acm_excludedTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
     const mandatoryTags = $('#acm_mandatoryTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
@@ -26,7 +25,7 @@ export function searchAndFilter(){
 
     // Filtering based on tags
     let tagfilteredChars = charactersCopy.filter(item => {
-        const characterTags = tagMap[item.avatar] || [];
+        const characterTags = acm.st.tagMap[item.avatar] || [];
 
         // First: Exclude characters with any excluded tags
         if (excludedTags.length > 0) {
@@ -49,8 +48,8 @@ export function searchAndFilter(){
         return true;
     });
 
-    if (acmSettings.searchValue !== '') {
-        const searchValueTrimmed = acmSettings.searchValue.trim();
+    if (acm.settings.searchValue !== '') {
+        const searchValueTrimmed = acm.settings.searchValue.trim();
         const searchField = $('#search_filter_dropdown').val();
 
         let fuseOptions;
@@ -84,12 +83,12 @@ export function searchAndFilter(){
                     threshold: 0.3,
                     includeScore: true,
                 };
-                const tagFuse = new Fuse(tagList, tagFuseOptions);
+                const tagFuse = new Fuse(acm.st.tagList, tagFuseOptions);
                 const matchingTags = tagFuse.search(searchValueTrimmed);
                 const matchingTagIds = matchingTags.map(result => result.item.id);
 
                 filteredChars = tagfilteredChars.filter(item => {
-                    return (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
+                    return (acm.st.tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
                 });
                 return filteredChars;
             }
@@ -123,7 +122,7 @@ export function sortCharAR(chars, sort_data, sort_order) {
                 comparison = a[sort_data].localeCompare(b[sort_data]);
                 break;
             case 'tags':
-                comparison = tagMap[a.avatar].length - tagMap[b.avatar].length;
+                comparison = acm.st.tagMap[a.avatar].length - acm.st.tagMap[b.avatar].length;
                 break;
             case 'date_last_chat':
                 comparison = b[sort_data] - a[sort_data];

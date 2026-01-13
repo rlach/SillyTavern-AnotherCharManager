@@ -2,13 +2,13 @@
 import { initializeTagInput } from './scripts/services/tags-service.js';
 import { initializeModal } from './scripts/components/modal.js';
 import { initializeEventHandlers } from './scripts/events/global-events.js';
-import SettingsManager from './scripts/classes/SettingsManager.js';
+import { AppContext } from './scripts/classes/AppContext.js';
 
-export const acmSettings = new SettingsManager();
+export const acm = new AppContext();
 
 jQuery(async () => {
-    await acmSettings.init();
-    acmSettings.migrateDropdownPresets();
+    await acm.settings.init();
+    acm.settings.migrateDropdownPresets();
     await initializeModal();
     initializeEventHandlers();
     initializeTagInput();

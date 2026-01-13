@@ -1,4 +1,3 @@
-import { eventSource } from '../constants/context.js';
 import {
     addAltGreeting,
     closeCharacterPopup,
@@ -15,7 +14,7 @@ import { closeDetails } from '../components/modal.js';
 import { checkApiAvailability, editCharDebounced, saveAltGreetings } from '../services/characters-service.js';
 import { refreshCharListDebounced } from '../components/charactersList.js';
 import { updateTokenCount } from '../utils.js';
-import { acmSettings } from '../../index.js';
+import { acm } from '../../index.js';
 
 /**
  * Initializes a set of field updaters for designated DOM elements, enabling dynamic updates
@@ -28,13 +27,13 @@ import { acmSettings } from '../../index.js';
  */
 export function initializeFieldUpdaters() {
     const elementsToInitialize = {
-        '#acm_description': async function () {const descZone = $('#acm_description');const update = { avatar:acmSettings.selectedChar,description:String(descZone.val()),data:{ description:String(descZone.val()) } };editCharDebounced(update);await updateTokenCount('#acm_description');},
-        '#acm_firstMess': async function () {const firstMesZone = $('#acm_firstMess');const update = { avatar:acmSettings.selectedChar,first_mes:String(firstMesZone.val()),data:{ first_mes:String(firstMesZone.val()) } };editCharDebounced(update);await updateTokenCount('#acm_firstMess');},
+        '#acm_description': async function () {const descZone = $('#acm_description');const update = { avatar:acm.settings.selectedChar,description:String(descZone.val()),data:{ description:String(descZone.val()) } };editCharDebounced(update);await updateTokenCount('#acm_description');},
+        '#acm_firstMess': async function () {const firstMesZone = $('#acm_firstMess');const update = { avatar:acm.settings.selectedChar,first_mes:String(firstMesZone.val()),data:{ first_mes:String(firstMesZone.val()) } };editCharDebounced(update);await updateTokenCount('#acm_firstMess');},
         '#acm_creatornotes': function () {
             const creatorNotes = $('#acm_creatornotes');
             $('#acm_creator_notes_textarea').val(String(creatorNotes.val()));
             const update = {
-                avatar: acmSettings.selectedChar,
+                avatar: acm.settings.selectedChar,
                 creatorcomment: String(creatorNotes.val()),
                 data: { creator_notes: String(creatorNotes.val()) },
             };
@@ -44,24 +43,24 @@ export function initializeFieldUpdaters() {
             const creatorNotes = $('#acm_creator_notes_textarea');
             $('#acm_creatornotes').val(String(creatorNotes.val()));
             const update = {
-                avatar: acmSettings.selectedChar,
+                avatar: acm.settings.selectedChar,
                 creatorcomment: String(creatorNotes.val()),
                 data: { creator_notes: String(creatorNotes.val()) },
             };
             editCharDebounced(update);
         },
-        '#acm_character_version_textarea': function () { const update = { avatar:acmSettings.selectedChar,data:{ character_version:String($('#acm_character_version_textarea').val()) } };editCharDebounced(update);},
-        '#acm_system_prompt': async function () {const sysPrompt = $('#acm_system_prompt');const update = { avatar:acmSettings.selectedChar,data:{ system_prompt:String(sysPrompt.val()) } };editCharDebounced(update);await updateTokenCount('#acm_system_prompt');},
-        '#acm_post_history_prompt': async function () {const postHistory = $('#acm_post_history_prompt');const update = { avatar:acmSettings.selectedChar,data:{ post_history_instructions:String(postHistory.val()) } };editCharDebounced(update);await updateTokenCount('#acm_post_history_prompt');},
-        '#acm_creator_textarea': function () {const update = { avatar:acmSettings.selectedChar,data:{ creator:String($('#acm_creator_textarea').val()) } };editCharDebounced(update);},
-        '#acm_personality': async function () {const personality = $('#acm_personality');const update = { avatar:acmSettings.selectedChar,personality:String(personality.val()),data:{ personality:String(personality.val()) } };editCharDebounced(update);await updateTokenCount('#acm_personality');},
-        '#acm_scenario': async function () {const scenario = $('#acm_scenario');const update = { avatar:acmSettings.selectedChar,scenario: String(scenario.val()),data:{ scenario:String(scenario.val()) } };editCharDebounced(update);await updateTokenCount('#acm_scenario');},
-        '#acm_character_notes': async function () {const depthPrompt = $('#acm_character_notes');const update = { avatar:acmSettings.selectedChar,data:{ extensions:{ depth_prompt:{ prompt:String(depthPrompt.val()) } } } };editCharDebounced(update);await updateTokenCount('#acm_character_notes');},
-        '#acm_character_notes_depth': function () {const update = { avatar:acmSettings.selectedChar,data:{ extensions:{ depth_prompt:{ depth:$('#acm_character_notes_depth').val() } } } };editCharDebounced(update);},
-        '#acm_character_notes_role': function () {const update = { avatar:acmSettings.selectedChar,data:{ extensions:{ depth_prompt:{ role:String($('#acm_character_notes_role').val()) } } } };editCharDebounced(update);},
-        '#acm_talkativeness_slider': function () {const talkativeness = $('#acm_talkativeness_slider');const update = { avatar:acmSettings.selectedChar,talkativeness:String(talkativeness.val()),data:{ extensions:{ talkativeness:String(talkativeness.val()) } } };editCharDebounced(update);},
-        '#acm_mes_examples': async function () {const example = $('#acm_mes_examples');const update = { avatar:acmSettings.selectedChar,mes_example:String(example.val()),data:{ mes_example:String(example.val()) } };editCharDebounced(update);await updateTokenCount('#acm_mes_examples');},
-        '#acm_tags_textarea': function () {const tagZone = $('#acm_tags_textarea');const update = { avatar:acmSettings.selectedChar,tags:tagZone.val().split(', '),data:{ tags:tagZone.val().split(', ') } };editCharDebounced(update);},
+        '#acm_character_version_textarea': function () { const update = { avatar:acm.settings.selectedChar,data:{ character_version:String($('#acm_character_version_textarea').val()) } };editCharDebounced(update);},
+        '#acm_system_prompt': async function () {const sysPrompt = $('#acm_system_prompt');const update = { avatar:acm.settings.selectedChar,data:{ system_prompt:String(sysPrompt.val()) } };editCharDebounced(update);await updateTokenCount('#acm_system_prompt');},
+        '#acm_post_history_prompt': async function () {const postHistory = $('#acm_post_history_prompt');const update = { avatar:acm.settings.selectedChar,data:{ post_history_instructions:String(postHistory.val()) } };editCharDebounced(update);await updateTokenCount('#acm_post_history_prompt');},
+        '#acm_creator_textarea': function () {const update = { avatar:acm.settings.selectedChar,data:{ creator:String($('#acm_creator_textarea').val()) } };editCharDebounced(update);},
+        '#acm_personality': async function () {const personality = $('#acm_personality');const update = { avatar:acm.settings.selectedChar,personality:String(personality.val()),data:{ personality:String(personality.val()) } };editCharDebounced(update);await updateTokenCount('#acm_personality');},
+        '#acm_scenario': async function () {const scenario = $('#acm_scenario');const update = { avatar:acm.settings.selectedChar,scenario: String(scenario.val()),data:{ scenario:String(scenario.val()) } };editCharDebounced(update);await updateTokenCount('#acm_scenario');},
+        '#acm_character_notes': async function () {const depthPrompt = $('#acm_character_notes');const update = { avatar:acm.settings.selectedChar,data:{ extensions:{ depth_prompt:{ prompt:String(depthPrompt.val()) } } } };editCharDebounced(update);await updateTokenCount('#acm_character_notes');},
+        '#acm_character_notes_depth': function () {const update = { avatar:acm.settings.selectedChar,data:{ extensions:{ depth_prompt:{ depth:$('#acm_character_notes_depth').val() } } } };editCharDebounced(update);},
+        '#acm_character_notes_role': function () {const update = { avatar:acm.settings.selectedChar,data:{ extensions:{ depth_prompt:{ role:String($('#acm_character_notes_role').val()) } } } };editCharDebounced(update);},
+        '#acm_talkativeness_slider': function () {const talkativeness = $('#acm_talkativeness_slider');const update = { avatar:acm.settings.selectedChar,talkativeness:String(talkativeness.val()),data:{ extensions:{ talkativeness:String(talkativeness.val()) } } };editCharDebounced(update);},
+        '#acm_mes_examples': async function () {const example = $('#acm_mes_examples');const update = { avatar:acm.settings.selectedChar,mes_example:String(example.val()),data:{ mes_example:String(example.val()) } };editCharDebounced(update);await updateTokenCount('#acm_mes_examples');},
+        '#acm_tags_textarea': function () {const tagZone = $('#acm_tags_textarea');const update = { avatar:acm.settings.selectedChar,tags:tagZone.val().split(', '),data:{ tags:tagZone.val().split(', ') } };editCharDebounced(update);},
     };
 
     Object.keys(elementsToInitialize).forEach(function (id) {
@@ -77,17 +76,17 @@ export function initializeFieldUpdaters() {
  */
 export function initializeCharactersEvents() {
     // Add listener to refresh the display on characters edit
-    eventSource.on('character_edited', function (data) {
+    acm.st.eventSource.on('character_edited', function (data) {
         if (data.detail && data.detail.avatarReplaced) {
             refreshCharListDebounced(true);
         }
     });
     // Add listener to refresh the display when a character is renamed
-    eventSource.on('character_renamed', function () {
+    acm.st.eventSource.on('character_renamed', function () {
         refreshCharListDebounced(true);
     });
     // Add listener to refresh the display on characters delete
-    eventSource.on('characterDeleted', function () {
+    acm.st.eventSource.on('characterDeleted', function () {
         let charDetailsState = document.getElementById('char-details');
         if (charDetailsState.style.display !== 'none') {
             closeDetails();
@@ -95,7 +94,7 @@ export function initializeCharactersEvents() {
         refreshCharListDebounced(true);
     });
     // Add listener to refresh the display on characters duplication
-    eventSource.on('character_duplicated', function () {
+    acm.st.eventSource.on('character_duplicated', function () {
         refreshCharListDebounced(true);
     });
 
