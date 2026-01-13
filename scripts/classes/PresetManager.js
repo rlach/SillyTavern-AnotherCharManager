@@ -300,7 +300,7 @@ export class PresetManager {
             : $('#catContainer').empty() && $('#catContainer');
 
         const preset = this.getPreset(presetID);
-        if(preset.categories.length === 0){
+        if(!preset.categories?.length){
             catContainer.append('No category defined');
             $('#acm_custom_categories').append(catContainer);
         }
@@ -385,7 +385,7 @@ export class PresetManager {
     /**
      * Adds a new category to the specified preset and updates the dropdown presets.
      *
-     * @param {string} preset - The identifier of the preset to which the category will be added.
+     * @param {number} preset - The identifier of the preset to which the category will be added.
      * @param {string} catName - The name of the new category to be added.
      * @return {void} This function does not return a value.
      */

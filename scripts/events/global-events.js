@@ -1,6 +1,5 @@
-import { initializeExtMenuEvents, initializeModalEvents, initializeUIMenuEvents } from './modal-events.js';
+import { initializeModalEvents, initializeUIMenuEvents } from './modal-events.js';
 import { initializeCharactersEvents } from './characters-events.js';
-import { initializePresetsEvents } from './presets-events.js';
 import { initializeCharactersListEvents, initializeToolbarEvents } from './charactersList-events.js';
 import { initializeCharacterCreationEvents } from './characterCreation-events.js';
 
@@ -11,7 +10,6 @@ import { initializeCharacterCreationEvents } from './characterCreation-events.js
 export function initializeEventHandlers() {
     // Initialize event handlers for different components
     initializeModalEvents();
-    initializeExtMenuEvents();
     initializeToolbarEvents();
     initializeUIMenuEvents();
     initializeCharactersListEvents();

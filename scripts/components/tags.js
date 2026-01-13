@@ -1,8 +1,7 @@
 import { refreshCharListDebounced } from './charactersList.js';
 import { acmFindTagMulti, findTag } from '../services/tags-service.js';
 import { equalsIgnoreCaseAndAccents } from '../utils.js';
-import { addTagToCategory } from '../services/presets-service.js';
-import { acm } from '../../index.js';
+import { acm, presetManager } from '../../index.js';
 
 /**
  * Renders a tag as an HTML string based on the provided tag ID and an optional display mode.
@@ -115,7 +114,7 @@ function acmSelectTag(event, ui, listSelector, { tagListOptions = {}, mode = 'cl
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $(listSelector).find('label').closest('[data-catid]').data('catid');
             $(listSelector).find('label').before(displayTag(tag.id, 'category'));
-            addTagToCategory(selectedPreset, selectedCat, tag.id);
+            presetManager.addTagToCategory(selectedPreset, selectedCat, tag.id);
             break;
         }
         case 'multiple': {

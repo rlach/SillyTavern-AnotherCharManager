@@ -1,9 +1,8 @@
 import { getIdByAvatar } from '../utils.js';
 import { setCharacterId, setMenuType } from '/script.js';
-const { Popper } = SillyTavern.libs;
-import { updateDropdownPresetNames } from '../services/presets-service.js';
 import { updateLayout } from './characterCreation.js';
-import { acm } from '../../index.js';
+import { acm, presetManager } from '../../index.js';
+const { Popper } = SillyTavern.libs;
 
 /**
  * Initializes the modal component
@@ -42,7 +41,7 @@ export async function initializeModal() {
 
     // Initialize popper.js for dropdowns
     initializePoppers();
-    updateDropdownPresetNames();
+    presetManager.updateDropdownPresetNames();
     updateLayout(false);
 }
 

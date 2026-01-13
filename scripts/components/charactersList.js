@@ -2,9 +2,8 @@ import { setCharacterId, setMenuType } from '/script.js';
 import { debounce, getIdByAvatar } from '../utils.js';
 import { fillAdvancedDefinitions, fillDetails } from './characters.js';
 import { searchAndFilter, sortCharAR } from '../services/charactersList-service.js';
-import { getPreset } from '../services/presets-service.js';
 import { VirtualScroller } from '../classes/VirtualScroller.js';
-import { acm } from '../../index.js';
+import { acm, presetManager } from '../../index.js';
 
 let virtualScroller = null;
 export const refreshCharListDebounced = debounce((preserveScroll) => {
@@ -217,7 +216,7 @@ function generateDropdown(sortedList, type) {
         },
         custom: () => {
             const preset = acm.settings.getSetting('presetId');
-            const categories = getPreset(preset).categories;
+            const categories = presetManager.getPreset(preset).categories;
             if (categories.length === 0) {
                 return 'Looks like our categories went on vacation! 🏖️ Check back when they\'re done sunbathing!';
             }

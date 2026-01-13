@@ -7,22 +7,7 @@ import {
     toggleDropdownMenus,
 } from '../components/modal.js';
 import { handleContainerResize, refreshCharListDebounced } from '../components/charactersList.js';
-import { manageCustomCategories, printCategoriesList } from '../components/presets.js';
-import { acm } from '../../index.js';
-
-/**
- * Initializes external menu events by attaching event listeners to specified menu elements.
- * This method binds a click event to the menu element with the ID 'acm_open',
- * triggering the `openModal` function when the element is clicked.
- *
- * @return {void} This function does not return any value.
- */
-export function initializeExtMenuEvents() {
-    $('#acm_open').on('click', function () {
-        refreshCharListDebounced();
-        openModal();
-    });
-}
+import { acm, presetManager } from '../../index.js';
 
 /**
  * Initializes modal-related events for interactive elements within the application.
@@ -34,7 +19,7 @@ export function initializeExtMenuEvents() {
  * @return {void} Does not return a value.
  */
 export function initializeModalEvents() {
-    $('#acm-manager').on('click', function () {
+    $('#acm-manager, #acm_open').on('click', function() {
         refreshCharListDebounced();
         openModal();
     });
@@ -123,12 +108,12 @@ export function initializeUIMenuEvents() {
             }
         },
         '#acm_manage_categories': () => {
-            manageCustomCategories();
+            presetManager.manageCustomCategories();
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             if (acm.settings.getSetting('dropdownUI') && acm.settings.getSetting('dropdownMode') === 'custom') {
                 $('.popup-button-ok').on('click', refreshCharListDebounced);
             }
-            printCategoriesList(selectedPreset, true);
+            presetManager.printCategoriesList(selectedPreset, true);
         },
         '[data-ui="preset"]': function() {
             const presetId = $(this).data('preset');
