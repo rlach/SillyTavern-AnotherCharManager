@@ -14,7 +14,6 @@ export function initializeEventHandlers() {
     initializeExtMenuEvents();
     initializeToolbarEvents();
     initializeUIMenuEvents();
-    initializePresetsEvents();
     initializeCharactersListEvents();
     initializeCharactersEvents();
     initializeCharacterCreationEvents();

@@ -1,7 +1,7 @@
 import { getIdByAvatar } from '../utils.js';
 import { setCharacterId, setMenuType } from '/script.js';
 const { Popper } = SillyTavern.libs;
-import { updateDropdownPresetNames } from './charactersList.js';
+import { updateDropdownPresetNames } from '../services/presets-service.js';
 import { updateLayout } from './characterCreation.js';
 import { acm } from '../../index.js';
 

@@ -340,19 +340,7 @@ function generateDropdownContent(sortedList, type, content){
     return dropdownContent[type]?.() || '';
 }
 
-/**
- * Updates the names of the preset items in a dropdown menu by iterating through each dropdown item,
- * fetching the associated preset using its index, and setting its name as the item's text content.
- *
- * @return {void} This function does not return a value.
- */
-export function updateDropdownPresetNames() {
-    $('#preset-submenu .dropdown-ui-item').each(function () {
-        const presetIndex = $(this).data('preset');
-        const newName = getPreset(presetIndex).name;
-        if (newName) { $(this).text(newName); }
-    });
-}
+
 
 /**
  * Toggles the visibility of the tag query list by manipulating CSS classes and styles.
