@@ -4,7 +4,7 @@ import {
     updateSearchFilter,
     updateSortOrder,
 } from '../components/charactersList.js';
-import { toggleCharacterCreationPopup } from '../components/characterCreation.js';
+import { acm } from '../../index.js';
 
 /**
  * Initializes events for the characters list.
@@ -57,7 +57,9 @@ export function initializeToolbarEvents() {
         $('#external_import_button').trigger('click');
     });
 
-    $('#acm_character_create_button').on('click', toggleCharacterCreationPopup);
+    $('#acm_character_create_button').on('click', () => {
+        acm.eventManager.emit('acm_toggleCreationPopup');
+    });
 
     $(document).on('click', '.tag_acm_remove', function () {
         $(this).closest('[data-tagid]').remove();

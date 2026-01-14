@@ -4,7 +4,6 @@ import { renameGroupMember } from '/scripts/group-chats.js';
 import { world_info } from '/scripts/world-info.js';
 import { createTagMapFromList } from '/scripts/tags.js';
 import { debounce, delay } from '../utils.js';
-import { closeCreationPopup } from '../components/characterCreation.js';
 import { refreshCharListDebounced, selectAndDisplay } from '../components/charactersList.js';
 import { acm, tagManager } from '../../index.js';
 
@@ -389,7 +388,7 @@ export async function createCharacter(formData) {
         createTagMapFromList('#acmTagList', avatarId);
         acm.settings.setCrop_data(undefined);
         await delay(500);
-        closeCreationPopup();
+        acm.eventManager.emit('acm_toggleCreationPopup');
         await acm.st.getCharacters();
         refreshCharListDebounced();
         await selectAndDisplay(avatarId, true);
