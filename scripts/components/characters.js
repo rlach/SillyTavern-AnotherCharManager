@@ -14,7 +14,6 @@ import {
     saveAltGreetings,
 } from '../services/characters-service.js';
 import { addAltGreetingsTrigger } from '../events/characters-events.js';
-import { closeDetails } from './modal.js';
 import { acm, tagManager } from '../../index.js';
 
 /**
@@ -237,7 +236,7 @@ export function openCharacterChat() {
     setCharacterId(undefined);
     acm.settings.setMem_avatar(undefined);
     acm.st.selectCharacterById(getIdByAvatar(acm.settings.selectedChar));
-    closeDetails(false);
+    acm.eventManager.emit('acm_closeDetails', false);
 
     $('#acm_popup').transition({
         opacity: 0,

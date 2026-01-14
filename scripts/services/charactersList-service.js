@@ -24,7 +24,7 @@ export function searchAndFilter(){
     const facultativeTags = $('#acm_facultativeTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
 
     // Filtering based on tags
-    let tagfilteredChars = charactersCopy.filter(item => {
+    let tagFilteredChars = charactersCopy.filter(item => {
         const characterTags = acm.st.tagMap[item.avatar] || [];
 
         // First: Exclude characters with any excluded tags
@@ -87,21 +87,21 @@ export function searchAndFilter(){
                 const matchingTags = tagFuse.search(searchValueTrimmed);
                 const matchingTagIds = matchingTags.map(result => result.item.id);
 
-                filteredChars = tagfilteredChars.filter(item => {
+                filteredChars = tagFilteredChars.filter(item => {
                     return (acm.st.tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
                 });
                 return filteredChars;
             }
         }
 
-        const fuse = new Fuse(tagfilteredChars, fuseOptions);
+        const fuse = new Fuse(tagFilteredChars, fuseOptions);
         const results = fuse.search(searchValueTrimmed);
         filteredChars = results.map(result => result.item);
 
         return filteredChars;
     }
     else {
-        return tagfilteredChars;
+        return tagFilteredChars;
     }
 }
 

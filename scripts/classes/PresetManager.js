@@ -1,3 +1,5 @@
+import { refreshCharListDebounced } from '../components/charactersList.js';
+
 export class PresetManager {
     constructor(eventManager, settings, st, tagManager) {
         this.eventManager = eventManager;
@@ -75,6 +77,15 @@ export class PresetManager {
 
         this.eventManager.on('acm_addTagCategory',  (data) => {
             this.addTagToCategory(data.presetId, data.categoryId, data.tagId)
+        });
+
+        this.eventManager.on('acm_open_presets_manager', () => {
+            this.manageCustomCategories();
+            const selectedPreset = $('#preset_selector option:selected').data('preset');
+            if (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom') {
+                $('.popup-button-ok').on('click', refreshCharListDebounced);
+            }
+            this.printCategoriesList(selectedPreset, true);
         });
     }
 
@@ -256,10 +267,9 @@ export class PresetManager {
      * This method creates and displays a popup allowing users to view, select, rename, or create custom categories.
      * It initializes a dropdown for preset categories, renders category controls,
      * and provides drag-and-drop reordering functionality.
-     *
-     * @return {Promise<void>} A Promise that resolves when the popup dialog is fully displayed and the operation is complete.
+     *.
      */
-    async manageCustomCategories(){
+    manageCustomCategories(){
         const html = $(document.createElement('div'));
         html.attr('id', 'acm_custom_categories');
         const selectElement = $(`<select id="preset_selector" title="Preset Selector"></select>`);
@@ -289,7 +299,7 @@ export class PresetManager {
                 </div>
              </div>
         `);
-        await this.st.callGenericPopup(html, this.st.POPUP_TYPE.TEXT, '', { okButton: 'Close', allowVerticalScrolling: true });
+        this.st.callGenericPopup(html, this.st.POPUP_TYPE.TEXT, '', { okButton: 'Close', allowVerticalScrolling: true });
     }
 
     /**

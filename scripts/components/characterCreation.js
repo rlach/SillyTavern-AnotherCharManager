@@ -1,6 +1,5 @@
 import { getBase64Async, updateTokenCount } from '../utils.js';
 import { createCharacter } from '../services/characters-service.js';
-import { closeDetails } from './modal.js';
 import { acm } from '../../index.js';
 
 /**
@@ -31,7 +30,7 @@ export function toggleCharacterCreationPopup() {
     const $popup = $('#acm_create_popup');
     if ($popup.css('display') === 'none') {
 
-        closeDetails();
+        acm.eventManager.emit('acm_closeDetails');
         // Initialize all form fields with create_data values
         $('#acm_create_name').val(acm.settings.create_data.name);
         $('#acm_create_desc').val(acm.settings.create_data.description);
