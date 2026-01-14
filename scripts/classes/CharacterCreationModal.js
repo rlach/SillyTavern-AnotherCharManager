@@ -202,27 +202,16 @@ export class CharacterCreationModal {
             // Check if the user has disabled avatar resizing
             if (!this.st.never_resize_avatars) {
                 // // Display a cropping dialog for the avatar image
-                // const dlg = this.st.callGenericPopup('Set the crop position of the avatar image', this.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
-                // const croppedImage = await dlg.show();
+                const dlg = await this.st.callGenericPopup('Set the crop position of the avatar image', this.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
 
-
-                const popupResult = this.st.callGenericPopup('Set the crop position of the avatar image', this.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
-
-                if (!popupResult || typeof popupResult.show !== 'function') {
-                    console.error('The popup object is invalid:', popupResult);
+                if (!dlg) {
+                    console.error('The popup object is invalid:', dlg);
                     return;
                 }
 
-                const croppedImage = await popupResult.show();
-
-
-                // If the user cancels the cropping, exit the function
-                if (!croppedImage) {
-                    return;
-                }
                 // Save the crop data and set the cropped image as the avatar
                 this.settings.setCrop_data(dlg.cropData);
-                $('#acm_create_avatar').attr('src', String(croppedImage));
+                $('#acm_create_avatar').attr('src', String(dlg));
             } else {
                 // Directly set the Base64 image as the avatar
                 $('#acm_create_avatar').attr('src', fileData);

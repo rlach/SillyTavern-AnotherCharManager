@@ -308,10 +308,10 @@ export async function update_avatar(input){
 
         if (!acm.st.never_resize_avatars) {
             // Display a cropping dialog to the user
-            const dlg = acm.st.callGenericPopup('Set the crop position of the avatar image', acm.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
-            const croppedImage = await dlg.show();
+            const dlg = await acm.st.callGenericPopup('Set the crop position of the avatar image', acm.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
 
-            if (!croppedImage) {
+            if (!dlg) {
+                console.error('The popup object is invalid:', dlg);
                 return; // Exit if the user cancels the cropping dialog
             }
             crop_data = dlg.cropData;
