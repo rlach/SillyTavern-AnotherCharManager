@@ -7,9 +7,9 @@ export class AppContext {
         this.eventManager = new EventManager();
         this.st = new SillyTavernContext();
         this.settings = new SettingsManager({
-            extensionSettings: () => this.st.extensionSettings,
+            extensionSettings: this.st.extensionSettings,
             saveSettingsDebounced: (...args) =>
-                this.st.ctx.saveSettingsDebounced(...args)
+                this.st.saveSettingsDebounced(...args)
         });
     }
 }

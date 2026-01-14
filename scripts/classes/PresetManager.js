@@ -10,8 +10,9 @@ export class PresetManager {
         this.st = st;
     }
     registerListeners(){
-        $(document).on('change', '#preset_selector',  () => {
-            const newPreset = $(this).find(':selected').data('preset');
+        $(document).on('change', '#preset_selector',  (event) => {
+            const $element = $(event.currentTarget);
+            const newPreset = $element.find(':selected').data('preset');
             this.displayPresetName(newPreset);
             this.printCategoriesList(newPreset);
         });
@@ -35,16 +36,18 @@ export class PresetManager {
         });
 
         // Trigger on a click on the delete category button
-        $(document).on('click', '.cat_delete',  () => {
+        $(document).on('click', '.cat_delete',  (event) => {
+            const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
-            const selectedCat = $(this).closest('[data-catid]').data('catid');
+            const selectedCat = $element.closest('[data-catid]').data('catid');
             this.removeCategory(selectedPreset, selectedCat);
         });
 
         // Trigger on a click on the rename category button
-        $(document).on('click', '.cat_rename', async () => {
+        $(document).on('click', '.cat_rename', async (event) => {
+            const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
-            const selectedCat = $(this).closest('[data-catid]').data('catid');
+            const selectedCat = $element.closest('[data-catid]').data('catid');
             const newCatName = await this.st.callGenericPopup('<h3>New category name:</h3>', this.st.POPUP_TYPE.INPUT, this.getCategory(selectedPreset, selectedCat).name);
             if (newCatName && newCatName.trim() !== '') {
                 this.renameCategory(selectedPreset, selectedCat, newCatName);
@@ -52,23 +55,26 @@ export class PresetManager {
         });
 
         // Trigger on a click on the add tag button in a category
-        $(document).on('click', '.addCatTag',  () => {
-            const selectedCat = $(this).closest('[data-catid]').data('catid');
-            this.toggleTagButton($(this), selectedCat);
+        $(document).on('click', '.addCatTag',  (event) => {
+            const $element = $(event.currentTarget);
+            const selectedCat = $element.closest('[data-catid]').data('catid');
+            this.toggleTagButton($element, selectedCat);
         });
 
         // Trigger on a click on the minus tag button in a category
-        $(document).on('click', '.cancelCatTag',  () => {
-            const selectedCat = $(this).closest('[data-catid]').data('catid');
-            this.toggleTagButton($(this), selectedCat);
+        $(document).on('click', '.cancelCatTag',  (event) => {
+            const $element = $(event.currentTarget);
+            const selectedCat = $element.closest('[data-catid]').data('catid');
+            this.toggleTagButton($element, selectedCat);
         });
 
-        $(document).on('click', '.tag_cat_remove',  () => {
+        $(document).on('click', '.tag_cat_remove',  (event) => {
+            const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
-            const selectedCat = $(this).closest('[data-catid]').data('catid');
-            const selectedTag = $(this).closest('[data-tagid]').data('tagid');
+            const selectedCat = $element.closest('[data-catid]').data('catid');
+            const selectedTag = $element.closest('[data-tagid]').data('tagid');
             this.removeTagFromCategory(selectedPreset, selectedCat, selectedTag);
-            $(this).closest('[data-tagid]').remove();
+            $element.closest('[data-tagid]').remove();
         });
     }
 
@@ -237,10 +243,11 @@ export class PresetManager {
      * @return {void} This function does not return a value.
      */
     updateDropdownPresetNames() {
-        $('#preset-submenu .dropdown-ui-item').each(() => {
-            const presetIndex = $(this).data('preset');
+        $('#preset-submenu .dropdown-ui-item').each((index, element) => {
+            const $element = $(element);
+            const presetIndex = $element.data('preset');
             const newName = this.getPreset(presetIndex).name;
-            if (newName) { $(this).text(newName); }
+            if (newName) { $element.text(newName); }
         });
     }
 
@@ -371,7 +378,7 @@ export class PresetManager {
     /**
      * Renames an existing preset to a new name and updates all related UI elements.
      *
-     * @param {string} preset - The identifier of the preset to rename.
+     * @param {number} preset - The identifier of the preset to rename.
      * @param {string} newName - The new name to assign to the preset.
      * @return {void}
      */
@@ -448,7 +455,7 @@ export class PresetManager {
     /**
      * Updates the content of the preset name element with the name of the specified preset.
      *
-     * @param {string} newPreset - The identifier for the new preset whose name is to be displayed.
+     * @param {number} newPreset - The identifier for the new preset whose name is to be displayed.
      * @return {void} This function does not return a value.
      */
     displayPresetName(newPreset) {
