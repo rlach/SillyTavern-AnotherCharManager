@@ -4,10 +4,9 @@ import { renameGroupMember } from '/scripts/group-chats.js';
 import { world_info } from '/scripts/world-info.js';
 import { createTagMapFromList } from '/scripts/tags.js';
 import { debounce, delay } from '../utils.js';
-import { renameTagKey } from './tags-service.js';
 import { closeCreationPopup } from '../components/characterCreation.js';
 import { refreshCharListDebounced, selectAndDisplay } from '../components/charactersList.js';
-import { acm } from '../../index.js';
+import { acm, tagManager } from '../../index.js';
 
 // Create a debounced version of editChar
 export const editCharDebounced = debounce((data) => { editChar(data); }, 1000);
@@ -156,7 +155,7 @@ export async function renameChar(oldAvatar, charID, newName) {
                 const oldName = getCharaFilename(null, { manualAvatarKey: oldAvatar });
 
                 // Replace tags list
-                renameTagKey(oldAvatar, newAvatar);
+                tagManager.renameTagKey(oldAvatar, newAvatar);
 
                 // Addtional lore books
                 const charLore = world_info.charLore?.find(x => x.name == oldName);

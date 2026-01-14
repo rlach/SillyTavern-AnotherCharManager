@@ -1,13 +1,9 @@
-import {
-    acmCreateTagInput,
-    displayTag,
-} from '../components/tags.js';
-
 export class PresetManager {
-    constructor(events, settings, st) {
-        this.events = events;
+    constructor(eventManager, settings, st, tagManager) {
+        this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
+        this.tagManager = tagManager;
     }
     registerListeners(){
         $(document).on('change', '#preset_selector',  (event) => {
@@ -75,6 +71,10 @@ export class PresetManager {
             const selectedTag = $element.closest('[data-tagid]').data('tagid');
             this.removeTagFromCategory(selectedPreset, selectedCat, selectedTag);
             $element.closest('[data-tagid]').remove();
+        });
+
+        this.eventManager.on('acm_addTagCategory',  (data) => {
+            this.addTagToCategory(data.presetId, data.categoryId, data.tagId)
         });
     }
 
@@ -329,7 +329,7 @@ export class PresetManager {
                 const catTagList = catElement.find(`#acm_catTagList_${index}`);
                 if (cat.tags) {
                     cat.tags.forEach(tag => {
-                        catTagList.append(displayTag(tag, 'category'));
+                        catTagList.append(this.tagManager.displayTag(tag, 'category'));
                     });
                 }
                 catTagList.append(`<label for="input_cat_tag_${index}" title="Search or create a tag.">
@@ -338,7 +338,7 @@ export class PresetManager {
                 catTagList.append('<i class="fa-solid fa-plus tag addCatTag"></i>');
                 catContainer.append(catElement);
                 $('#acm_custom_categories').append(catContainer);
-                acmCreateTagInput(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } }, 'category');
+                this.tagManager.acmCreateTagInput(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } }, 'category');
             });
             this.makeCategoryDraggable('#catContainer');
         }
@@ -404,7 +404,7 @@ export class PresetManager {
     /**
      * Removes a category from a specified preset's category list.
      *
-     * @param {string} preset - The name of the preset from which the category will be removed.
+     * @param {number} preset - The name of the preset from which the category will be removed.
      * @param {number} category - The index of the category to remove in the preset's category list.
      * @return {void} This method does not return a value.
      */
@@ -416,8 +416,8 @@ export class PresetManager {
     /**
      * Renames a category within a specified preset and updates the stored settings.
      *
-     * @param {string} preset - The name of the preset containing the category to rename.
-     * @param {string} category - The name of the category to be renamed.
+     * @param {number} preset - The name of the preset containing the category to rename.
+     * @param {number} category - The name of the category to be renamed.
      * @param {string} newName - The new name to assign to the category.
      * @return {void} This function does not return any value.
      */

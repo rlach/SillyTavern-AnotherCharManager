@@ -5,7 +5,8 @@ export class SillyTavernContext {
     }
 
     // ---- data ----
-    get power_user() { return this.ctx.powerUserSettings; }
+    get never_resize_avatars() { return this.ctx.powerUserSettings.never_resize_avatars; }
+    get tag_sort_mode() { return this.ctx.powerUserSettings.tag_sort_mode; }
     get characters() { return this.ctx.characters; }
     get tagMap() { return this.ctx.tagMap; }
     get tagList() { return this.ctx.tags; }

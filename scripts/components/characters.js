@@ -4,7 +4,6 @@ import {
     setCharacterId,
     talkativeness_default,
 } from '/script.js';
-import { displayTag } from './tags.js';
 import { getBase64Async, getIdByAvatar } from '../utils.js';
 import {
     dupeChar,
@@ -16,7 +15,7 @@ import {
 } from '../services/characters-service.js';
 import { addAltGreetingsTrigger } from '../events/characters-events.js';
 import { closeDetails } from './modal.js';
-import { acm } from '../../index.js';
+import { acm, tagManager } from '../../index.js';
 
 /**
  * Fills the character details in the user interface based on the provided avatar.
@@ -71,7 +70,7 @@ export async function fillDetails(avatar) {
     $('#acm_firstMess').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#acm_creatornotes').val(char.data?.creator_notes || char.creatorcomment);
-    $('#tag_List').html(`${acm.st.tagMap[char.avatar].map((tag) => displayTag(tag, 'details')).join('')}`);
+    $('#tag_List').html(`${acm.st.tagMap[char.avatar].map((tag) => tagManager.displayTag(tag, 'details')).join('')}`);
     displayAltGreetings(char.data.alternate_greetings).then(html => {
         $('#altGreetings_content').html(html);
     });
@@ -308,7 +307,7 @@ export async function update_avatar(input){
         const file = input.files[0];
         const fileData = await getBase64Async(file);
 
-        if (!acm.st.power_user.never_resize_avatars) {
+        if (!acm.st.never_resize_avatars) {
             // Display a cropping dialog to the user
             const dlg = acm.st.callGenericPopup('Set the crop position of the avatar image', acm.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
             const croppedImage = await dlg.show();

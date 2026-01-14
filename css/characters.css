@@ -28,7 +28,7 @@
 
 
 #char-details.open {
-    height: min(33svh, 50%);
+    height: min(40svh, 50%);
     opacity: 1;
     transform: translateY(0);
     transition:

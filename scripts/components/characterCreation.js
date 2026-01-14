@@ -147,7 +147,7 @@ export async function loadAvatar(input) {
         const file = input.files[0];
         const fileData = await getBase64Async(file);
         // Check if the user has disabled avatar resizing
-        if (!acm.st.power_user.never_resize_avatars) {
+        if (!acm.st.never_resize_avatars) {
             // Display a cropping dialog for the avatar image
             const dlg = acm.st.callGenericPopup('Set the crop position of the avatar image', acm.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
             const croppedImage = await dlg.show();
