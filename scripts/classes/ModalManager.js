@@ -1,6 +1,6 @@
 import { getIdByAvatar, resetScrollHeight } from '../utils.js';
 import { setCharacterId, setMenuType } from '/script.js';
-import { handleContainerResize, refreshCharListDebounced } from '../components/charactersList.js';
+import { CharCreationManager } from './CharCreationManager.js';
 const { Popper } = SillyTavern.libs;
 
 export class ModalManager {
@@ -8,12 +8,13 @@ export class ModalManager {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
+        this.charCreationManager = new CharCreationManager(this.eventManager, this.settings, this.st);
     }
 
     /**
      * Initializes the modal component
      */
-    async initializeModal() {
+    async init() {
         // Load the modal HTML template
         let modalHtml;
         try {
@@ -49,6 +50,7 @@ export class ModalManager {
         this.initializePoppers();
         this.initializeModalEvents();
         this.initializeUIMenuEvents();
+        this.charCreationManager.initializeCharacterCreationEvents();
     }
 
     /**
@@ -259,7 +261,7 @@ export class ModalManager {
      */
     initializeModalEvents() {
         $('#acm-manager, #acm_open').on('click', () => {
-            refreshCharListDebounced();
+            this.eventManager.emit('acm_refreshCharList');
             this.openModal();
         });
 
@@ -302,7 +304,7 @@ export class ModalManager {
 
             // Refresh virtual scroller after resize
             requestAnimationFrame(() => {
-                handleContainerResize();
+                this.eventManager.emit('acm_handleContainerResize');
             });
         });
 
@@ -333,21 +335,21 @@ export class ModalManager {
             '#acm_switch_classic': () => {
                 if (this.settings.getSetting('dropdownUI')) {
                     this.settings.updateSetting('dropdownUI', false);
-                    refreshCharListDebounced();
+                    this.eventManager.emit('acm_refreshCharList');
                 }
             },
             '#acm_switch_alltags': () => {
                 if (!this.settings.getSetting('dropdownUI') || (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'allTags')) {
                     this.settings.updateSetting('dropdownUI', true);
                     this.settings.updateSetting('dropdownMode', 'allTags');
-                    refreshCharListDebounced();
+                    this.eventManager.emit('acm_refreshCharList');
                 }
             },
             '#acm_switch_creators': () => {
                 if (!this.settings.getSetting('dropdownUI') || (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'creators')) {
                     this.settings.updateSetting('dropdownUI', true);
                     this.settings.updateSetting('dropdownMode', 'creators');
-                    refreshCharListDebounced();
+                    this.eventManager.emit('acm_refreshCharList');
                 }
             },
             '#acm_manage_categories': () => {
@@ -361,7 +363,7 @@ export class ModalManager {
                     this.settings.updateSetting('dropdownUI', true);
                     this.settings.updateSetting('dropdownMode', 'custom');
                     this.settings.updateSetting('presetId', presetId);
-                    refreshCharListDebounced();
+                    this.eventManager.emit('acm_refreshCharList');
                 }
             },
         };

@@ -1,4 +1,3 @@
-import { refreshCharListDebounced } from '../components/charactersList.js';
 import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from '../utils.js';
 import { createTagInput } from '/scripts/tags.js';
 
@@ -20,7 +19,7 @@ export class TagManager {
      *
      * @return {void} Does not return a value.
      */
-    initializeTagInput() {
+    init() {
         createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
         createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
         // Grouping the three interdependent inputs using the 'multiple' mode
@@ -165,7 +164,7 @@ export class TagManager {
                 if (!isDuplicate) {
                     // Append ONLY to the list associated with the current input
                     $(listSelector).append(this.displayTag(tag.id));
-                    refreshCharListDebounced();
+                    this.eventManager.emit('acm_refreshCharList');
                 } else {
                     toastr.warning('This tag is already assigned to one of the requirement lists.');
                 }
@@ -174,7 +173,7 @@ export class TagManager {
             case 'classic':
             default: {
                 $(listSelector).append(this.displayTag(tag.id));
-                refreshCharListDebounced(true);
+                this.eventManager.emit('acm_refreshCharList', true);
                 break;
             }
         }

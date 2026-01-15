@@ -1,5 +1,3 @@
-import { refreshCharListDebounced } from '../components/charactersList.js';
-
 export class PresetManager {
     constructor(eventManager, settings, st, tagManager) {
         this.eventManager = eventManager;
@@ -7,6 +5,12 @@ export class PresetManager {
         this.st = st;
         this.tagManager = tagManager;
     }
+
+    init(){
+        this.registerListeners();
+        this.updateDropdownPresetNames();
+    }
+
     registerListeners(){
         $(document).on('change', '#preset_selector',  (event) => {
             const $element = $(event.currentTarget);
@@ -83,7 +87,7 @@ export class PresetManager {
             this.manageCustomCategories();
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             if (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom') {
-                $('.popup-button-ok').on('click', refreshCharListDebounced);
+                $('.popup-button-ok').on('click', this.eventManager.emit('acm_refreshCharList'));
             }
             this.printCategoriesList(selectedPreset, true);
         });

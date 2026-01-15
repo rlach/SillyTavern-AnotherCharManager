@@ -1,7 +1,8 @@
-import { getBase64Async, updateTokenCount } from '../utils.js';
-import { createCharacter } from '../services/characters-service.js';
+import { createTagMapFromList } from "/scripts/tags.js";
+import { ensureImageFormatSupported } from "/scripts/utils.js";
+import { delay, getBase64Async, updateTokenCount } from '../utils.js';
 
-export class CharacterCreationModal {
+export class CharCreationManager {
     constructor(eventManager, settings, st) {
         this.eventManager = eventManager;
         this.settings = settings;
@@ -121,7 +122,7 @@ export class CharacterCreationModal {
             $('#acmTagInput').empty();
 
             // Update token counts for all fields
-            Object.values(CharacterCreationModal.FIELD_CONFIGURATIONS).forEach(selector => {
+            Object.values(CharCreationManager.FIELD_CONFIGURATIONS).forEach(selector => {
                 updateTokenCount(`${selector}`);
             });
             // Avatar handling
@@ -147,7 +148,7 @@ export class CharacterCreationModal {
             // Reset the character creation data to its default state
             this.settings.resetCreateData();
             // Update token counts for all fields in the form
-            Object.values(CharacterCreationModal.FIELD_CONFIGURATIONS).forEach(selector => {
+            Object.values(CharCreationManager.FIELD_CONFIGURATIONS).forEach(selector => {
                 updateTokenCount(`${selector}`);
             });
             // Clear the tag list in the popup
@@ -277,7 +278,54 @@ export class CharacterCreationModal {
         formData.append('extra_books', JSON.stringify(this.settings.create_data.extra_books));
         formData.append('extensions', JSON.stringify(this.settings.create_data.extensions));
         // Submit the form data to create the character
-        await createCharacter(formData);
+        await this.createCharacter(formData);
+    }
+
+    /**
+     * Creates a new character using the provided form data.
+     * Sends a POST request to the server to create the character and handles associated processes such as avatar format conversion,
+     * refreshing character lists, and updating the UI after successful creation.
+     *
+     * @param {FormData} formData The form data containing the character details and avatar file to be uploaded.
+     * @return {Promise<void>} Resolves when the character creation process is successfully completed,
+     * or handles errors if the creation fails.
+     */
+    async createCharacter(formData) {
+        try {
+            let url = '/api/characters/create';
+            const headers = this.st.getRequestHeaders({ omitContentType: true });
+            if (this.settings.acm_crop_data != undefined) {
+                url += `?crop=${encodeURIComponent(JSON.stringify(this.settings.acm_crop_data))}`;
+            }
+            const rawFile = formData.get('avatar');
+            if (rawFile instanceof File) {
+                const convertedFile = await ensureImageFormatSupported(rawFile);
+                formData.set('avatar', convertedFile);
+            }
+            const fetchResult = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: formData,
+                cache: 'no-cache',
+            });
+
+            if (!fetchResult.ok) {
+                throw new Error('Fetch result is not ok');
+            }
+
+            const avatarId = await fetchResult.text();
+            createTagMapFromList('#acmTagList', avatarId);
+            this.settings.setCrop_data(undefined);
+            await delay(500);
+            this.toggleCharacterCreationPopup();
+            await this.st.getCharacters();
+            this.eventManager.emit('acm_refreshCharList');
+            this.eventManager.emit('acm_selectAndDisplay', {avatar: avatarId, scrollTo: true});
+        }
+        catch (error) {
+            console.error('Error creating character', error);
+            toastr.error(this.st.t`Failed to create character`);
+        }
     }
 }
 
