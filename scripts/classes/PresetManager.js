@@ -15,7 +15,7 @@ export class PresetManager {
         $(document).on('change', '#preset_selector',  (event) => {
             const $element = $(event.currentTarget);
             const newPreset = $element.find(':selected').data('preset');
-            this.displayPresetName(newPreset);
+            $('#preset_name').html(this.getPreset(newPreset).name);
             this.printCategoriesList(newPreset);
         });
 
@@ -24,7 +24,10 @@ export class PresetManager {
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const newPresetName = await this.st.callGenericPopup('<h3>New preset name:</h3>', this.st.POPUP_TYPE.INPUT, this.getPreset(selectedPreset).name);
             if (newPresetName && newPresetName.trim() !== '') {
-                this.renamePreset(selectedPreset, newPresetName);
+                this.updatePresetName(selectedPreset, newPresetName);
+                $('#preset_name').html(newPresetName);
+                $('#preset_selector option').filter((_, element) => $(element).data('preset') === selectedPreset).text(newPresetName);
+                this.updateDropdownPresetNames();
             }
         });
 
@@ -33,7 +36,8 @@ export class PresetManager {
             const newCatName = await this.st.callGenericPopup('<h3>Category name:</h3>', this.st.POPUP_TYPE.INPUT, '');
             if (newCatName && newCatName.trim() !== '') {
                 const selectedPreset = $('#preset_selector option:selected').data('preset');
-                this.addCategory(selectedPreset, newCatName);
+                this.addPresetCategory(selectedPreset, newCatName);
+                this.printCategoriesList(selectedPreset);
             }
         });
 
@@ -42,7 +46,8 @@ export class PresetManager {
             const $element = $(event.currentTarget);
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $element.closest('[data-catid]').data('catid');
-            this.removeCategory(selectedPreset, selectedCat);
+            this.removePresetCategory(selectedPreset, selectedCat);
+            this.printCategoriesList(selectedPreset);
         });
 
         // Trigger on a click on the rename category button
@@ -52,7 +57,8 @@ export class PresetManager {
             const selectedCat = $element.closest('[data-catid]').data('catid');
             const newCatName = await this.st.callGenericPopup('<h3>New category name:</h3>', this.st.POPUP_TYPE.INPUT, this.getCategory(selectedPreset, selectedCat).name);
             if (newCatName && newCatName.trim() !== '') {
-                this.renameCategory(selectedPreset, selectedCat, newCatName);
+                this.updateCategoryName(selectedPreset, selectedCat, newCatName);
+                this.printCategoriesList(selectedPreset);
             }
         });
 
@@ -390,57 +396,6 @@ export class PresetManager {
     }
 
     /**
-     * Renames an existing preset to a new name and updates all related UI elements.
-     *
-     * @param {number} preset - The identifier of the preset to rename.
-     * @param {string} newName - The new name to assign to the preset.
-     * @return {void}
-     */
-    renamePreset(preset, newName) {
-        this.updatePresetName(preset, newName);
-        $('#preset_name').html(newName);
-        $('#preset_selector option').filter((_, element) => $(element).data('preset') === preset).text(newName);
-        this.updateDropdownPresetNames();
-    }
-
-    /**
-     * Adds a new category to the specified preset and updates the dropdown presets.
-     *
-     * @param {number} preset - The identifier of the preset to which the category will be added.
-     * @param {string} catName - The name of the new category to be added.
-     * @return {void} This function does not return a value.
-     */
-    addCategory(preset, catName){
-        this.addPresetCategory(preset, catName);
-        this.printCategoriesList(preset);
-    }
-
-    /**
-     * Removes a category from a specified preset's category list.
-     *
-     * @param {number} preset - The name of the preset from which the category will be removed.
-     * @param {number} category - The index of the category to remove in the preset's category list.
-     * @return {void} This method does not return a value.
-     */
-    removeCategory(preset, category) {
-        this.removePresetCategory(preset, category);
-        this.printCategoriesList(preset);
-    }
-
-    /**
-     * Renames a category within a specified preset and updates the stored settings.
-     *
-     * @param {number} preset - The name of the preset containing the category to rename.
-     * @param {number} category - The name of the category to be renamed.
-     * @param {string} newName - The new name to assign to the category.
-     * @return {void} This function does not return any value.
-     */
-    renameCategory(preset, category, newName) {
-        this.updateCategoryName(preset, category, newName);
-        this.printCategoriesList(preset);
-    }
-
-    /**
      * Toggles the state of a tag button between "add" and "cancel" styles
      * and shows or hides the associated category tag input field.
      *
@@ -464,15 +419,5 @@ export class PresetManager {
                 .removeClass('fa-minus');
             $(`#input_cat_tag_${selectedCat}`).hide();
         }
-    }
-
-    /**
-     * Updates the content of the preset name element with the name of the specified preset.
-     *
-     * @param {number} newPreset - The identifier for the new preset whose name is to be displayed.
-     * @return {void} This function does not return a value.
-     */
-    displayPresetName(newPreset) {
-        $('#preset_name').html(this.getPreset(newPreset).name);
     }
 }

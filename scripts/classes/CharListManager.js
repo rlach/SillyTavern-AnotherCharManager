@@ -69,15 +69,20 @@ export class CharListManager {
         $(document).on('click', '#acm_tags_filter', this.toggleTagQueries);
 
         $(document).on('change', '#char_sort_order', (event) => {
-            this.updateSortOrder($(event.currentTarget).find(':selected'));
+            const selectedOption = $(event.currentTarget).find(':selected');
+            this.settings.updateSetting('sortingField', selectedOption.data('field'));
+            this.settings.updateSetting('sortingOrder', selectedOption.data('order'));
+            this.refreshCharListDebounced();
         });
 
         $(document).on('input', '#char_search_bar', (event) => {
-            this.updateSearchFilter($(event.currentTarget).val());
+            this.settings.setSearchValue(String($(event.currentTarget).val()).toLowerCase());
+            this.refreshCharListDebounced();
         });
 
         $('#favOnly_checkbox').on('change', (event) => {
-            this.toggleFavoritesOnly(event.currentTarget.checked);
+            this.settings.updateSetting('favOnly', event.currentTarget.checked);
+            this.refreshCharListDebounced();
         });
 
         $('#acm_character_import_button').on('click', function () {
@@ -591,41 +596,4 @@ export class CharListManager {
         }
         tagsList.classList.toggle('open');
     }
-
-    /**
-     * Updates the sort order of a list based on the selected option.
-     *
-     * @param {Object} selectedOption - The selected option containing sorting information.
-     * @param {function} selectedOption.data - A function that retrieves specific data from the selected option.
-     * @return {void} This function does not return a value.
-     */
-    updateSortOrder(selectedOption) {
-        this.settings.updateSetting('sortingField', selectedOption.data('field'));
-        this.settings.updateSetting('sortingOrder', selectedOption.data('order'));
-        this.refreshCharListDebounced();
-    }
-
-    /**
-     * Updates the search filter by setting a normalized search value and triggering a refresh of the character list.
-     *
-     * @param {string} searchText - The text input used to update the search filter. It is converted to lowercase before being processed.
-     * @return {void} This method does not return a value.
-     */
-    updateSearchFilter(searchText) {
-        this.settings.setSearchValue(String(searchText).toLowerCase());
-        this.refreshCharListDebounced();
-    }
-
-    /**
-     * Toggles the display setting for favorites only.
-     *
-     * @param {boolean} isChecked - Indicates whether the favorites-only filter is enabled.
-     * @return {void} This function does not return any value.
-     */
-    toggleFavoritesOnly(isChecked) {
-        this.settings.updateSetting('favOnly', isChecked);
-        this.refreshCharListDebounced();
-    }
-
-
 }

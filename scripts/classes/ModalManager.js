@@ -1,6 +1,9 @@
 import { getIdByAvatar, resetScrollHeight } from '../utils.js';
 import { setCharacterId, setMenuType } from '/script.js';
 import { CharCreationManager } from './CharCreationManager.js';
+import { PresetManager } from './PresetManager.js';
+import { TagManager } from './TagManager.js';
+import { CharListManager } from "./CharListManager.js";
 const { Popper } = SillyTavern.libs;
 
 export class ModalManager {
@@ -9,6 +12,9 @@ export class ModalManager {
         this.settings = settings;
         this.st = st;
         this.charCreationManager = new CharCreationManager(this.eventManager, this.settings, this.st);
+        this.tagManager = new TagManager(this.eventManager, this.st);
+        this.presetManager = new PresetManager(this.eventManager, this.settings, this.st, this.tagManager);
+        this.charListManager = new CharListManager(this.eventManager, this.settings, this.st, this.presetManager);
     }
 
     /**
@@ -51,6 +57,9 @@ export class ModalManager {
         this.initializeModalEvents();
         this.initializeUIMenuEvents();
         this.charCreationManager.initializeCharacterCreationEvents();
+        this.tagManager.init();
+        this.presetManager.init();
+        this.charListManager.init();
     }
 
     /**

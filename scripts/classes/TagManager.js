@@ -100,20 +100,10 @@ export class TagManager {
                     },
                     minLength: 0,
                 })
-                .on('focus', this.onTagInputFocus);
+                .on('focus', function () {
+                    $(this).autocomplete('search', $(this).val());
+                });
         });
-    }
-
-    /**
-     * Handles the focus event on a tag input field and triggers the autocomplete functionality.
-     *
-     * This method is intended to initiate an autocomplete search using the input value when the field gains focus.
-     *
-     * @return {void} This method does not return a value.
-     */
-    onTagInputFocus() {
-        // @ts-ignore
-        $(this).autocomplete('search', $(this).val());
     }
 
     /**

@@ -3,7 +3,7 @@ import {
     OLD_EXTENSION_NAME,
     defaultSettings,
     create_data,
-} from '../constants/settings.js';
+} from '../settings.js';
 
 export class SettingsManager {
     constructor({ extensionSettings, saveSettingsDebounced }) {

@@ -55,7 +55,7 @@ export class CharacterManager {
                     creatorcomment: String(creatorNotes.val()),
                     data: { creator_notes: String(creatorNotes.val()) },
                 };
-                editCharDebounced(update);
+                this.editCharDebounced(update);
             },
             '#acm_creator_notes_textarea': ()=> {
                 const creatorNotes = $('#acm_creator_notes_textarea');
@@ -200,6 +200,21 @@ export class CharacterManager {
     }
 
     /**
+     * Checks the availability of the AvatarEdit API by making a POST request to the probe endpoint.
+     *
+     * @return {Promise<boolean>} A promise that resolves to true if the API is available (returns a status of 204), or false otherwise.
+     */
+    async checkApiAvailability() {
+        try {
+            const response = await fetch('/api/plugins/avataredit/probe', { method: 'POST', headers: this.st.getRequestHeaders() });
+            return response.status === 204;
+        } catch (err) {
+            console.error('Error checking API availability:', err);
+            return false;
+        }
+    }
+
+    /**
      * Fills the character details in the user interface based on the provided avatar.
      *
      * @param {string} avatar - The avatar identifier of the character for which details are to be filled.
@@ -328,111 +343,6 @@ export class CharacterManager {
     }
 
     /**
-     * Exports the currently selected character in the specified format.
-     * This function utilizes the `exportChar` service to handle the export process.
-     *
-     * @param {string} format - The format in which the character should be exported (e.g., JSON, XML).
-     * @return {void} This function does not return a value.
-     */
-    exportCharacter(format) {
-        this.exportChar(format, this.settings.selectedChar);
-    }
-
-    /**
-     * Duplicates the currently selected character.
-     * This function checks if a character is selected, prompts the user for confirmation,
-     * and duplicates the character if the user confirms the action.
-     *
-     * @async
-     * @return {Promise<void>} A promise that resolves once the character duplication process is complete.
-     */
-    async duplicateCharacter() {
-        if (!this.settings.selectedChar) {
-            // Display a warning if no character is selected
-            toastr.warning('You must first select a character to duplicate!');
-            return;
-        }
-        // Show a confirmation dialog to the user
-        const confirmed = await this.showDuplicateConfirmation();
-        if (!confirmed) {
-            // Log a message if the user cancels the duplication
-            console.log('User cancelled duplication');
-            return;
-        }
-        // Duplicate the selected character
-        await this.dupeChar(this.settings.selectedChar);
-    }
-
-    /**
-     * Displays a confirmation popup to the user asking if they want to duplicate a character.
-     * The popup includes a message explaining the duplication action and an alternative option
-     * to start a new chat with the same character.
-     *
-     * @async
-     * @return {Promise<Popup>} A promise that resolves to the confirmation popup instance.
-     */
-    async showDuplicateConfirmation() {
-        const confirmMessage = `
-        <h3>Are you sure you want to duplicate this character?</h3>
-        <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
-        return this.st.callGenericPopup(confirmMessage, this.st.POPUP_TYPE.CONFIRM);
-    }
-
-    /**
-     * Displays a rename dialog for the specified character.
-     * This function creates a popup dialog that allows the user to input a new name
-     * for the character identified by the provided avatar.
-     *
-     * @async
-     * @param {string} characterAvatar - The avatar identifier of the character to be renamed.
-     * @return {Promise<Popup>} A promise that resolves to the popup instance for the rename dialog.
-     */
-    async showRenameDialog(characterAvatar) {
-        const charID = getIdByAvatar(characterAvatar);
-        return this.st.callGenericPopup('<h3>New name:</h3>', this.st.POPUP_TYPE.INPUT, this.st.characters[charID].name);
-    }
-
-    /**
-     * Renames the currently selected character.
-     * This function retrieves the character ID based on the selected avatar,
-     * displays a rename dialog to the user, and updates the character's name
-     * with the new name provided by the user.
-     *
-     * @async
-     * @return {Promise<void>} A promise that resolves once the character's name has been successfully updated.
-     */
-    async renameCharacter() {
-        const charID = getIdByAvatar(this.settings.selectedChar);
-        const newName = await this.showRenameDialog(this.settings.selectedChar);
-        await this.renameChar(this.settings.selectedChar, charID, newName);
-    }
-
-    /**
-     * Opens the character chat interface for the currently selected character.
-     * This function resets the character ID and avatar memory, selects the character
-     * by its ID, and closes the details view. It also transitions the shadow popup
-     * to fade out and hides the popup after a short delay.
-     *
-     * @return {void} This function does not return a value.
-     */
-    openCharacterChat() {
-        setCharacterId(undefined);
-        this.settings.setMem_avatar(undefined);
-        this.st.selectCharacterById(getIdByAvatar(this.settings.selectedChar));
-        this.eventManager.emit('acm_closeDetails', false);
-
-        $('#acm_popup').transition({
-            opacity: 0,
-            duration: 125,
-            easing: 'ease-in-out',
-        });
-        setTimeout(function () {
-            $('#acm_popup').css('display', 'none');
-            // $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
-        }, 125);
-    }
-
-    /**
      * Toggles the visibility of the advanced definitions popup.
      * This function checks the current display state of the popup and either shows or hides it.
      * When showing the popup, it applies a fade-in transition effect; when hiding, it removes the 'open' class.
@@ -472,293 +382,49 @@ export class CharacterManager {
         }, 125);
     }
 
-
     /**
-     * Updates the avatar of the currently selected character.
-     * This function allows the user to upload a new avatar image, optionally crop it,
-     * and then update the avatar in the application. The updated avatar is displayed
-     * in the user interface and saved in the data model.
+     * Exports the currently selected character in the specified format.
+     * This function utilizes the `exportChar` service to handle the export process.
      *
-     * @async
-     * @param {HTMLInputElement} input - The file input element containing the uploaded image file.
-     * @return {Promise<void>} A promise that resolves when the avatar update process is complete.
+     * @param {string} format - The format in which the character should be exported (e.g., JSON, XML).
+     * @return {void} This function does not return a value.
      */
-    async update_avatar(input){
-        if (input.files && input.files[0]) {
-            let crop_data = undefined;
-            const file = input.files[0];
-            const fileData = await getBase64Async(file);
+    async exportCharacter(format) {
+        const avatar = this.settings.selectedChar;
+        const body = { format, avatar_url: avatar };
 
-            if (!this.st.never_resize_avatars) {
-                // Display a cropping dialog to the user
-                const dlg = await this.st.callGenericPopup('Set the crop position of the avatar image', this.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
-
-                if (!dlg) {
-                    console.error('The popup object is invalid:', dlg);
-                    return; // Exit if the user cancels the cropping dialog
-                }
-                crop_data = dlg.cropData;
-
-                try {
-                    // Replace the avatar with the cropped image
-                    await this.replaceAvatar(file, getIdByAvatar(this.settings.selectedChar), crop_data);
-                    // Update the avatar image in the UI with a cache-busting timestamp
-                    const newImageUrl = this.st.getThumbnailUrl('avatar', this.settings.selectedChar) + '&t=' + new Date().getTime();
-                    $('#avatar_img').attr('src', newImageUrl);
-                    $(`[data-avatar="${this.settings.selectedChar}"]`).attr('src', newImageUrl);
-                } catch {
-                    toastr.error('Something went wrong.'); // Display an error message if the update fails
-                }
-            } else {
-                try {
-                    // Replace the avatar without cropping
-                    await this.replaceAvatar(file, getIdByAvatar(this.settings.selectedChar));
-                    // Update the avatar image in the UI with a cache-busting timestamp
-                    const newImageUrl = this.st.getThumbnailUrl('avatar', this.settings.selectedChar) + '&t=' + new Date().getTime();
-                    $('#avatar_img').attr('src', newImageUrl);
-                    $(`[data-avatar="${this.settings.selectedChar}"]`).attr('src', newImageUrl);
-                } catch {
-                    toastr.error('Something went wrong.'); // Display an error message if the update fails
-                }
-            }
-        }
-    }
-
-    /**
-     * Adds a new alternate greeting section to the DOM within the 'altGreetings_content' container.
-     * Each new section is dynamically created and appended to the container, including appropriate event listeners.
-     *
-     * @return {void} Does not return anything.
-     */
-    addAltGreeting(){
-        const drawerContainer = document.getElementById('altGreetings_content');
-        // Determine the new greeting index
-        const greetingIndex = drawerContainer.getElementsByClassName('inline-drawer').length + 1;
-        // Create the new inline-drawer block
-        const altGreetingDiv = document.createElement('div');
-        altGreetingDiv.className = 'inline-drawer';
-        altGreetingDiv.innerHTML = `<div id="altGreetDrawer${greetingIndex}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                    <div style="display: flex;flex-grow: 1;">
-                        <strong class="drawer-header-item">
-                            Greeting #
-                            <span class="greeting_index">${greetingIndex}</span>
-                        </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: 0</span>
-                    </div>
-                    <div class="altGreetings_buttons">
-                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
-                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
-                    </div>
-                </div>
-                <div class="inline-drawer-content">
-                    <textarea class="altGreeting_zone autoSetHeight"></textarea>
-                </div>
-            </div>`;
-        // Add the new inline-drawer block
-        $('#chicken').empty();
-        drawerContainer.appendChild(altGreetingDiv);
-        // Add the event on the textarea
-        altGreetingDiv.querySelector('.altGreeting_zone').addEventListener('input', (event) => {
-            this.saveAltGreetings(event);
-        });
-        // Save it
-        this.saveAltGreetings();
-    }
-
-    /**
-     * Deletes an alternative greeting block, updates the indices of remaining blocks,
-     * and ensures a proper UI display for the alternative greetings section.
-     *
-     * @param {number} index The index of the alternative greeting block to be deleted.
-     * @param {Object} inlineDrawer The DOM element representing the alternative greeting block to remove.
-     * @return {void} The function does not return a value.
-     */
-    delAltGreeting(index, inlineDrawer){
-        // Delete the AltGreeting block
-        inlineDrawer.remove();
-        // Update the others AltGreeting blocks
-        const $altGreetingsToggle = $('.altgreetings-drawer-toggle');
-        if ($('div[id^="altGreetDrawer"]').length === 0) {
-            $('#altGreetings_content').html('<span id="chicken">Nothing here but chickens!!</span>');
-        }
-        else {
-            $altGreetingsToggle.each(function() {
-                const currentIndex = parseInt($(this).find('.greeting_index').text());
-                if (currentIndex > index) {
-                    $(this).find('.greeting_index').text(currentIndex - 1);
-                    $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
-                }
-            });
-        }
-        // Save it
-        this.saveAltGreetings();
-    }
-
-    /**
-     * Generates and returns HTML content for alternative greetings based on the provided items.
-     *
-     * @param {string[]} item - An array of strings where each string represents a greeting.
-     * @return {string} The generated HTML as a string. If the `item` array is empty, a placeholder HTML string is returned.
-     */
-    async displayAltGreetings(item) {
-        let altGreetingsHTML = '';
-        if (!item || item.length === 0) {
-            return '<span id="chicken">Nothing here but chickens!!</span>';
-        } else {
-            for (let i = 0; i < item.length; i++) {
-                let greetingNumber = i + 1;
-                altGreetingsHTML += `<div class="inline-drawer">
-                <div id="altGreetDrawer${greetingNumber}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                    <div style="display: flex;flex-grow: 1;">
-                        <strong class="drawer-header-item">
-                            Greeting #
-                            <span class="greeting_index">${greetingNumber}</span>
-                        </strong>
-                        <span class="tokens_count drawer-header-item">Tokens: ${await this.st.getTokenCountAsync(this.st.substituteParams(item[i]))}</span>
-                    </div>
-                    <div class="altGreetings_buttons">
-                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
-                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
-                    </div>
-                </div>
-                <div class="inline-drawer-content">
-                    <textarea class="altGreeting_zone autoSetHeight">${item[i]}</textarea>
-                </div>
-            </div>`;
-            }
-            return altGreetingsHTML;
-        }
-    }
-
-    /**
-     * Checks the availability of the AvatarEdit API by making a POST request to the probe endpoint.
-     *
-     * @return {Promise<boolean>} A promise that resolves to true if the API is available (returns a status of 204), or false otherwise.
-     */
-    async checkApiAvailability() {
-        try {
-            const response = await fetch('/api/plugins/avataredit/probe', { method: 'POST', headers: this.st.getRequestHeaders() });
-            return response.status === 204;
-        } catch (err) {
-            console.error('Error checking API availability:', err);
-            return false;
-        }
-    }
-
-    /**
-     * Updates the attributes of a character by sending a POST request with the given data.
-     * Emits an event upon successful update.
-     *
-     * @param {Object} update - The object containing the character attributes to update.
-     * @return {Promise<void>} A promise that resolves when the character is successfully updated or logs an error if the request fails.
-     */
-    async editChar(update) {
-        let url = '/api/characters/merge-attributes';
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: this.st.getRequestHeaders(),
-            body: JSON.stringify(update),
-            cache: 'no-cache',
-        });
-
-        if (response.ok) {
-            await this.st.getCharacters();
-            await this.st.eventSource.emit(this.st.event_types.CHARACTER_EDITED, { detail: { id: this.st.characterId, character: this.st.characters[this.st.characterId] } });
-        } else {
-            console.log('Error!');
-        }
-    }
-
-    /**
-     * Replaces a character's avatar with a new one, with optional cropping.
-     *
-     * @param {File|string} newAvatar - The new avatar to replace the current one. Can be a File object or a URL string.
-     * @param {string} id - The unique identifier of the character whose avatar is being replaced.
-     * @param {Object} [crop_data] - Optional cropping data for the avatar, if applicable.
-     * @return {Promise<void>} A promise that resolves when the avatar has been successfully replaced or rejects if an error occurs.
-     */
-    async replaceAvatar(newAvatar, id, crop_data = undefined) {
-        let url = '/api/plugins/avataredit/edit-avatar';
-
-        if (crop_data !== undefined) {
-            url += `?crop=${encodeURIComponent(JSON.stringify(crop_data))}`;
-        }
-
-        let formData = new FormData();
-        if (newAvatar instanceof File) {
-            const convertedFile = await ensureImageFormatSupported(newAvatar);
-            formData.set('avatar', convertedFile);
-        }
-
-        formData.set('avatar_url', this.st.characters[id].avatar);
-
-        return new Promise((resolve, reject) => {
-            jQuery.ajax({
-                type: 'POST',
-                url: url,
-                data: formData,
-                cache: false,
-                contentType: false,
-                processData: false,
-                success: async ()=> {
-                    toastr.success('Avatar replaced successfully.');
-                    await fetch(this.st.getThumbnailUrl('avatar', formData.get('avatar_url')), {
-                        method: 'GET',
-                        cache: 'no-cache',
-                        headers: {
-                            'pragma': 'no-cache',
-                            'cache-control': 'no-cache',
-                        },
-                    });
-                    await this.st.getCharacters();
-                    await this.st.eventSource.emit(this.st.event_types.CHARACTER_EDITED, { detail: { id: id, avatarReplaced: true, character: this.st.characters[id] } });
-                    resolve();
-                },
-                error: function (jqXHR, exception) {
-                    toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format. Double check that the image is not a webp.');
-                    reject();
-                },
-            });
-        });
-    }
-
-    /**
-     * Sends a request to duplicate a character based on the provided avatar URL.
-     * Upon success, notifies via a success message, emits an event containing
-     * the duplication details, and refreshes the character list.
-     *
-     * @param {string} avatar - The URL of the avatar to be duplicated.
-     * @return {Promise<void>} Resolves when the operation is complete.
-     */
-    async dupeChar(avatar) {
-        const body = { avatar_url: avatar };
-        const response = await fetch('/api/characters/duplicate', {
+        const response = await fetch('/api/characters/export', {
             method: 'POST',
             headers: this.st.getRequestHeaders(),
             body: JSON.stringify(body),
         });
 
         if (response.ok) {
-            toastr.success('Character Duplicated');
-            const data = await response.json();
-            await this.st.eventSource.emit(this.st.event_types.CHARACTER_DUPLICATED, { oldAvatar: body.avatar_url, newAvatar: data.path });
-            await this.st.getCharacters();
+            const filename = avatar.replace('.png', `.${format}`);
+            const blob = await response.blob();
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
+        $('#acm_export_format_popup').hide();
     }
 
     /**
-     * Renames an existing character and updates related data across the system.
-     * This includes updating the character's avatar, name, associated group membership,
-     * and optionally updating past chat logs to reflect the new name.
+     * Renames the currently selected character.
+     * This function retrieves the character ID based on the selected avatar,
+     * displays a rename dialog to the user, and updates the character's name
+     * with the new name provided by the user.
      *
-     * @param {string} oldAvatar - The current avatar URL of the character being renamed.
-     * @param {number} charID - The unique identifier of the character to be renamed.
-     * @param {string} newName - The new name to assign to the character.
-     * @return {Promise<void>} Resolves when the character has been successfully renamed,
-     *         associated data updated, and UI changes applied. Rejects if any operation fails during the process.
+     * @async
+     * @return {Promise<void>} A promise that resolves once the character's name has been successfully updated.
      */
-    async renameChar(oldAvatar, charID, newName) {
+    async renameCharacter() {
+        const oldAvatar = this.settings.selectedChar;
+        const charID = getIdByAvatar(this.settings.selectedChar);
+        const newName = await this.st.callGenericPopup('<h3>New name:</h3>', this.st.POPUP_TYPE.INPUT, this.st.characters[charID].name);
         if (newName && newName !== this.st.characters[charID].name) {
             const body = JSON.stringify({ avatar_url: oldAvatar, new_name: newName });
             const response = await fetch('/api/characters/rename', {
@@ -840,6 +506,200 @@ export class CharacterManager {
     }
 
     /**
+     * Opens the character chat interface for the currently selected character.
+     * This function resets the character ID and avatar memory, selects the character
+     * by its ID, and closes the details view. It also transitions the shadow popup
+     * to fade out and hides the popup after a short delay.
+     *
+     * @return {void} This function does not return a value.
+     */
+    openCharacterChat() {
+        setCharacterId(undefined);
+        this.settings.setMem_avatar(undefined);
+        this.st.selectCharacterById(getIdByAvatar(this.settings.selectedChar));
+        this.eventManager.emit('acm_closeDetails', false);
+
+        $('#acm_popup').transition({
+            opacity: 0,
+            duration: 125,
+            easing: 'ease-in-out',
+        });
+        setTimeout(function () {
+            $('#acm_popup').css('display', 'none');
+            // $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+        }, 125);
+    }
+
+    /**
+     * Updates the avatar of the currently selected character.
+     * This function allows the user to upload a new avatar image, optionally crop it,
+     * and then update the avatar in the application. The updated avatar is displayed
+     * in the user interface and saved in the data model.
+     *
+     * @async
+     * @param {HTMLInputElement} input - The file input element containing the uploaded image file.
+     * @return {Promise<void>} A promise that resolves when the avatar update process is complete.
+     */
+    async update_avatar(input){
+        if (input.files && input.files[0]) {
+            let crop_data = undefined;
+            const file = input.files[0];
+            const fileData = await getBase64Async(file);
+
+            if (!this.st.never_resize_avatars) {
+                // Display a cropping dialog to the user
+                const dlg = await this.st.callGenericPopup('Set the crop position of the avatar image', this.st.POPUP_TYPE.CROP, '', { cropImage: fileData });
+
+                if (!dlg) {
+                    console.error('The popup object is invalid:', dlg);
+                    return; // Exit if the user cancels the cropping dialog
+                }
+                crop_data = dlg.cropData;
+
+                try {
+                    // Replace the avatar with the cropped image
+                    await this.replaceAvatar(file, getIdByAvatar(this.settings.selectedChar), crop_data);
+                    // Update the avatar image in the UI with a cache-busting timestamp
+                    const newImageUrl = this.st.getThumbnailUrl('avatar', this.settings.selectedChar) + '&t=' + new Date().getTime();
+                    $('#avatar_img').attr('src', newImageUrl);
+                    $(`[data-avatar="${this.settings.selectedChar}"]`).attr('src', newImageUrl);
+                } catch {
+                    toastr.error('Something went wrong.'); // Display an error message if the update fails
+                }
+            } else {
+                try {
+                    // Replace the avatar without cropping
+                    await this.replaceAvatar(file, getIdByAvatar(this.settings.selectedChar));
+                    // Update the avatar image in the UI with a cache-busting timestamp
+                    const newImageUrl = this.st.getThumbnailUrl('avatar', this.settings.selectedChar) + '&t=' + new Date().getTime();
+                    $('#avatar_img').attr('src', newImageUrl);
+                    $(`[data-avatar="${this.settings.selectedChar}"]`).attr('src', newImageUrl);
+                } catch {
+                    toastr.error('Something went wrong.'); // Display an error message if the update fails
+                }
+            }
+        }
+    }
+
+    /**
+     * Replaces a character's avatar with a new one, with optional cropping.
+     *
+     * @param {File|string} newAvatar - The new avatar to replace the current one. Can be a File object or a URL string.
+     * @param {string} id - The unique identifier of the character whose avatar is being replaced.
+     * @param {Object} [crop_data] - Optional cropping data for the avatar, if applicable.
+     * @return {Promise<void>} A promise that resolves when the avatar has been successfully replaced or rejects if an error occurs.
+     */
+    async replaceAvatar(newAvatar, id, crop_data = undefined) {
+        let url = '/api/plugins/avataredit/edit-avatar';
+
+        if (crop_data !== undefined) {
+            url += `?crop=${encodeURIComponent(JSON.stringify(crop_data))}`;
+        }
+
+        let formData = new FormData();
+        if (newAvatar instanceof File) {
+            const convertedFile = await ensureImageFormatSupported(newAvatar);
+            formData.set('avatar', convertedFile);
+        }
+
+        formData.set('avatar_url', this.st.characters[id].avatar);
+
+        return new Promise((resolve, reject) => {
+            jQuery.ajax({
+                type: 'POST',
+                url: url,
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: async ()=> {
+                    toastr.success('Avatar replaced successfully.');
+                    await fetch(this.st.getThumbnailUrl('avatar', formData.get('avatar_url')), {
+                        method: 'GET',
+                        cache: 'no-cache',
+                        headers: {
+                            'pragma': 'no-cache',
+                            'cache-control': 'no-cache',
+                        },
+                    });
+                    await this.st.getCharacters();
+                    await this.st.eventSource.emit(this.st.event_types.CHARACTER_EDITED, { detail: { id: id, avatarReplaced: true, character: this.st.characters[id] } });
+                    resolve();
+                },
+                error: function (jqXHR, exception) {
+                    toastr.error('Something went wrong while saving the character, or the image file provided was in an invalid format. Double check that the image is not a webp.');
+                    reject();
+                },
+            });
+        });
+    }
+
+    /**
+     * Updates the attributes of a character by sending a POST request with the given data.
+     * Emits an event upon successful update.
+     *
+     * @param {Object} update - The object containing the character attributes to update.
+     * @return {Promise<void>} A promise that resolves when the character is successfully updated or logs an error if the request fails.
+     */
+    async editChar(update) {
+        let url = '/api/characters/merge-attributes';
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: this.st.getRequestHeaders(),
+            body: JSON.stringify(update),
+            cache: 'no-cache',
+        });
+
+        if (response.ok) {
+            await this.st.getCharacters();
+            await this.st.eventSource.emit(this.st.event_types.CHARACTER_EDITED, { detail: { id: this.st.characterId, character: this.st.characters[this.st.characterId] } });
+        } else {
+            console.log('Error!');
+        }
+    }
+
+    /**
+     * Duplicates the currently selected character.
+     * This function checks if a character is selected, prompts the user for confirmation,
+     * and duplicates the character if the user confirms the action.
+     *
+     * @async
+     * @return {Promise<void>} A promise that resolves once the character duplication process is complete.
+     */
+    async duplicateCharacter() {
+        if (!this.settings.selectedChar) {
+            // Display a warning if no character is selected
+            toastr.warning('You must first select a character to duplicate!');
+            return;
+        }
+        // Show a confirmation dialog to the user
+        const confirmMessage = `
+        <h3>Are you sure you want to duplicate this character?</h3>
+        <span>If you just want to start a new chat with the same character, use "Start new chat" option in the bottom-left options menu.</span><br><br>`;
+        const confirmed = await this.st.callGenericPopup(confirmMessage, this.st.POPUP_TYPE.CONFIRM);
+        if (!confirmed) {
+            // Log a message if the user cancels the duplication
+            console.log('User cancelled duplication');
+            return;
+        }
+        // Duplicate the selected character
+        const body = { avatar_url: this.settings.selectedChar };
+        const response = await fetch('/api/characters/duplicate', {
+            method: 'POST',
+            headers: this.st.getRequestHeaders(),
+            body: JSON.stringify(body),
+        });
+
+        if (response.ok) {
+            toastr.success('Character Duplicated');
+            const data = await response.json();
+            await this.st.eventSource.emit(this.st.event_types.CHARACTER_DUPLICATED, { oldAvatar: body.avatar_url, newAvatar: data.path });
+            await this.st.getCharacters();
+        }
+    }
+
+    /**
      * Renames past chats and updates their associated avatar and chat name in a persistent storage.
      * Iterates through all past chat files, modifies the chat data to reflect the new avatar and chat name,
      * and then saves the updated chats back to storage.
@@ -900,32 +760,109 @@ export class CharacterManager {
     }
 
     /**
-     * Exports a character's avatar in the specified format.
+     * Generates and returns HTML content for alternative greetings based on the provided items.
      *
-     * @param {string} format - The desired file format for the exported avatar (e.g., "png", "jpg").
-     * @param {string} avatar - The URL of the avatar image to be exported.
-     * @return {Promise<void>} A promise that resolves when the export operation completes.
+     * @param {string[]} item - An array of strings where each string represents a greeting.
+     * @return {string} The generated HTML as a string. If the `item` array is empty, a placeholder HTML string is returned.
      */
-    async exportChar(format, avatar) {
-        const body = { format, avatar_url: avatar };
-
-        const response = await fetch('/api/characters/export', {
-            method: 'POST',
-            headers: this.st.getRequestHeaders(),
-            body: JSON.stringify(body),
-        });
-
-        if (response.ok) {
-            const filename = avatar.replace('.png', `.${format}`);
-            const blob = await response.blob();
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.setAttribute('download', filename);
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+    async displayAltGreetings(item) {
+        let altGreetingsHTML = '';
+        if (!item || item.length === 0) {
+            return '<span id="chicken">Nothing here but chickens!!</span>';
+        } else {
+            for (let i = 0; i < item.length; i++) {
+                let greetingNumber = i + 1;
+                altGreetingsHTML += `<div class="inline-drawer">
+                <div id="altGreetDrawer${greetingNumber}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
+                    <div style="display: flex;flex-grow: 1;">
+                        <strong class="drawer-header-item">
+                            Greeting #
+                            <span class="greeting_index">${greetingNumber}</span>
+                        </strong>
+                        <span class="tokens_count drawer-header-item">Tokens: ${await this.st.getTokenCountAsync(this.st.substituteParams(item[i]))}</span>
+                    </div>
+                    <div class="altGreetings_buttons">
+                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
+                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
+                    </div>
+                </div>
+                <div class="inline-drawer-content">
+                    <textarea class="altGreeting_zone autoSetHeight">${item[i]}</textarea>
+                </div>
+            </div>`;
+            }
+            return altGreetingsHTML;
         }
-        $('#acm_export_format_popup').hide();
+    }
+
+    /**
+     * Adds a new alternate greeting section to the DOM within the 'altGreetings_content' container.
+     * Each new section is dynamically created and appended to the container, including appropriate event listeners.
+     *
+     * @return {void} Does not return anything.
+     */
+    addAltGreeting(){
+        const drawerContainer = document.getElementById('altGreetings_content');
+        // Determine the new greeting index
+        const greetingIndex = drawerContainer.getElementsByClassName('inline-drawer').length + 1;
+        // Create the new inline-drawer block
+        const altGreetingDiv = document.createElement('div');
+        altGreetingDiv.className = 'inline-drawer';
+        altGreetingDiv.innerHTML = `<div id="altGreetDrawer${greetingIndex}" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
+                    <div style="display: flex;flex-grow: 1;">
+                        <strong class="drawer-header-item">
+                            Greeting #
+                            <span class="greeting_index">${greetingIndex}</span>
+                        </strong>
+                        <span class="tokens_count drawer-header-item">Tokens: 0</span>
+                    </div>
+                    <div class="altGreetings_buttons">
+                        <i class="inline-drawer-icon fa-solid fa-circle-minus"></i>
+                        <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
+                    </div>
+                </div>
+                <div class="inline-drawer-content">
+                    <textarea class="altGreeting_zone autoSetHeight"></textarea>
+                </div>
+            </div>`;
+        // Add the new inline-drawer block
+        $('#chicken').empty();
+        drawerContainer.appendChild(altGreetingDiv);
+        // Add the event on the textarea
+        altGreetingDiv.querySelector('.altGreeting_zone').addEventListener('input', (event) => {
+            this.saveAltGreetings(event);
+        });
+        // Save it
+        this.saveAltGreetings();
+    }
+
+    /**
+     * Deletes an alternative greeting block, updates the indices of remaining blocks,
+     * and ensures a proper UI display for the alternative greetings section.
+     *
+     * @param {number} index The index of the alternative greeting block to be deleted.
+     * @param {Object} inlineDrawer The DOM element representing the alternative greeting block to remove.
+     * @return {void} The function does not return a value.
+     */
+    delAltGreeting(index, inlineDrawer){
+        // Delete the AltGreeting block
+        inlineDrawer.remove();
+        // Update the others AltGreeting blocks
+        const $altGreetingsToggle = $('.altgreetings-drawer-toggle');
+        if ($('div[id^="altGreetDrawer"]').length === 0) {
+            $('#altGreetings_content').html('<span id="chicken">Nothing here but chickens!!</span>');
+        }
+        else {
+            $altGreetingsToggle.each(function() {
+                const currentIndex = parseInt($(this).find('.greeting_index').text());
+                if (currentIndex > index) {
+                    $(this).find('.greeting_index').text(currentIndex - 1);
+                    $(this).attr('id', `altGreetDrawer${currentIndex - 1}`);
+                }
+            });
+        }
+        // Save it
+        this.saveAltGreetings();
     }
 
     /**

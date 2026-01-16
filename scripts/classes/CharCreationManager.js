@@ -278,19 +278,6 @@ export class CharCreationManager {
         formData.append('extra_books', JSON.stringify(this.settings.create_data.extra_books));
         formData.append('extensions', JSON.stringify(this.settings.create_data.extensions));
         // Submit the form data to create the character
-        await this.createCharacter(formData);
-    }
-
-    /**
-     * Creates a new character using the provided form data.
-     * Sends a POST request to the server to create the character and handles associated processes such as avatar format conversion,
-     * refreshing character lists, and updating the UI after successful creation.
-     *
-     * @param {FormData} formData The form data containing the character details and avatar file to be uploaded.
-     * @return {Promise<void>} Resolves when the character creation process is successfully completed,
-     * or handles errors if the creation fails.
-     */
-    async createCharacter(formData) {
         try {
             let url = '/api/characters/create';
             const headers = this.st.getRequestHeaders({ omitContentType: true });
