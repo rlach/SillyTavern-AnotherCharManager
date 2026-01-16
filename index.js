@@ -2,7 +2,7 @@
 import { AppContext } from './scripts/classes/AppContext.js';
 import { ModalManager } from './scripts/classes/ModalManager.js';
 
-const acm = new AppContext();
+export const acm = new AppContext();
 const modalManager = new ModalManager(acm.eventManager, acm.settings, acm.st);
 
 jQuery(async () => {
