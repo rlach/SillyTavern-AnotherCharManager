@@ -15,6 +15,7 @@ import {
     updateTokenCount,
     debounce,
     delay,
+    toYYYYMMDD,
 } from '../utils.js';
 
 
@@ -232,9 +233,7 @@ export class CharacterManager {
         $('#ch_name_details').text(char.name);
         $('#ch_infos_creator').text(`Creator: ${char.data.creator ? char.data.creator : (char.data.extensions.chub?.full_path?.split('/')[0] ?? ' - ')}`);
         $('#ch_infos_version').text(`Version: ${char.data.character_version ?? ' - '}`);
-        const dateString = char.create_date?.split('@')[0] ?? ' - ';
-        const [year, month, day] = dateString.split('-');
-        const formattedDateString = year === ' - ' ? ' - ' : `${year}-${month.padStart(2, '0')}-${day.trim().padStart(2, '0')}`;
+        const formattedDateString = toYYYYMMDD(char.create_date);
         $('#ch_infos_date').text(`Created: ${formattedDateString}`);
         $('#ch_infos_lastchat').text(`Last chat: ${char.date_last_chat ? new Date(char.date_last_chat).toISOString().substring(0, 10) : ' - '}`);
         $('#ch_infos_adddate').text(`Added: ${char.date_added ? new Date(char.date_added).toISOString().substring(0, 10) : ' - '}`);

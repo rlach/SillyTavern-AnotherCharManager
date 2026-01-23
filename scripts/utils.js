@@ -121,3 +121,29 @@ export async function updateTokenCount(fieldId) {
     const tokenCount = await acm.st.getTokenCountAsync(acm.st.substituteParams(inputValue));
     tokenCountElement.html(`Tokens: ${tokenCount}`);
 }
+
+/**
+ * Converts a given date-like string to the "YYYY-MM-DD" format. Supports various input formats
+ * such as ISO 8601 and custom formats containing a "@" character.
+ *
+ * @param {string | Date} createDate - The input date to be converted. Can be a string or a Date object.
+ * @return {string} A formatted date string in "YYYY-MM-DD" format. Returns ' - ' if the input is invalid or cannot be parsed.
+ */
+export function toYYYYMMDD(createDate) {
+    if (!createDate) return ' - ';
+
+    const raw = String(createDate).trim();
+
+    // New format: ISO 8601 → "2026-01-23T13:45:29.659Z"
+    // Old format (yours): "YYYY-MM-DD@..." → take before "@"
+    const datePart =
+        raw.includes('T') ? raw.slice(0, 10) :
+            raw.includes('@') ? raw.split('@')[0] :
+                raw;
+
+    const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(datePart);
+    if (!m) return ' - ';
+
+    const [, y, mo, d] = m;
+    return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+}
