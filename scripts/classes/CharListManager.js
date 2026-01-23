@@ -6,7 +6,7 @@ import { CharacterManager } from "./CharacterManager.js";
 const { Fuse } = SillyTavern.libs;
 
 export class CharListManager {
-    constructor(eventManager, settings, st, presetManager) {
+    constructor(eventManager, settings, st, presetManager, modalOpen) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
@@ -22,7 +22,7 @@ export class CharListManager {
     }
 
     refreshCharListDebounced = debounce((preserveScroll) => {
-        this.refreshCharList(preserveScroll);
+        if (this.modalOpen) this.refreshCharList(preserveScroll);
     }, 200);
 
     /**
@@ -38,17 +38,31 @@ export class CharListManager {
             this.selectAndDisplay(event.currentTarget.dataset.avatar);
         });
 
-        this.eventManager.on('acm_refreshCharList', (data) => {
+        this.eventManager.on('charList:refresh', (data) => {
             this.refreshCharListDebounced(data);
         });
 
-        this.eventManager.on('acm_handleContainerResize', () => {
+        this.eventManager.on('charList:handleResize', () => {
             this.handleContainerResize();
         });
 
-        this.eventManager.on('acm_selectAndDisplay', (data) => {
+        this.eventManager.on('char:select', (data) => {
             this.selectAndDisplay(data.avatar, data.scrollTo);
         });
+
+        this.eventManager.on('modal:opened', () => {
+            this.modalOpen = true;
+            this.refreshCharListDebounced();
+        });
+
+        this.eventManager.on('modal:closed', () => {
+            this.modalOpen = false;
+        });
+
+        this.st.eventSource.on(this.st.event_types.CHARACTER_PAGE_LOADED, () => {
+            this.eventManager.emit('charList:refresh');
+        });
+
     }
 
     /**
@@ -94,7 +108,7 @@ export class CharListManager {
         });
 
         $('#acm_character_create_button').on('click', () => {
-            this.eventManager.emit('acm_toggleCreationPopup');
+            this.eventManager.emit('modal:toggleCreation');
         });
 
         $(document).on('click', '.tag_acm_remove',  (event) => {

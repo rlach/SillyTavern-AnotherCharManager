@@ -135,6 +135,7 @@ export class ModalManager {
             option.selected = field === this.settings.getSetting('sortingField') && order === this.settings.getSetting('sortingOrder');
         });
         document.getElementById('favOnly_checkbox').checked = this.settings.getSetting('favOnly');
+        this.eventManager.emit('modal:opened');
     }
 
     /**
@@ -175,6 +176,7 @@ export class ModalManager {
         setTimeout(function () {
             $popup.css('display', 'none');
         }, 125);
+        this.eventManager.emit('modal:closed');
     }
 
     /**
@@ -270,7 +272,6 @@ export class ModalManager {
      */
     initializeModalEvents() {
         $('#acm-manager, #acm_open').on('click', () => {
-            this.eventManager.emit('acm_refreshCharList');
             this.openModal();
         });
 
@@ -313,11 +314,11 @@ export class ModalManager {
 
             // Refresh virtual scroller after resize
             requestAnimationFrame(() => {
-                this.eventManager.emit('acm_handleContainerResize');
+                this.eventManager.emit('charList:handleResize');
             });
         });
 
-        this.eventManager.on('acm_closeDetails', (data)=> {
+        this.eventManager.on('amodal:closeDetails', (data)=> {
             this.closeDetails(data);
         });
     }
@@ -344,25 +345,25 @@ export class ModalManager {
             '#acm_switch_classic': () => {
                 if (this.settings.getSetting('dropdownUI')) {
                     this.settings.updateSetting('dropdownUI', false);
-                    this.eventManager.emit('acm_refreshCharList');
+                    this.eventManager.emit('charList:refresh');
                 }
             },
             '#acm_switch_alltags': () => {
                 if (!this.settings.getSetting('dropdownUI') || (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'allTags')) {
                     this.settings.updateSetting('dropdownUI', true);
                     this.settings.updateSetting('dropdownMode', 'allTags');
-                    this.eventManager.emit('acm_refreshCharList');
+                    this.eventManager.emit('charList:refresh');
                 }
             },
             '#acm_switch_creators': () => {
                 if (!this.settings.getSetting('dropdownUI') || (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') !== 'creators')) {
                     this.settings.updateSetting('dropdownUI', true);
                     this.settings.updateSetting('dropdownMode', 'creators');
-                    this.eventManager.emit('acm_refreshCharList');
+                    this.eventManager.emit('charList:refresh');
                 }
             },
             '#acm_manage_categories': () => {
-                this.eventManager.emit('acm_open_presets_manager');
+                this.eventManager.emit('modal:openPresetManager');
             },
             '[data-ui="preset"]': (event) => {
                 const presetId = $(event.target).closest('[data-ui="preset"]').data('preset');
@@ -372,7 +373,7 @@ export class ModalManager {
                     this.settings.updateSetting('dropdownUI', true);
                     this.settings.updateSetting('dropdownMode', 'custom');
                     this.settings.updateSetting('presetId', presetId);
-                    this.eventManager.emit('acm_refreshCharList');
+                    this.eventManager.emit('charList:refresh');
                 }
             },
         };

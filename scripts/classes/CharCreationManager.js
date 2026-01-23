@@ -32,7 +32,7 @@ export class CharCreationManager {
      */
     initializeCharacterCreationEvents() {
 
-        this.eventManager.on('acm_toggleCreationPopup', ()=> {
+        this.eventManager.on('modal:toggleCreation', ()=> {
             this.toggleCharacterCreationPopup();
         })
 
@@ -98,7 +98,7 @@ export class CharCreationManager {
         const $popup = $('#acm_create_popup');
         if ($popup.css('display') === 'none') {
 
-            this.eventManager.emit('acm_closeDetails');
+            this.eventManager.emit('modal:closeDetails');
             // Initialize all form fields with create_data values
             $('#acm_create_name').val(this.settings.create_data.name);
             $('#acm_create_desc').val(this.settings.create_data.description);
@@ -306,8 +306,8 @@ export class CharCreationManager {
             await delay(500);
             this.toggleCharacterCreationPopup();
             await this.st.getCharacters();
-            this.eventManager.emit('acm_refreshCharList');
-            this.eventManager.emit('acm_selectAndDisplay', {avatar: avatarId, scrollTo: true});
+            this.eventManager.emit('charList:refresh');
+            this.eventManager.emit('char:select', {avatar: avatarId, scrollTo: true});
         }
         catch (error) {
             console.error('Error creating character', error);

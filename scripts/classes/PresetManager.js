@@ -85,15 +85,15 @@ export class PresetManager {
             $element.closest('[data-tagid]').remove();
         });
 
-        this.eventManager.on('acm_addTagCategory',  (data) => {
+        this.eventManager.on('tag:addTagToCat',  (data) => {
             this.addTagToCategory(data.presetId, data.categoryId, data.tagId)
         });
 
-        this.eventManager.on('acm_open_presets_manager', () => {
+        this.eventManager.on('modal:openPresetManager', () => {
             this.manageCustomCategories();
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             if (this.settings.getSetting('dropdownUI') && this.settings.getSetting('dropdownMode') === 'custom') {
-                $('.popup-button-ok').on('click', this.eventManager.emit('acm_refreshCharList'));
+                $('.popup-button-ok').on('click', this.eventManager.emit('charList:refresh'));
             }
             this.printCategoriesList(selectedPreset, true);
         });

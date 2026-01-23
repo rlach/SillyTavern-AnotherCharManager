@@ -94,26 +94,26 @@ export class CharacterManager {
      */
     initializeCharactersEvents() {
         // Add listener to refresh the display on characters edit
-        this.st.eventSource.on('character_edited',  (data) => {
+        this.st.eventSource.on(this.st.event_types.CHARACTER_EDITED,  (data) => {
             if (data.detail && data.detail.avatarReplaced) {
-                this.eventManager.emit('acm_refreshCharList', true);
+                this.eventManager.emit('charList:refresh', true);
             }
         });
         // Add listener to refresh the display when a character is renamed
-        this.st.eventSource.on('character_renamed', () => {
-            this.eventManager.emit('acm_refreshCharList', true);
+        this.st.eventSource.on(this.st.event_types.CHARACTER_RENAMED, () => {
+            this.eventManager.emit('charList:refresh', true);
         });
         // Add listener to refresh the display on characters delete
-        this.st.eventSource.on('characterDeleted', () => {
+        this.st.eventSource.on(this.st.event_types.CHARACTER_DELETED, () => {
             let charDetailsState = document.getElementById('char-details');
             if (charDetailsState.style.display !== 'none') {
-                this.eventManager.emit('acm_closeDetails');
+                this.eventManager.emit('modal:closeDetails');
             }
-            this.eventManager.emit('acm_refreshCharList', true);
+            this.eventManager.emit('charList:refresh', true);
         });
         // Add listener to refresh the display on characters duplication
-        this.st.eventSource.on('character_duplicated', () => {
-            this.eventManager.emit('acm_refreshCharList', true);
+        this.st.eventSource.on(this.st.event_types.CHARACTER_DUPLICATED, () => {
+            this.eventManager.emit('charList:refresh', true);
         });
 
         // Trigger when the favorites button is clicked
@@ -178,7 +178,7 @@ export class CharacterManager {
 
         const tagListObserver = new MutationObserver(() => {
             if (window.acmIsUpdatingDetails) return;
-            this.eventManager.emit('acm_refreshCharList', true);
+            this.eventManager.emit('charList:refresh', true);
         });
 
         const tagListElement = document.getElementById('tag_List');
@@ -517,7 +517,7 @@ export class CharacterManager {
         setCharacterId(undefined);
         this.settings.setMem_avatar(undefined);
         this.st.selectCharacterById(getIdByAvatar(this.settings.selectedChar));
-        this.eventManager.emit('acm_closeDetails', false);
+        this.eventManager.emit('modal:closeDetails', false);
 
         $('#acm_popup').transition({
             opacity: 0,

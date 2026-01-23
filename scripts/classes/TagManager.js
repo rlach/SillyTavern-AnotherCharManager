@@ -138,7 +138,7 @@ export class TagManager {
                 const selectedPreset = $('#preset_selector option:selected').data('preset');
                 const selectedCat = $(listSelector).find('label').closest('[data-catid]').data('catid');
                 $(listSelector).find('label').before(this.displayTag(tag.id, 'category'));
-                this.eventManager.emit('acm_addTagCategory', {
+                this.eventManager.emit('tag:addTagToCat', {
                     presetId: selectedPreset,
                     categoryId: selectedCat,
                     tagId: tag.id,
@@ -154,7 +154,7 @@ export class TagManager {
                 if (!isDuplicate) {
                     // Append ONLY to the list associated with the current input
                     $(listSelector).append(this.displayTag(tag.id));
-                    this.eventManager.emit('acm_refreshCharList');
+                    this.eventManager.emit('charList:refresh');
                 } else {
                     toastr.warning('This tag is already assigned to one of the requirement lists.');
                 }
@@ -163,7 +163,7 @@ export class TagManager {
             case 'classic':
             default: {
                 $(listSelector).append(this.displayTag(tag.id));
-                this.eventManager.emit('acm_refreshCharList', true);
+                this.eventManager.emit('charList:refresh', true);
                 break;
             }
         }
