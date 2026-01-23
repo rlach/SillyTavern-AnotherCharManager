@@ -137,9 +137,8 @@ export function toYYYYMMDD(createDate) {
     // New format: ISO 8601 → "2026-01-23T13:45:29.659Z"
     // Old format (yours): "YYYY-MM-DD@..." → take before "@"
     const datePart =
-        raw.includes('T') ? raw.slice(0, 10) :
-            raw.includes('@') ? raw.split('@')[0] :
-                raw;
+        raw.includes('T') ? raw.slice(0, 10) :          // ISO: YYYY-MM-DD...
+            raw.split(/\s*@\s*/)[0].trim();
 
     const m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(datePart);
     if (!m) return ' - ';
