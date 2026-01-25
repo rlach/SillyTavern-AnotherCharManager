@@ -318,7 +318,7 @@ export class ModalManager {
             });
         });
 
-        this.eventManager.on('amodal:closeDetails', (data)=> {
+        this.eventManager.on('modal:closeDetails', (data)=> {
             this.closeDetails(data);
         });
     }
