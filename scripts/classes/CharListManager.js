@@ -1,4 +1,5 @@
 import { setCharacterId, setMenuType } from '/script.js';
+import { timestampToMoment, sortMoments } from '/scripts/utils.js';
 import { debounce, getIdByAvatar } from '../utils.js';
 import { VirtualScroller } from './VirtualScroller.js';
 import { CharacterManager } from "./CharacterManager.js";
@@ -226,13 +227,13 @@ export class CharListManager {
      * Sorts an array of character objects based on a specified property and order.
      *
      * @param {Array<Object>} chars - The array of character objects to be sorted.
-     * @param {string} sort_data - The property of the character objects to sort by (e.g., 'name', 'tags', 'date_last_chat', 'create_date', 'data_size').
-     * @param {string} sort_order - The order of sorting, either 'asc' for ascending or 'desc' for descending.
      * @return {Array<Object>} The sorted array of character objects.
      */
-    sortCharAR(chars, sort_data, sort_order) {
+    sortCharAR(chars) {
         return chars.sort((a, b) => {
             let comparison = 0;
+            const sort_data = this.settings.getSetting('sortingField');
+            const sort_order = this.settings.getSetting('sortingOrder');
 
             switch (sort_data) {
                 case 'name':
@@ -245,7 +246,7 @@ export class CharListManager {
                     comparison = b[sort_data] - a[sort_data];
                     break;
                 case 'create_date':
-                    comparison = b[sort_data] - a[sort_data];
+                    comparison = sortMoments(timestampToMoment(b[sort_data]), timestampToMoment(a[sort_data]));
                     break;
                 case 'data_size':
                     comparison = a[sort_data] - b[sort_data];
@@ -402,7 +403,7 @@ export class CharListManager {
             const sortingOrder = this.settings.getSetting('sortingOrder');
             const dropdownUI = this.settings.getSetting('dropdownUI');
             const dropdownMode = this.settings.getSetting('dropdownMode');
-            const sortedList = this.sortCharAR(filteredChars, sortingField, sortingOrder);
+            const sortedList = this.sortCharAR(filteredChars);
 
             if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
                 $('#character-list').html(this.generateDropdown(sortedList, dropdownMode));
