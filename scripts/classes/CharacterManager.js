@@ -152,10 +152,10 @@ export class CharacterManager {
         });
 
         // Rename character
-        $('#acm_rename_button').on('click', this.renameCharacter);
+        $('#acm_rename_button').on('click', () => this.renameCharacter());
 
         // Trigger when the Open Chat button is clicked
-        $('#acm_open_chat').on('click', this.openCharacterChat);
+        $('#acm_open_chat').on('click', () => this.openCharacterChat());
 
         // Display Advanced Definitions popup
         $('#acm_advanced_div').on('click', this.toggleAdvancedDefinitionsPopup);
