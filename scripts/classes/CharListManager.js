@@ -399,8 +399,6 @@ export class CharListManager {
             $('#character-list').html('<span>Hmm, it seems like the character you\'re looking for is hiding out in a secret lair. Try searching for someone else instead.</span>');
         }
         else {
-            const sortingField = this.settings.getSetting('sortingField');
-            const sortingOrder = this.settings.getSetting('sortingOrder');
             const dropdownUI = this.settings.getSetting('dropdownUI');
             const dropdownMode = this.settings.getSetting('dropdownMode');
             const sortedList = this.sortCharAR(filteredChars);
