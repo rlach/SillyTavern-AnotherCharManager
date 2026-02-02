@@ -517,16 +517,7 @@ export class CharacterManager {
         this.settings.setMem_avatar(undefined);
         this.st.selectCharacterById(getIdByAvatar(this.settings.selectedChar));
         this.eventManager.emit('modal:closeDetails', false);
-
-        $('#acm_popup').transition({
-            opacity: 0,
-            duration: 125,
-            easing: 'ease-in-out',
-        });
-        setTimeout(function () {
-            $('#acm_popup').css('display', 'none');
-            // $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
-        }, 125);
+        this.eventManager.emit('modal:close');
     }
 
     /**
