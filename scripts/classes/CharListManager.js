@@ -226,7 +226,7 @@ export class CharListManager {
      * Sorts an array of character objects based on a specified property and order.
      *
      * @param {Array<Object>} chars - The array of character objects to be sorted.
-     * @param {string} sort_data - The property of the character objects to sort by (e.g., 'name', 'tags', 'date_last_chat', 'date_added', 'data_size').
+     * @param {string} sort_data - The property of the character objects to sort by (e.g., 'name', 'tags', 'date_last_chat', 'create_date', 'data_size').
      * @param {string} sort_order - The order of sorting, either 'asc' for ascending or 'desc' for descending.
      * @return {Array<Object>} The sorted array of character objects.
      */
@@ -244,7 +244,7 @@ export class CharListManager {
                 case 'date_last_chat':
                     comparison = b[sort_data] - a[sort_data];
                     break;
-                case 'date_added':
+                case 'create_date':
                     comparison = b[sort_data] - a[sort_data];
                     break;
                 case 'data_size':
