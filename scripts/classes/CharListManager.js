@@ -6,13 +6,13 @@ import { CharacterManager } from "./CharacterManager.js";
 const { Fuse } = SillyTavern.libs;
 
 export class CharListManager {
-    constructor(eventManager, settings, st, presetManager, modalOpen) {
+    constructor(eventManager, settings, st, presetManager) {
         this.eventManager = eventManager;
         this.settings = settings;
         this.st = st;
         this.presetManager = presetManager;
         this.virtualScroller = null;
-        this.charManager = new CharacterManager(eventManager, settings, st, presetManager.tagManager);
+        this.charManager = new CharacterManager(this.eventManager, this.settings, this.st, this.presetManager.tagManager);
     }
 
     init() {
