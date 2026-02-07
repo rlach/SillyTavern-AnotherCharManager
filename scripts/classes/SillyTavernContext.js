@@ -17,6 +17,8 @@ export class SillyTavernContext {
     get POPUP_TYPE() { return this.ctx.POPUP_TYPE; }
     get saveSettingsDebounced() { return this.ctx.saveSettingsDebounced; }
     get eventSource() { return this.ctx.eventSource; }
+    get slashCommand() { return this.ctx.SlashCommand; }
+    get slashCommandParser() { return this.ctx.SlashCommandParser; }
 
     // ---- functions ----
     getCharacters() {

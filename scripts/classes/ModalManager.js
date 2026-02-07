@@ -40,6 +40,17 @@ export class ModalManager {
         // Add the extensionMenu button to the extensionsMenu
         $('#extensionsMenu').append(buttonHtml);
 
+        // Add the slash command
+        this.st.slashCommandParser.addCommandObject(this.st.slashCommand.fromProps({
+            name: 'another-char-manager',
+            helpString: 'Open the Another Character Manager UI.',
+            callback: () => {
+                this.openModal();
+                return 'Opening Another Character Manager...';
+            },
+            returns: 'Opens the Another Character Manager modal window',
+        }));
+
         // Add the modal HTML to the page
         $('#background_template').after(modalHtml);
 
