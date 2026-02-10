@@ -145,7 +145,10 @@ export class ModalManager {
 
             option.selected = field === this.settings.getSetting('sortingField') && order === this.settings.getSetting('sortingOrder');
         });
-        document.getElementById('favOnly_checkbox').checked = this.settings.getSetting('favOnly');
+        
+        const favOnly = this.settings.getSetting('favOnly');
+        this.charListManager.updateFavFilterButtonState(favOnly);
+        
         this.eventManager.emit('modal:opened');
     }
 
