@@ -203,6 +203,10 @@
     margin: 5px;
 }
 
+.acm_toolbar_button {
+    margin: 5px 0;
+}
+
 #charNumber {
     padding: 7px 2px;
     min-width: fit-content;

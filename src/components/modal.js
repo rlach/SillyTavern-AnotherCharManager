@@ -12,7 +12,7 @@ import { characterId, characters, menuType, renderExtensionTemplateAsync } from 
 import { getSetting } from "../services/settings-service.js";
 import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '/script.js';
-import { updateDropdownPresetNames } from "./charactersList.js";
+import { updateDropdownPresetNames, updateFavFilterButtonState } from "./charactersList.js";
 import { updateLayout } from "./characterCreation.js";
 
 /**
@@ -126,7 +126,7 @@ export function openModal() {
 
         option.selected = field === getSetting('sortingField') && order === getSetting('sortingOrder');
     });
-    document.getElementById('favOnly_checkbox').checked = getSetting('favOnly');
+    updateFavFilterButtonState(getSetting('favOnly'));
 }
 
 /**

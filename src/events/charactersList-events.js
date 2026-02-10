@@ -1,9 +1,14 @@
 import {
     refreshCharListDebounced,
-    selectAndDisplay, toggleFavoritesOnly, toggleTagQueries,
+    selectAndDisplay,
+    selectRandomCharacter,
+    toggleFavoritesOnly,
+    toggleTagQueries,
     updateSearchFilter,
     updateSortOrder
 } from "../components/charactersList.js";
+import { openCharacterChat } from "../components/characters.js";
+import { getSetting } from "../services/settings-service.js";
 import { toggleCharacterCreationPopup } from "../components/characterCreation.js";
 
 /**
@@ -17,6 +22,15 @@ export function initializeCharactersListEvents() {
     // Trigger when a character is selected in the list
     $(document).on('click', '.char_select', function () {
         selectAndDisplay(this.dataset.avatar);
+    });
+
+    $(document).on('dblclick', '.char_select', async function () {
+        await selectAndDisplay(this.dataset.avatar);
+        openCharacterChat();
+    });
+
+    $(document).on('dblclick', '.char_selected', function () {
+        openCharacterChat();
     });
 }
 
@@ -45,8 +59,12 @@ export function initializeToolbarEvents() {
         updateSearchFilter($(this).val());
     });
 
-    $('#favOnly_checkbox').on("change", function () {
-        toggleFavoritesOnly(this.checked);
+    $('#acm_fav_filter_button').on("click", function () {
+        toggleFavoritesOnly(!getSetting('favOnly'));
+    });
+
+    $('#acm_random_button').on("click", function () {
+        selectRandomCharacter();
     });
 
     $('#acm_character_import_button').on("click", function () {

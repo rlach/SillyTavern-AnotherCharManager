@@ -1,7 +1,7 @@
 import { setCharacterId, setMenuType } from '/script.js';
 import { debounce, getIdByAvatar } from "../utils.js";
 import { characters, eventSource, getThumbnailUrl, tagList, tagMap } from "../constants/context.js";
-import { selectedChar, setSearchValue, setSelectedChar } from "../constants/settings.js";
+import { searchValue, selectedChar, setSearchValue, setSelectedChar } from "../constants/settings.js";
 import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
 import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
@@ -170,9 +170,16 @@ function refreshCharList() {
         if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
             $('#character-list').html(generateDropdown(sortedList, dropdownMode));
             const list = document.querySelector('#character-list');
+            const openSections = getOpenDropdownSections();
             list.querySelectorAll('.dropdown-container').forEach(container => {
                 const title = container.querySelector('.dropdown-title');
                 const content = container.querySelector('.dropdown-content');
+                const data = container.dataset;
+                const storedOpen = openSections[data.type]?.includes(data.content);
+                if (storedOpen) {
+                    container.classList.add('open');
+                    content.appendChild(generateDropdownContent(sortedList, data.type, data.content));
+                }
                 title.addEventListener('click', () => {
                     const isOpen = container.classList.toggle('open');
                     if (isOpen) {
@@ -181,13 +188,14 @@ function refreshCharList() {
                     } else {
                         content.innerText = '';
                     }
+                    updateDropdownOpenState(container.dataset.type, container.dataset.content, isOpen);
                 });
             });
         } else {
             renderCharactersListHTML(sortedList);
         }
     }
-    $('#charNumber').empty().append(`Total characters : ${characters.length}`);
+    updateCharacterCount(filteredChars.length);
     eventSource.emit('character_list_refreshed');
 }
 
@@ -399,6 +407,64 @@ export function updateSortOrder(selectedOption) {
     refreshCharListDebounced();
 }
 
+function normalizeOpenSections(value) {
+    if (!value || typeof value !== 'object') {
+        return { allTags: [], custom: [], creators: [] };
+    }
+    return {
+        allTags: Array.isArray(value.allTags) ? value.allTags : [],
+        custom: Array.isArray(value.custom) ? value.custom : [],
+        creators: Array.isArray(value.creators) ? value.creators : []
+    };
+}
+
+function getOpenDropdownSections() {
+    return normalizeOpenSections(getSetting('dropdownOpenSections'));
+}
+
+function updateDropdownOpenState(type, content, isOpen) {
+    if (!type || !content) return;
+    const openSections = normalizeOpenSections(getSetting('dropdownOpenSections'));
+    const list = openSections[type] || [];
+    const index = list.indexOf(content);
+
+    if (isOpen && index === -1) {
+        list.push(content);
+    }
+    if (!isOpen && index !== -1) {
+        list.splice(index, 1);
+    }
+
+    openSections[type] = list;
+    updateSetting('dropdownOpenSections', openSections);
+}
+
+function hasActiveFilters() {
+    const hasSearch = String(searchValue || '').trim().length > 0;
+    const hasFavOnly = getSetting('favOnly');
+    const hasExcluded = $('#acm_excludedTags > span').length > 0;
+    const hasMandatory = $('#acm_mandatoryTags > span').length > 0;
+    const hasFacultative = $('#acm_facultativeTags > span').length > 0;
+    return hasSearch || hasFavOnly || hasExcluded || hasMandatory || hasFacultative;
+}
+
+function updateCharacterCount(visibleCount) {
+    const totalCount = characters.length;
+    const dropdownUI = getSetting('dropdownUI');
+    const displayCount = dropdownUI
+        ? `${totalCount}/${totalCount}`
+        : `${hasActiveFilters() ? visibleCount : totalCount}/${totalCount}`;
+    $('#charNumber').empty().append(`Characters: ${displayCount}`);
+}
+
+export function updateFavFilterButtonState(isEnabled) {
+    const button = document.getElementById('acm_fav_filter_button');
+    if (!button) return;
+    button.classList.toggle('fav_on', isEnabled);
+    button.classList.toggle('fav_off', !isEnabled);
+    button.setAttribute('aria-pressed', isEnabled ? 'true' : 'false');
+}
+
 /**
  * Updates the search filter by setting a normalized search value and triggering a refresh of the character list.
  *
@@ -418,6 +484,51 @@ export function updateSearchFilter(searchText) {
  */
 export function toggleFavoritesOnly(isChecked) {
     updateSetting('favOnly', isChecked);
+    updateFavFilterButtonState(isChecked);
     refreshCharListDebounced();
+}
+
+export async function selectRandomCharacter() {
+    const dropdownUI = getSetting('dropdownUI');
+    const dropdownMode = getSetting('dropdownMode');
+    const filteredChars = searchAndFilter();
+
+    if (!filteredChars.length) {
+        toastr.warning('No characters match the current filters.');
+        return;
+    }
+
+    let candidateAvatars = [];
+
+    if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
+        const openContainers = Array.from(document.querySelectorAll('#character-list .dropdown-container.open'));
+        if (openContainers.length > 0) {
+            const avatarSet = new Set();
+            openContainers.forEach(container => {
+                container.querySelectorAll('.card[data-avatar]').forEach(card => {
+                    avatarSet.add(card.dataset.avatar);
+                });
+            });
+            candidateAvatars = Array.from(avatarSet);
+        } else {
+            toastr.warning('Open a dropdown section to pick a random character.');
+            return;
+        }
+    } else {
+        candidateAvatars = filteredChars.map(item => item.avatar);
+    }
+
+    if (candidateAvatars.length === 0) {
+        toastr.warning('No characters are available for random selection.');
+        return;
+    }
+
+    const randomAvatar = candidateAvatars[Math.floor(Math.random() * candidateAvatars.length)];
+    await selectAndDisplay(randomAvatar);
+
+    const card = document.querySelector(`[data-avatar="${randomAvatar}"]`);
+    if (card) {
+        card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+    }
 }
 

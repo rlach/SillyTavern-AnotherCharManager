@@ -33,6 +33,11 @@ export const defaultSettings = {
     dropdownUI: false,
     dropdownMode: "allTags",
     presetId: 0,
+    dropdownOpenSections: {
+        allTags: [],
+        custom: [],
+        creators: []
+    },
     dropdownPresets: [
         { name: "Preset 1", categories: [] },
         { name: "Preset 2", categories: [] },
