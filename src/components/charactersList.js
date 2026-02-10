@@ -236,17 +236,16 @@ function generateDropdown(sortedList, type) {
             if (categories.length === 0) {
                 return "Looks like our categories went on vacation! 🏖️ Check back when they're done sunbathing!";
             }
-            return categories.map(category => {
-                const members = category.tags;
+            return categories.map((category, index) => {
                 const charactersForCat = sortedList
-                    .filter(item => members.every(memberId => tagMap[item.avatar]?.includes(String(memberId))))
+                    .filter(item => matchesCategoryFilters(item, category))
                     .map(item => item.avatar);
                 if (charactersForCat.length === 0) return '';
                 return createDropdownContainer(
                     category.name,
                     charactersForCat.length,
                     'custom',
-                    category.tags.join(',')
+                    String(index)
                 );
             }).join('');
         },
@@ -327,14 +326,16 @@ function generateDropdownContent(sortedList, type, content){
             return container;
         },
         custom: () => {
-            const tags = content
-                .split(',')
-                .map(t => t.trim())
-                .filter(t => t.length > 0);
-            const filteredCharacters = sortedList.filter(item => {
-                const charTags = tagMap[item.avatar] || [];
-                return tags.every(tag => charTags.includes(tag));
-            });
+            const preset = getSetting('presetId');
+            const categoryIndex = Number(content);
+            if (Number.isNaN(categoryIndex)) {
+                return document.createDocumentFragment();
+            }
+            const category = getPreset(preset).categories[categoryIndex];
+            if (!category) {
+                return document.createDocumentFragment();
+            }
+            const filteredCharacters = sortedList.filter(item => matchesCategoryFilters(item, category));
             const container = document.createDocumentFragment();
             filteredCharacters.forEach(character => {
                 const block = createCharacterBlock(character.avatar, false);
@@ -353,6 +354,37 @@ function generateDropdownContent(sortedList, type, content){
         }
     };
     return dropdownContent[type]?.() || '';
+}
+
+function normalizeCategoryFilters(category) {
+    const mandatory = Array.isArray(category.mandatoryTags)
+        ? category.mandatoryTags
+        : (Array.isArray(category.tags) ? category.tags : []);
+    return {
+        mandatory,
+        facultative: Array.isArray(category.facultativeTags) ? category.facultativeTags : [],
+        excluded: Array.isArray(category.excludedTags) ? category.excludedTags : []
+    };
+}
+
+function matchesCategoryFilters(item, category) {
+    const { mandatory, facultative, excluded } = normalizeCategoryFilters(category);
+    const charTags = tagMap[item.avatar] || [];
+    const charTagSet = new Set(charTags.map(tag => String(tag)));
+
+    if (excluded.length > 0 && excluded.some(tagId => charTagSet.has(String(tagId)))) {
+        return false;
+    }
+
+    if (mandatory.length > 0 && !mandatory.every(tagId => charTagSet.has(String(tagId)))) {
+        return false;
+    }
+
+    if (facultative.length > 0 && !facultative.some(tagId => charTagSet.has(String(tagId)))) {
+        return false;
+    }
+
+    return true;
 }
 
 /**

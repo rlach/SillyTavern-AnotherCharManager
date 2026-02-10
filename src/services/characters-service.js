@@ -16,7 +16,8 @@ import {
     getTokenCountAsync,
     POPUP_TYPE,
     saveSettingsDebounced,
-    substituteParams, t
+    substituteParams, t,
+    tagMap
 } from "../constants/context.js";
 import { debounce, delay } from '../utils.js';
 import { renameTagKey } from './tags-service.js';
@@ -418,5 +419,86 @@ export async function createCharacter(formData) {
     catch (error) {
         console.error('Error creating character', error);
         toastr.error(t`Failed to create character`);
+    }
+}
+
+/**
+ * Deletes all broken characters (those without tagMap entries, with 0 tags if added in last 24h, or with 0 tags and source link) along with their chats.
+ * Shows a confirmation popup before proceeding with the deletion.
+ *
+ * @return {Promise<void>} Resolves when all broken characters have been deleted or the user cancels.
+ */
+export async function deleteBrokenCharacters() {
+    const now = Date.now();
+    const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
+    
+    const brokenCharacters = characters.filter(character => {
+        const hasNoTagMap = typeof tagMap[character.avatar] === 'undefined';
+        const hasZeroTags = Array.isArray(tagMap[character.avatar]) && tagMap[character.avatar].length === 0;
+        const isRecent = character.date_added && character.date_added >= twentyFourHoursAgo;
+        const hasSourceLink = character.data?.extensions?.chub?.full_path;
+        
+        return hasNoTagMap || (hasZeroTags && isRecent) || (hasZeroTags && hasSourceLink);
+    });
+
+    if (brokenCharacters.length === 0) {
+        toastr.info('No broken characters found!');
+        return;
+    }
+
+    const confirmMessage = `
+        <h3>Delete Broken Characters</h3>
+        <p>Found <strong>${brokenCharacters.length}</strong> broken character(s) without tagMap entries.</p>
+        <p>This will permanently delete these characters and all their chats.</p>
+        <p><strong>This action cannot be undone!</strong></p>
+        <br>
+        <p>Characters to be deleted:</p>
+        <ul style="max-height: 200px; overflow-y: auto; text-align: left;">
+            ${brokenCharacters.map(char => `<li>${char.name || char.avatar}</li>`).join('')}
+        </ul>
+    `;
+
+    const confirmed = await callGenericPopup(confirmMessage, POPUP_TYPE.CONFIRM);
+    if (!confirmed) {
+        console.log('User cancelled deletion of broken characters');
+        return;
+    }
+
+    let deletedCount = 0;
+    let failedCount = 0;
+
+    for (const character of brokenCharacters) {
+        try {
+            const deleteBody = JSON.stringify({
+                avatar_url: character.avatar,
+                delete_chats: true
+            });
+
+            const deleteResponse = await fetch('/api/characters/delete', {
+                method: 'POST',
+                headers: getRequestHeaders(),
+                body: deleteBody,
+                cache: 'no-cache',
+            });
+
+            if (deleteResponse.ok) {
+                deletedCount++;
+            } else {
+                failedCount++;
+                console.error(`Failed to delete character: ${character.name}`, await deleteResponse.text());
+            }
+        } catch (error) {
+            failedCount++;
+            console.error(`Error deleting character: ${character.name}`, error);
+        }
+    }
+
+    await getCharacters();
+    refreshCharListDebounced();
+
+    if (failedCount === 0) {
+        toastr.success(`Successfully deleted ${deletedCount} broken character(s)!`);
+    } else {
+        toastr.warning(`Deleted ${deletedCount} character(s), but ${failedCount} failed.`);
     }
 }

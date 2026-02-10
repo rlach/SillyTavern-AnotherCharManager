@@ -83,7 +83,8 @@ export async function fillDetails(avatar) {
     $('#acm_firstMess').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     $('#acm_creatornotes').val(char.data?.creator_notes || char.creatorcomment);
-    $('#tag_List').html(`${tagMap[char.avatar].map((tag) => displayTag(tag, 'details')).join('')}`);
+    const characterTags = Array.isArray(tagMap[char.avatar]) ? tagMap[char.avatar] : [];
+    $('#tag_List').html(`${characterTags.map((tag) => displayTag(tag, 'details')).join('')}`);
     displayAltGreetings(char.data.alternate_greetings).then(html => {
         $('#altGreetings_content').html(html);
     });

@@ -75,6 +75,11 @@ export function printCategoriesList(presetID, init = false){
     }
     else {
         preset.categories.forEach((cat,index) => {
+            const mandatoryTags = Array.isArray(cat.mandatoryTags)
+                ? cat.mandatoryTags
+                : (Array.isArray(cat.tags) ? cat.tags : []);
+            const facultativeTags = Array.isArray(cat.facultativeTags) ? cat.facultativeTags : [];
+            const excludedTags = Array.isArray(cat.excludedTags) ? cat.excludedTags : [];
             const catHTML = `
                         <div data-catid="${index}">
                             <div class="acm_catList">
@@ -85,22 +90,57 @@ export function printCategoriesList(presetID, init = false){
                                     <div class="menu_button fa-solid fa-trash cat_delete" title="Delete category"></div>
                                 </div>
                             </div>
-                            <div id="acm_catTagList_${index}" class="acm_catTagList"></div>
+                            <div class="acm_catTagSection">
+                                <div class="acm_catTagHeader">
+                                    <span>Mandatory Tags</span>
+                                    <i class="fa-solid fa-plus tag addCatTag" data-tagtype="mandatory"></i>
+                                </div>
+                                <div id="acm_catTagList_${index}_mandatory" class="acm_catTagList" data-tagtype="mandatory"></div>
+                            </div>
+                            <div class="acm_catTagSection">
+                                <div class="acm_catTagHeader">
+                                    <span>At least one tag</span>
+                                    <i class="fa-solid fa-plus tag addCatTag" data-tagtype="facultative"></i>
+                                </div>
+                                <div id="acm_catTagList_${index}_facultative" class="acm_catTagList" data-tagtype="facultative"></div>
+                            </div>
+                            <div class="acm_catTagSection">
+                                <div class="acm_catTagHeader">
+                                    <span>Excluded tags</span>
+                                    <i class="fa-solid fa-plus tag addCatTag" data-tagtype="excluded"></i>
+                                </div>
+                                <div id="acm_catTagList_${index}_excluded" class="acm_catTagList" data-tagtype="excluded"></div>
+                            </div>
                         </div>`;
             const catElement = $(catHTML);
-            const catTagList = catElement.find(`#acm_catTagList_${index}`);
-            if (cat.tags) {
-                cat.tags.forEach(tag => {
-                    catTagList.append(displayTag(tag, 'category'));
-                });
-            }
-            catTagList.append(`<label for="input_cat_tag_${index}" title="Search or create a tag.">
-                                    <input id="input_cat_tag_${index}" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
+            const catTagListMandatory = catElement.find(`#acm_catTagList_${index}_mandatory`);
+            const catTagListFacultative = catElement.find(`#acm_catTagList_${index}_facultative`);
+            const catTagListExcluded = catElement.find(`#acm_catTagList_${index}_excluded`);
+
+            mandatoryTags.forEach(tag => {
+                catTagListMandatory.append(displayTag(tag, 'category'));
+            });
+            facultativeTags.forEach(tag => {
+                catTagListFacultative.append(displayTag(tag, 'category'));
+            });
+            excludedTags.forEach(tag => {
+                catTagListExcluded.append(displayTag(tag, 'category'));
+            });
+
+            catTagListMandatory.append(`<label for="input_cat_tag_${index}_mandatory" title="Search or create a tag.">
+                                    <input id="input_cat_tag_${index}_mandatory" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
                                 </label>`);
-            catTagList.append(`<i class="fa-solid fa-plus tag addCatTag"></i>`);
+            catTagListFacultative.append(`<label for="input_cat_tag_${index}_facultative" title="Search or create a tag.">
+                                    <input id="input_cat_tag_${index}_facultative" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
+                                </label>`);
+            catTagListExcluded.append(`<label for="input_cat_tag_${index}_excluded" title="Search or create a tag.">
+                                    <input id="input_cat_tag_${index}_excluded" class="text_pole tag_input wide100p margin0 ui-autocomplete-input" placeholder="Search tags" maxlength="50" autocomplete="off" style="display: none">
+                                </label>`);
             catContainer.append(catElement);
             $('#acm_custom_categories').append(catContainer);
-            acmCreateTagInput(`#input_cat_tag_${index}`, `#acm_catTagList_${index}`, { tagOptions: { removable: true } }, 'category');
+            acmCreateTagInput(`#input_cat_tag_${index}_mandatory`, `#acm_catTagList_${index}_mandatory`, { tagOptions: { removable: true } }, 'category');
+            acmCreateTagInput(`#input_cat_tag_${index}_facultative`, `#acm_catTagList_${index}_facultative`, { tagOptions: { removable: true } }, 'category');
+            acmCreateTagInput(`#input_cat_tag_${index}_excluded`, `#acm_catTagList_${index}_excluded`, { tagOptions: { removable: true } }, 'category');
         });
         makeCategoryDraggable("#catContainer");
     }
@@ -196,21 +236,21 @@ export function renameCategory(preset, category, newName) {
  * @param {string} selectedCat The identifier for the selected category.
  * @return {string} The identifier of the toggled category.
  */
-export function toggleTagButton(button, selectedCat) {
+export function toggleTagButton(button, selectedCat, tagType = 'mandatory') {
     if (button.hasClass('addCatTag')) {
         button
             .removeClass('addCatTag')
             .addClass('cancelCatTag')
             .removeClass('fa-plus')
             .addClass('fa-minus');
-        $(`#input_cat_tag_${selectedCat}`).show();
+        $(`#input_cat_tag_${selectedCat}_${tagType}`).show();
     } else {
         button
             .addClass('addCatTag')
             .removeClass('cancelCatTag')
             .addClass('fa-plus')
             .removeClass('fa-minus');
-        $(`#input_cat_tag_${selectedCat}`).hide();
+        $(`#input_cat_tag_${selectedCat}_${tagType}`).hide();
     }
 }
 

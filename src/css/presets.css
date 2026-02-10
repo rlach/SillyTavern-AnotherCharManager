@@ -19,6 +19,19 @@
 .acm_catTagList {
     display: flex;
     margin: 0 5px 5px 5px;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.acm_catTagSection {
+    margin-bottom: 8px;
+}
+
+.acm_catTagHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 2px 5px 4px 5px;
 }
 
 #preset_selector {

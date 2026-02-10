@@ -30,6 +30,17 @@
     width: 50%;
 }
 
+#tag_List {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-height: min(30vh, 220px);
+    overflow-y: auto;
+    padding-right: 4px;
+    padding-bottom: 53px;
+    box-sizing: border-box;
+}
+
 .acm_tagQuery_container {
     display: flex;
     flex-direction: column;

@@ -124,7 +124,7 @@ export function sortCharAR(chars, sort_data, sort_order) {
                 comparison = a[sort_data].localeCompare(b[sort_data]);
                 break;
             case 'tags':
-                comparison = tagMap[a.avatar].length - tagMap[b.avatar].length;
+                comparison = (tagMap[a.avatar]?.length || 0) - (tagMap[b.avatar]?.length || 0);
                 break;
             case 'date_last_chat':
                 comparison = b[sort_data] - a[sort_data];

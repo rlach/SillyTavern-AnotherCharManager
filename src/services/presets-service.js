@@ -60,15 +60,26 @@ export function updatePresetCategories(presetIndex, categories) {
     }
     if (!categories.every(category =>
         typeof category === 'object' &&
-        typeof category.name === 'string' &&
-        Array.isArray(category.tags)
+        typeof category.name === 'string'
     )) {
-        throw new Error('Invalid category format. Each category must have a name (string) and tags (array)');
+        throw new Error('Invalid category format. Each category must have a name (string)');
     }
+    const normalizedCategories = categories.map(category => {
+        const mandatoryTags = Array.isArray(category.mandatoryTags)
+            ? category.mandatoryTags
+            : (Array.isArray(category.tags) ? category.tags : []);
+        return {
+            ...category,
+            tags: [...mandatoryTags],
+            mandatoryTags: [...mandatoryTags],
+            facultativeTags: Array.isArray(category.facultativeTags) ? [...category.facultativeTags] : [],
+            excludedTags: Array.isArray(category.excludedTags) ? [...category.excludedTags] : []
+        };
+    });
     const updatedPresets = [...getSetting('dropdownPresets')];
     updatedPresets[presetIndex] = {
         ...updatedPresets[presetIndex],
-        categories: [...categories]
+        categories: normalizedCategories
     };
     updateSetting('dropdownPresets', updatedPresets);
 }
@@ -85,7 +96,10 @@ export function addPresetCategory(presetIndex, name) {
     const updatedPresets = [...getSetting('dropdownPresets')];
     updatedPresets[presetIndex] = {
         ...updatedPresets[presetIndex],
-        categories: [...updatedPresets[presetIndex].categories, { name, tags: [] }]
+        categories: [
+            ...updatedPresets[presetIndex].categories,
+            { name, tags: [], mandatoryTags: [], facultativeTags: [], excludedTags: [] }
+        ]
     };
     updateSetting('dropdownPresets', updatedPresets);
 }
@@ -134,13 +148,31 @@ export function removePresetCategory(presetIndex, categoryIndex) {
  * @param {number} categoryIndex - The index of the category
  * @param {number} tagId - The ID of the tag to add
  */
-export function addTagToCategory(presetIndex, categoryIndex, tagId) {
+export function addTagToCategory(presetIndex, categoryIndex, tagId, tagType = 'mandatory') {
     const category = getCategory(presetIndex, categoryIndex);
-    if (category.tags.includes(tagId)) {
+    const mandatoryTags = Array.isArray(category.mandatoryTags)
+        ? category.mandatoryTags
+        : (Array.isArray(category.tags) ? category.tags : []);
+    const facultativeTags = Array.isArray(category.facultativeTags) ? category.facultativeTags : [];
+    const excludedTags = Array.isArray(category.excludedTags) ? category.excludedTags : [];
+    const targetList = tagType === 'facultative'
+        ? facultativeTags
+        : tagType === 'excluded'
+            ? excludedTags
+            : mandatoryTags;
+
+    if (targetList.includes(tagId)) {
         return; // Tag already exists in category
     }
     const updatedPresets = [...getSetting('dropdownPresets')];
-    updatedPresets[presetIndex].categories[categoryIndex].tags.push(tagId);
+    if (tagType === 'facultative') {
+        updatedPresets[presetIndex].categories[categoryIndex].facultativeTags = [...facultativeTags, tagId];
+    } else if (tagType === 'excluded') {
+        updatedPresets[presetIndex].categories[categoryIndex].excludedTags = [...excludedTags, tagId];
+    } else {
+        updatedPresets[presetIndex].categories[categoryIndex].mandatoryTags = [...mandatoryTags, tagId];
+        updatedPresets[presetIndex].categories[categoryIndex].tags = [...mandatoryTags, tagId];
+    }
     updateSetting('dropdownPresets', updatedPresets);
 }
 
@@ -150,10 +182,25 @@ export function addTagToCategory(presetIndex, categoryIndex, tagId) {
  * @param {number} categoryIndex - The index of the category
  * @param {number} tagId - The ID of the tag to remove
  */
-export function removeTagFromCategory(presetIndex, categoryIndex, tagId) {
+export function removeTagFromCategory(presetIndex, categoryIndex, tagId, tagType = 'mandatory') {
     const updatedPresets = [...getSetting('dropdownPresets')];
-    updatedPresets[presetIndex].categories[categoryIndex].tags =
-        updatedPresets[presetIndex].categories[categoryIndex].tags
-            .filter(id => id !== tagId);
+    if (tagType === 'facultative') {
+        updatedPresets[presetIndex].categories[categoryIndex].facultativeTags =
+            (updatedPresets[presetIndex].categories[categoryIndex].facultativeTags || [])
+                .filter(id => id !== tagId);
+    } else if (tagType === 'excluded') {
+        updatedPresets[presetIndex].categories[categoryIndex].excludedTags =
+            (updatedPresets[presetIndex].categories[categoryIndex].excludedTags || [])
+                .filter(id => id !== tagId);
+    } else {
+        updatedPresets[presetIndex].categories[categoryIndex].mandatoryTags =
+            (updatedPresets[presetIndex].categories[categoryIndex].mandatoryTags
+                || updatedPresets[presetIndex].categories[categoryIndex].tags
+                || [])
+                .filter(id => id !== tagId);
+        updatedPresets[presetIndex].categories[categoryIndex].tags =
+            (updatedPresets[presetIndex].categories[categoryIndex].tags || [])
+                .filter(id => id !== tagId);
+    }
     updateSetting('dropdownPresets', updatedPresets);
 }

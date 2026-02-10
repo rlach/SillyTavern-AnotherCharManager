@@ -65,20 +65,23 @@ export function initializePresetsEvents() {
     // Trigger on a click on the add tag button in a category
     $(document).on("click", ".addCatTag", function () {
         const selectedCat = $(this).closest('[data-catid]').data('catid');
-        toggleTagButton($(this), selectedCat);
+        const tagType = $(this).data('tagtype') || 'mandatory';
+        toggleTagButton($(this), selectedCat, tagType);
     });
 
     // Trigger on a click on the minus tag button in a category
     $(document).on("click", ".cancelCatTag", function () {
         const selectedCat = $(this).closest('[data-catid]').data('catid');
-        toggleTagButton($(this), selectedCat);
+        const tagType = $(this).data('tagtype') || 'mandatory';
+        toggleTagButton($(this), selectedCat, tagType);
     });
 
     $(document).on("click", ".tag_cat_remove", function () {
         const selectedPreset = $('#preset_selector option:selected').data('preset');
         const selectedCat = $(this).closest('[data-catid]').data('catid');
         const selectedTag = $(this).closest('[data-tagid]').data('tagid');
-        removeTagFromCategory(selectedPreset, selectedCat, selectedTag);
+        const tagType = $(this).closest('.acm_catTagList').data('tagtype') || 'mandatory';
+        removeTagFromCategory(selectedPreset, selectedCat, selectedTag, tagType);
         $(this).closest('[data-tagid]').remove();
     });
 }

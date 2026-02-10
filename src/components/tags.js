@@ -114,8 +114,9 @@ function acmSelectTag(event, ui, listSelector, { tagListOptions = {}, mode = 'cl
         case 'category': {
             const selectedPreset = $('#preset_selector option:selected').data('preset');
             const selectedCat = $(listSelector).find('label').closest('[data-catid]').data('catid');
+            const tagType = $(listSelector).data('tagtype') || 'mandatory';
             $(listSelector).find('label').before(displayTag(tag.id, 'category'));
-            addTagToCategory(selectedPreset, selectedCat, tag.id);
+            addTagToCategory(selectedPreset, selectedCat, tag.id, tagType);
             break;
         }
         case 'multiple': {
