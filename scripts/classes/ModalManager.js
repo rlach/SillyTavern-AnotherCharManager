@@ -174,8 +174,10 @@ export class ModalManager {
      * @return {void} This function does not return a value.
      */
     closeModal() {
-        this.closeDetails();
-        setCharacterId(getIdByAvatar(this.settings.mem_avatar));
+        this.closeDetails(false);
+        if (this.settings.mem_avatar !== undefined) {
+            setCharacterId(getIdByAvatar(this.settings.mem_avatar));
+        }
         setMenuType(this.settings.mem_menu);
         this.settings.setMem_avatar(undefined);
 
