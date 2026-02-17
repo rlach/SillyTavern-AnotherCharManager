@@ -502,3 +502,79 @@ export async function deleteBrokenCharacters() {
         toastr.warning(`Deleted ${deletedCount} character(s), but ${failedCount} failed.`);
     }
 }
+
+/**
+ * Deletes characters that have no source link and have an empty or missing tagMap entry.
+ * Shows a confirmation popup listing affected characters before deletion.
+ *
+ * @return {Promise<void>} Resolves when deletion completes or the user cancels.
+ */
+export async function deleteUnlinkedUntaggedCharacters() {
+    const candidates = characters.filter(character => {
+        const hasLink = !!character.data?.extensions?.chub?.full_path;
+        const tagEntry = tagMap[character.avatar];
+        const hasNoTags = !Array.isArray(tagEntry) || tagEntry.length === 0;
+        return hasLink && hasNoTags;
+    });
+
+    if (candidates.length === 0) {
+        toastr.info('No unlinked, untagged characters found!');
+        return;
+    }
+
+    const confirmMessage = `
+        <h3>Delete Linked & Untagged Characters</h3>
+        <p>Found <strong>${candidates.length}</strong> character(s) with a link and no tags.</p>
+        <p>This will permanently delete these characters and all their chats.</p>
+        <p><strong>This action cannot be undone!</strong></p>
+        <br>
+        <p>Characters to be deleted:</p>
+        <ul style="max-height: 200px; overflow-y: auto; text-align: left;">
+            ${candidates.map(char => `<li>${char.name || char.avatar}</li>`).join('')}
+        </ul>
+    `;
+
+    const confirmed = await callGenericPopup(confirmMessage, POPUP_TYPE.CONFIRM);
+    if (!confirmed) {
+        console.log('User cancelled deletion of unlinked, untagged characters');
+        return;
+    }
+
+    let deletedCount = 0;
+    let failedCount = 0;
+
+    for (const character of candidates) {
+        try {
+            const deleteBody = JSON.stringify({
+                avatar_url: character.avatar,
+                delete_chats: true
+            });
+
+            const deleteResponse = await fetch('/api/characters/delete', {
+                method: 'POST',
+                headers: getRequestHeaders(),
+                body: deleteBody,
+                cache: 'no-cache',
+            });
+
+            if (deleteResponse.ok) {
+                deletedCount++;
+            } else {
+                failedCount++;
+                console.error(`Failed to delete character: ${character.name}`, await deleteResponse.text());
+            }
+        } catch (error) {
+            failedCount++;
+            console.error(`Error deleting character: ${character.name}`, error);
+        }
+    }
+
+    await getCharacters();
+    refreshCharListDebounced();
+
+    if (failedCount === 0) {
+        toastr.success(`Successfully deleted ${deletedCount} character(s)!`);
+    } else {
+        toastr.warning(`Deleted ${deletedCount} character(s), but ${failedCount} failed.`);
+    }
+}

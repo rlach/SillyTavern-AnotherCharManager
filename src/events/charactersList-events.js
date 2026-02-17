@@ -8,6 +8,7 @@ import {
     updateSortOrder
 } from "../components/charactersList.js";
 import { openCharacterChat } from "../components/characters.js";
+import { deleteUnlinkedUntaggedCharacters } from "../services/characters-service.js";
 import { getSetting } from "../services/settings-service.js";
 import { toggleCharacterCreationPopup } from "../components/characterCreation.js";
 
@@ -65,6 +66,10 @@ export function initializeToolbarEvents() {
 
     $('#acm_random_button').on("click", function () {
         selectRandomCharacter();
+    });
+
+    $('#acm_trash_button').on("click", function () {
+        deleteUnlinkedUntaggedCharacters();
     });
 
     $('#acm_character_import_button').on("click", function () {

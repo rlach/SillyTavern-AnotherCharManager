@@ -151,8 +151,10 @@ export function closeDetails( reset = true ) {
  * @return {void} This function does not return a value.
  */
 export function closeModal() {
-    closeDetails();
-    setCharacterId(getIdByAvatar(mem_avatar));
+    closeDetails(false);
+    if (mem_avatar !== undefined) {
+        setCharacterId(getIdByAvatar(mem_avatar));
+    }
     setMenuType(mem_menu);
     setMem_avatar(undefined);
 
