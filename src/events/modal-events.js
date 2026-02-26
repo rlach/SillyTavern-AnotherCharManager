@@ -1,5 +1,6 @@
 import { resetScrollHeight } from "../utils.js";
 import {
+    applySidePanelMode,
     closeDetails,
     closeModal,
     initializeDropdownClickOutside,
@@ -75,6 +76,12 @@ export function initializeModalEvents() {
         $popup.css('width', newWidth + '%');
         $preview.hide();
         updateSetting('popupWidth', newWidth);
+    });
+
+    $('#acm_side_panel_checkbox').on('change', function () {
+        const enabled = $(this).is(':checked');
+        updateSetting('sidePanel', enabled);
+        applySidePanelMode(enabled);
     });
 }
 

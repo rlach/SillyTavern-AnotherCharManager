@@ -1,4 +1,11 @@
-import { eventSource } from "../constants/context.js";
+import {
+    callGenericPopup,
+    characters,
+    eventSource,
+    getCharacters,
+    getRequestHeaders,
+    POPUP_TYPE,
+} from "../constants/context.js";
 import {
     addAltGreeting,
     closeCharacterPopup,
@@ -6,6 +13,7 @@ import {
     duplicateCharacter,
     exportCharacter,
     openCharacterChat,
+    reimportCharacterTags,
     renameCharacter,
     toggleAdvancedDefinitionsPopup,
     toggleFavoriteStatus,
@@ -15,7 +23,7 @@ import { closeDetails } from "../components/modal.js";
 import { checkApiAvailability, editCharDebounced, saveAltGreetings } from "../services/characters-service.js";
 import { refreshCharListDebounced } from "../components/charactersList.js";
 import { selectedChar } from "../constants/settings.js";
-import { updateTokenCount } from "../utils.js";
+import { delay, updateTokenCount } from "../utils.js";
 
 /**
  * Initializes a set of field updaters for designated DOM elements, enabling dynamic updates
@@ -81,12 +89,20 @@ export function initializeCharactersEvents() {
         refreshCharListDebounced();
     });
     // Add listener to refresh the display on characters delete
-    eventSource.on('characterDeleted', function () {
-        let charDetailsState = document.getElementById('char-details');
-        if (charDetailsState.style.display !== 'none') {
-            closeDetails();
+    eventSource.on('characterDeleted', async function () {
+        closeDetails();
+
+        const MAX_ATTEMPTS = 8;
+        for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+            await getCharacters();
+            refreshCharListDebounced();
+            await delay(260);
+
+            const hasCards = document.querySelector('#character-list [data-avatar], #character-list [data-group-id]') !== null;
+            if (hasCards || characters.length === 0) {
+                break;
+            }
         }
-        refreshCharListDebounced();
     });
     // Add listener to refresh the display on characters duplication
     eventSource.on('character_duplicated', function () {
@@ -115,9 +131,44 @@ export function initializeCharactersEvents() {
     // Duplicate character
     $('#acm_dupe_button').on("click", duplicateCharacter);
 
+    // Reimport tags
+    $('#acm_reimport_tags_button').on("click", reimportCharacterTags);
+
     // Delete character
-    $('#acm_delete_button').on("click", function () {
-        $('#delete_button').trigger("click");
+    $('#acm_delete_button').on("click", async function () {
+        if (!selectedChar) {
+            toastr.warning('No character selected');
+            return;
+        }
+
+        const confirmed = await callGenericPopup(
+            '<h3>Delete this character?</h3><p>This will permanently delete this character and all chats.</p>',
+            POPUP_TYPE.CONFIRM
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const response = await fetch('/api/characters/delete', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+            body: JSON.stringify({
+                avatar_url: selectedChar,
+                delete_chats: true,
+            }),
+            cache: 'no-cache',
+        });
+
+        if (!response.ok) {
+            toastr.error('Failed to delete character');
+            return;
+        }
+
+        closeDetails();
+        await getCharacters();
+        refreshCharListDebounced();
+        toastr.success('Character deleted');
     });
 
     // Edit a character avatar

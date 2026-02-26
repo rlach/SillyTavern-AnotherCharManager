@@ -1,86 +1,56 @@
 // import { Fuse } from '/lib.js';
+import { groups } from '/scripts/group-chats.js';
 import { getSetting } from "./settings-service.js";
 import { characters, tagList, tagMap } from "../constants/context.js";
 import { searchValue } from "../constants/settings.js";
 const { Fuse } = SillyTavern.libs;
 /**
- * Filters and searches through a list of characters based on user-defined criteria such as tags, favorites,
- * and a search query. The method utilizes settings, tag filters, and fuzzy search to return a filtered list
- * of characters that satisfy the specified conditions.
+ * Filters and searches through characters and groups based on user-defined criteria.
+ * Returns an array of objects with type 'character' or 'group'.
  *
- * The filtering process includes:
- * - Excluding characters with specified excluded tags
- * - Including only characters with all mandatory tags
- * - Optionally including characters with at least one facultative tag
- * - Searching by fields like name, creator, creator notes, or tags using a fuzzy search algorithm
- *
- * @return {Array} The filtered and potentially searched list of character objects that meet the filter criteria.
+ * @return {Array} The filtered list with objects containing type and data
  */
 export function searchAndFilter(){
-    let filteredChars = [];
-    const charactersCopy = getSetting('favOnly')
-        ? [...characters].filter(character => character.fav === true || character.data.extensions.fav === true)
-        : [...characters];
+    const groupsFilter = getSetting('groupsFilter'); // 0=no groups, 1=show groups, 2=only groups
+    let results = [];
 
-    const excludedTags = $('#acm_excludedTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
-    const mandatoryTags = $('#acm_mandatoryTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
-    const facultativeTags = $('#acm_facultativeTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
+    // Handle characters (unless only groups)
+    if (groupsFilter !== 2) {
+        const charactersCopy = getSetting('favOnly')
+            ? [...characters].filter(character => character.fav === true || character.data.extensions.fav === true)
+            : [...characters];
 
-    // Filtering based on tags
-    let tagfilteredChars = charactersCopy.filter(item => {
-        const characterTags = tagMap[item.avatar] || [];
+        const excludedTags = $('#acm_excludedTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
+        const mandatoryTags = $('#acm_mandatoryTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
+        const facultativeTags = $('#acm_facultativeTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
 
-        // First: Exclude characters with any excluded tags
-        if (excludedTags.length > 0) {
-            const hasExcludedTag = characterTags.some(tagId => excludedTags.includes(tagId));
-            if (hasExcludedTag) return false;
-        }
+        let tagfilteredChars = charactersCopy.filter(item => {
+            const characterTags = tagMap[item.avatar] || [];
 
-        // Second: Filter out characters that don't have ALL mandatory tags
-        if (mandatoryTags.length > 0) {
-            const hasAllMandatoryTags = mandatoryTags.every(tagId => characterTags.includes(tagId));
-            if (!hasAllMandatoryTags) return false;
-        }
+            if (excludedTags.length > 0) {
+                const hasExcludedTag = characterTags.some(tagId => excludedTags.includes(tagId));
+                if (hasExcludedTag) return false;
+            }
 
-        // Third: Filter out characters that don't have at least ONE facultative tag
-        if (facultativeTags.length > 0) {
-            const hasAtLeastOneFacultativeTag = facultativeTags.some(tagId => characterTags.includes(tagId));
-            if (!hasAtLeastOneFacultativeTag) return false;
-        }
+            if (mandatoryTags.length > 0) {
+                const hasAllMandatoryTags = mandatoryTags.every(tagId => characterTags.includes(tagId));
+                if (!hasAllMandatoryTags) return false;
+            }
 
-        return true;
-    });
+            if (facultativeTags.length > 0) {
+                const hasAtLeastOneFacultativeTag = facultativeTags.some(tagId => characterTags.includes(tagId));
+                if (!hasAtLeastOneFacultativeTag) return false;
+            }
 
-    if (searchValue !== '') {
-        const searchValueTrimmed = searchValue.trim();
-        const searchField = $('#search_filter_dropdown').val();
+            return true;
+        });
 
-        let fuseOptions;
+        // Apply search if needed
+        if (searchValue !== '') {
+            const searchValueTrimmed = searchValue.trim();
+            const searchField = $('#search_filter_dropdown').val();
 
-        switch (searchField) {
-            case 'name':
-                fuseOptions = {
-                    keys: ['data.name'],
-                    threshold: 0.3,
-                    includeScore: true,
-                };
-                break;
-            case 'creator':
-                fuseOptions = {
-                    keys: ['data.creator'],
-                    threshold: 0.3,
-                    includeScore: true,
-                };
-                break;
-            case 'creator_notes':
-                fuseOptions = {
-                    keys: ['data.creator_notes'],
-                    threshold: 0.3,
-                    includeScore: true,
-                };
-                break;
-            case 'tags':
-                // For tags, we'll search tag names first, then filter characters
+            if (searchField === 'tags') {
                 const tagFuseOptions = {
                     keys: ['name'],
                     threshold: 0.3,
@@ -90,21 +60,53 @@ export function searchAndFilter(){
                 const matchingTags = tagFuse.search(searchValueTrimmed);
                 const matchingTagIds = matchingTags.map(result => result.item.id);
 
-                filteredChars = tagfilteredChars.filter(item => {
+                tagfilteredChars = tagfilteredChars.filter(item => {
                     return (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
                 });
-                return filteredChars;
+            } else {
+                const fuseOptions = {
+                    keys: [`data.${searchField}`],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                const fuse = new Fuse(tagfilteredChars, fuseOptions);
+                const searchResults = fuse.search(searchValueTrimmed);
+                tagfilteredChars = searchResults.map(result => result.item);
+            }
         }
 
-        const fuse = new Fuse(tagfilteredChars, fuseOptions);
-        const results = fuse.search(searchValueTrimmed);
-        filteredChars = results.map(result => result.item);
+        // Convert characters to result format
+        results = tagfilteredChars.map(char => ({ type: 'character', ...char }));
+    }
 
-        return filteredChars;
+    // Handle groups (if show or only)
+    if (groupsFilter >= 1) {
+        let filteredGroups = [...groups];
+
+        // Apply search to groups if needed
+        if (searchValue !== '') {
+            const searchValueTrimmed = searchValue.trim();
+            const searchField = $('#search_filter_dropdown').val();
+
+            if (searchField === 'name') {
+                const fuseOptions = {
+                    keys: ['name'],
+                    threshold: 0.3,
+                    includeScore: true,
+                };
+                const fuse = new Fuse(filteredGroups, fuseOptions);
+                const searchResults = fuse.search(searchValueTrimmed);
+                filteredGroups = searchResults.map(result => result.item);
+            }
+            // Groups don't have creator or creator_notes, so ignore those search fields
+        }
+
+        // Convert groups to result format
+        const groupResults = filteredGroups.map(group => ({ type: 'group', group, name: group.name }));
+        results = results.concat(groupResults);
     }
-    else {
-        return tagfilteredChars;
-    }
+
+    return results;
 }
 
 /**

@@ -1,4 +1,5 @@
-import { setCharacterId, setMenuType } from '/script.js';
+import { setMenuType } from '/script.js';
+import { groups } from '/scripts/group-chats.js';
 import { debounce, getIdByAvatar } from "../utils.js";
 import { characters, eventSource, getThumbnailUrl, tagList, tagMap } from "../constants/context.js";
 import { searchValue, selectedChar, setSearchValue, setSelectedChar } from "../constants/settings.js";
@@ -56,6 +57,67 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
     return div;
 }
 
+/**
+ * Creates and returns a group block element.
+ * @param {object} group - The group object
+ * @param {boolean} useLazyLoading - Whether to use lazy loading for images
+ * @return {HTMLDivElement} Returns a div element representing the group block
+ */
+function createGroupBlock(group, useLazyLoading = true) {
+    const div = document.createElement('div');
+    div.className = 'card char_select group-card';
+    div.title = `[Group] ${group.name} - Members: ${group.members?.length ?? 0}`;
+    div.setAttribute('data-group-id', group.id);
+    div.setAttribute('data-type', 'group');
+
+    // Get member avatars for collage
+    const memberAvatars = [];
+    if (group && Array.isArray(group.members) && group.members.length) {
+        for (const member of group.members) {
+            const charIndex = characters.findIndex(x => x.avatar === member);
+            if (charIndex !== -1 && characters[charIndex].avatar !== 'none') {
+                const avatar = getThumbnailUrl('avatar', characters[charIndex].avatar);
+                memberAvatars.push(avatar);
+            }
+            if (memberAvatars.length === 4) {
+                break;
+            }
+        }
+    }
+
+    const avatarCount = Math.min(memberAvatars.length, 4);
+    let avatarHTML = '';
+
+    if (avatarCount >= 1) {
+        avatarHTML = `<div class="avatar avatar_collage collage_${avatarCount}">`;
+        for (let i = 0; i < avatarCount; i++) {
+            const imgSrc = useLazyLoading
+                ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23e0e0e0' width='100' height='100'/%3E%3C/svg%3E"
+                : memberAvatars[i];
+            const dataSrcAttr = useLazyLoading ? `data-src="${memberAvatars[i]}"` : '';
+            avatarHTML += `<img class="img_${i + 1}" src="${imgSrc}" ${dataSrcAttr} alt="Member ${i + 1}" draggable="false">`;
+        }
+        avatarHTML += '</div>';
+    } else {
+        // Default avatar if no members
+        avatarHTML = '<div class="avatar"><i class="fa-solid fa-users" style="font-size: 48px;"></i></div>';
+    }
+
+    div.innerHTML = `
+        <!-- Media -->
+        <div class="card__media">
+            ${avatarHTML}
+        </div>
+        <!-- Header -->
+        <div class="card__header">
+            <h3 class="card__header-title">${group.name}</h3>
+            <p class="card__header-meta">Members: ${group.members?.length ?? 0}</p>
+        </div>
+    `;
+
+    return div;
+}
+
 const requestIdle = window.requestIdleCallback || (cb => {
     return setTimeout(() => cb({ timeRemaining: () => 5 }), 1);
 });
@@ -97,7 +159,9 @@ function renderCharactersListHTML(sortedList) {
 
             const item = sortedList[currentIndex];
             const useLazyLoading = currentIndex >= 100;
-            const charElement = createCharacterBlock(item.avatar, useLazyLoading);
+            const charElement = item.type === 'group' 
+                ? createGroupBlock(item.group, useLazyLoading)
+                : createCharacterBlock(item.avatar, useLazyLoading);
             fragment.appendChild(charElement);
 
             currentIndex++;
@@ -135,12 +199,15 @@ export async function selectAndDisplay(avatar) {
     }
     setMenuType('character_edit');
     setSelectedChar(avatar);
-    setCharacterId(getIdByAvatar(avatar));
+    // Keep global characterId unchanged while browsing details in ACM.
+    // It is set only for actions that require it (e.g. delete).
     $('#acm_export_format_popup').hide();
     window.acmIsUpdatingDetails = true;
     await fillDetails(avatar);
     await fillAdvancedDefinitions(avatar);
     window.acmIsUpdatingDetails = false;
+
+    document.querySelector('.list-character-wrapper')?.classList.remove('acm-no-selection');
 
     document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
     document.getElementById('char-sep').style.display = 'block';
@@ -481,12 +548,26 @@ function hasActiveFilters() {
 }
 
 function updateCharacterCount(visibleCount) {
-    const totalCount = characters.length;
+    const groupsFilter = getSetting('groupsFilter');
+    const totalCharsCount = characters.length;
+    const totalGroupsCount = groups.length;
+    
+    let totalCount;
+    if (groupsFilter === 0) {
+        totalCount = totalCharsCount; // Only characters
+    } else if (groupsFilter === 2) {
+        totalCount = totalGroupsCount; // Only groups
+    } else {
+        totalCount = totalCharsCount + totalGroupsCount; // Both
+    }
+    
     const dropdownUI = getSetting('dropdownUI');
     const displayCount = dropdownUI
         ? `${totalCount}/${totalCount}`
         : `${hasActiveFilters() ? visibleCount : totalCount}/${totalCount}`;
-    $('#charNumber').empty().append(`Characters: ${displayCount}`);
+    
+    const label = groupsFilter === 2 ? 'Groups' : (groupsFilter === 1 ? 'Items' : 'Chars');
+    $('#charNumber').empty().append(`${label}: ${displayCount}`);
 }
 
 export function updateFavFilterButtonState(isEnabled) {
@@ -495,6 +576,26 @@ export function updateFavFilterButtonState(isEnabled) {
     button.classList.toggle('fav_on', isEnabled);
     button.classList.toggle('fav_off', !isEnabled);
     button.setAttribute('aria-pressed', isEnabled ? 'true' : 'false');
+}
+
+/**
+ * Updates the groups filter button state based on current setting.
+ * @param {number} filterState - 0 = no groups, 1 = show groups, 2 = only groups
+ */
+export function updateGroupsFilterButtonState(filterState) {
+    const button = document.getElementById('acm_groups_filter_button');
+    if (!button) return;
+    
+    button.classList.remove('groups_none', 'groups_show', 'groups_only');
+    button.classList.add(`groups_${['none', 'show', 'only'][filterState]}`);
+    
+    const titles = [
+        'No groups',
+        'Show groups',
+        'Only groups'
+    ];
+    button.setAttribute('title', titles[filterState]);
+    button.setAttribute('data-i18n', `[title]${titles[filterState]}`);
 }
 
 /**
@@ -517,6 +618,17 @@ export function updateSearchFilter(searchText) {
 export function toggleFavoritesOnly(isChecked) {
     updateSetting('favOnly', isChecked);
     updateFavFilterButtonState(isChecked);
+    refreshCharListDebounced();
+}
+
+/**
+ * Toggles the groups filter through three states: show groups -> only groups -> no groups -> show groups
+ */
+export function toggleGroupsFilter() {
+    const currentState = getSetting('groupsFilter');
+    const nextState = (currentState + 1) % 3;
+    updateSetting('groupsFilter', nextState);
+    updateGroupsFilterButtonState(nextState);
     refreshCharListDebounced();
 }
 

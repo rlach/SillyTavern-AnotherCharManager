@@ -16,3 +16,18 @@
 .drag-handle {
     cursor: grab;
 }
+
+/* Groups filter button states */
+#acm_groups_filter_button.groups_none {
+    opacity: 0.5;
+}
+
+#acm_groups_filter_button.groups_show {
+    opacity: 1;
+    color: var(--SmartThemeHighlightColor);
+}
+
+#acm_groups_filter_button.groups_only {
+    opacity: 1;
+    color: var(--fullgreen);
+}

@@ -1,10 +1,12 @@
 import {
     extensionName,
     mem_avatar,
+    mem_characterId,
     mem_menu,
     oldExtensionName,
     selectedChar,
     setMem_avatar,
+    setMem_characterId,
     setMem_menu,
     setSelectedChar,
 } from "../constants/settings.js";
@@ -12,7 +14,7 @@ import { characterId, characters, menuType, renderExtensionTemplateAsync } from 
 import { getSetting } from "../services/settings-service.js";
 import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '/script.js';
-import { updateDropdownPresetNames, updateFavFilterButtonState } from "./charactersList.js";
+import { updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState } from "./charactersList.js";
 import { updateLayout } from "./characterCreation.js";
 
 /**
@@ -54,6 +56,7 @@ export async function initializeModal() {
     initializePoppers();
     updateDropdownPresetNames();
     updateLayout(false);
+    applySidePanelMode(getSetting('sidePanel'));
 }
 
 /**
@@ -103,10 +106,12 @@ function initializePoppers() {
  */
 export function openModal() {
 
-    // Memorize some global variables
+    // Memorize the current character state
     if (characterId !== undefined && characterId >= 0) {
+        setMem_characterId(characterId);
         setMem_avatar(characters[characterId].avatar);
     } else {
+        setMem_characterId(undefined);
         setMem_avatar(undefined);
     }
     setMem_menu(menuType);
@@ -127,6 +132,8 @@ export function openModal() {
         option.selected = field === getSetting('sortingField') && order === getSetting('sortingOrder');
     });
     updateFavFilterButtonState(getSetting('favOnly'));
+    updateGroupsFilterButtonState(getSetting('groupsFilter'));
+    applySidePanelMode(getSetting('sidePanel'));
 }
 
 /**
@@ -136,13 +143,35 @@ export function openModal() {
  * @return {void} Does not return a value.
  */
 export function closeDetails( reset = true ) {
-    if(reset){ setCharacterId(getIdByAvatar(mem_avatar)); }
-
+    // Clean up the character details UI
     $('#acm_export_format_popup').hide();
     document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').classList.remove("open");
     document.getElementById('char-sep').style.display = 'none';
+    document.querySelector('.list-character-wrapper')?.classList.add('acm-no-selection');
     setSelectedChar(undefined);
+}
+
+/**
+ * Applies side panel mode layout and empty-state visibility.
+ * @param {boolean} enabled Whether side panel mode is enabled
+ */
+export function applySidePanelMode(enabled) {
+    const wrapper = document.querySelector('.list-character-wrapper');
+    const checkbox = document.getElementById('acm_side_panel_checkbox');
+
+    if (!wrapper) {
+        return;
+    }
+
+    wrapper.classList.toggle('acm-side-panel-mode', !!enabled);
+
+    if (checkbox instanceof HTMLInputElement) {
+        checkbox.checked = !!enabled;
+    }
+
+    const hasSelection = Boolean(selectedChar);
+    wrapper.classList.toggle('acm-no-selection', !hasSelection);
 }
 
 /**
@@ -152,11 +181,13 @@ export function closeDetails( reset = true ) {
  */
 export function closeModal() {
     closeDetails(false);
-    if (mem_avatar !== undefined) {
-        setCharacterId(getIdByAvatar(mem_avatar));
+    // Restore the previously active character
+    if (mem_characterId !== undefined && mem_characterId >= 0) {
+        setCharacterId(mem_characterId);
     }
     setMenuType(mem_menu);
     setMem_avatar(undefined);
+    setMem_characterId(undefined);
 
     $('#acm_shadow_popup').transition({
         opacity: 0,

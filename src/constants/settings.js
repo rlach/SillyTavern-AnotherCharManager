@@ -12,12 +12,15 @@ export const setSearchValue = (value) => {
     searchValue = value;
 };
 
-export let mem_menu, mem_avatar;
+export let mem_menu, mem_avatar, mem_characterId;
 export const setMem_menu = (value) => {
     mem_menu = value;
 };
 export const setMem_avatar = (value) => {
     mem_avatar = value;
+};
+export const setMem_characterId = (value) => {
+    mem_characterId = value;
 };
 
 export let acm_crop_data;
@@ -27,9 +30,11 @@ export const setCrop_data = (value) => {
 
 export const defaultSettings = {
     popupWidth: 50,
+    sidePanel: false,
     sortingField: "name",
     sortingOrder: "asc",
     favOnly: false,
+    groupsFilter: 1, // 0 = no groups, 1 = show groups, 2 = only groups
     dropdownUI: false,
     dropdownMode: "allTags",
     presetId: 0,

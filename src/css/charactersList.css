@@ -99,6 +99,45 @@
     border-radius: 4px;
 }
 
+/* Group card styles */
+.group-card {
+    border-color: rgba(100, 200, 255, 0.3);
+}
+
+.group-card::before {
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(100, 200, 255, 0.6),
+        transparent
+    );
+}
+
+.group-card:hover {
+    border-color: rgba(100, 200, 255, 1);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(100, 200, 255, 0.2),
+        inset 0 -1px 0 rgba(100, 200, 255, 0.05),
+        inset 0 0 22px 11px rgba(100, 200, 255, 0.05),
+        0 0 20px rgba(100, 200, 255, 0.8);
+}
+
+/* Avatar collage sizing for groups */
+.card__media .avatar_collage {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    aspect-ratio: unset !important;
+    border-radius: 4px;
+}
+
+.card__media .avatar_collage img {
+    object-fit: cover;
+    border-radius: 0;
+}
+
 .card__media img {
     width: 100%;
     height: 100%;

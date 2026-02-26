@@ -4,6 +4,7 @@ import {
     setCharacterId,
     talkativeness_default
 } from '/script.js';
+import { importTags, tag_import_setting } from '/scripts/tags.js';
 import { displayTag } from './tags.js';
 import { getBase64Async, getIdByAvatar } from '../utils.js';
 import {
@@ -13,6 +14,7 @@ import {
     getTokenCountAsync,
     POPUP_TYPE,
     power_user,
+    saveSettingsDebounced,
     selectCharacterById,
     substituteParams,
     tagMap,
@@ -29,6 +31,7 @@ import {
 } from "../services/characters-service.js";
 import { addAltGreetingsTrigger } from "../events/characters-events.js";
 import { closeDetails } from "./modal.js";
+import { applyCreatorNotesDisplay } from "../services/creator-notes-css.js";
 
 /**
  * Fills the character details in the user interface based on the provided avatar.
@@ -82,7 +85,15 @@ export async function fillDetails(avatar) {
     $('#acm_firstMess_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.first_mes))}`);
     $('#acm_firstMess').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
-    $('#acm_creatornotes').val(char.data?.creator_notes || char.creatorcomment);
+    
+    // Handle Creator's Notes with CSS style support
+    const creatorNotesContent = char.data?.creator_notes || char.creatorcomment;
+    applyCreatorNotesDisplay(
+        creatorNotesContent,
+        $('#acm_creatornotes'),
+        $('#acm_creatornotes_display'),
+        char.avatar
+    );
     const characterTags = Array.isArray(tagMap[char.avatar]) ? tagMap[char.avatar] : [];
     $('#tag_List').html(`${characterTags.map((tag) => displayTag(tag, 'details')).join('')}`);
     displayAltGreetings(char.data.alternate_greetings).then(html => {
@@ -104,7 +115,15 @@ export async function fillDetails(avatar) {
 export async function fillAdvancedDefinitions(avatar) {
     const char = characters[getIdByAvatar(avatar)];
     $('#acm_character_popup-button-h3').text(char.name);
-    $('#acm_creator_notes_textarea').val(char.data?.creator_notes || char.creatorcomment);
+    
+    // Handle Creator's Notes with CSS style support
+    const creatorNotesContent = char.data?.creator_notes || char.creatorcomment;
+    applyCreatorNotesDisplay(
+        creatorNotesContent,
+        $('#acm_creator_notes_textarea'),
+        $('#acm_creator_notes_display'),
+        char.avatar
+    );
     $('#acm_character_version_textarea').val(char.data?.character_version || '');
     $('#acm_system_prompt').val(char.data?.system_prompt || '');
     $('#acm_system_prompt_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.data?.system_prompt || ''))}`);
@@ -193,6 +212,112 @@ export async function duplicateCharacter() {
     }
     // Duplicate the selected character
     await dupeChar(selectedChar);
+}
+
+/**
+ * Reimports tags from Chub for the currently selected character and overwrites existing tags.
+ * Uses core `importTags` logic from `/scripts/tags.js`.
+ *
+ * @async
+ * @return {Promise<void>} A promise that resolves once tags are reimported.
+ */
+export async function reimportCharacterTags() {
+    if (!selectedChar) {
+        toastr.warning('You must first select a character!');
+        return;
+    }
+
+    const charId = getIdByAvatar(selectedChar);
+    const char = characters[charId];
+    const rawFullPath = char?.data?.extensions?.chub?.full_path;
+
+    if (!rawFullPath || typeof rawFullPath !== 'string') {
+        toastr.warning('This character does not have a Chub link.');
+        return;
+    }
+
+    const normalizedPath = normalizeChubCharacterPath(rawFullPath);
+    if (!normalizedPath) {
+        toastr.warning('Invalid Chub path on this character.');
+        return;
+    }
+
+    const fullUrl = `https://chub.ai/characters/${normalizedPath}`;
+
+    let metadata;
+    try {
+        const response = await fetch(`https://api.chub.ai/api/characters/${normalizedPath}?full=true`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch Chub metadata: ${response.status} ${response.statusText}`);
+        }
+
+        metadata = await response.json();
+    } catch (error) {
+        console.error('Failed to fetch Chub tags', error);
+        toastr.error(`Failed to fetch tags from Chub: ${fullUrl}`);
+        return;
+    }
+
+    const incomingTags = Array.isArray(metadata?.node?.topics)
+        ? metadata.node.topics.map(tag => String(tag).trim()).filter(Boolean)
+        : [];
+
+    tagMap[char.avatar] = [];
+    saveSettingsDebounced();
+
+    if (incomingTags.length === 0) {
+        await fillDetails(selectedChar);
+        toastr.info('Reimport complete: no tags found on Chub (existing tags were cleared).');
+        return;
+    }
+
+    await importTags({
+        avatar: char.avatar,
+        name: char.name,
+        tags: incomingTags,
+    }, {
+        importSetting: tag_import_setting.ALL,
+    });
+
+    await fillDetails(selectedChar);
+    toastr.success('Tags reimported from Chub and overwritten.');
+}
+
+/**
+ * Normalizes Chub character path (creator/character) from different stored formats.
+ *
+ * @param {string} rawPath - Raw stored path from character metadata.
+ * @return {string|null} Normalized path in the form `creator/character`, or null if invalid.
+ */
+function normalizeChubCharacterPath(rawPath) {
+    let value = String(rawPath).trim();
+
+    if (!value) {
+        return null;
+    }
+
+    if (/^https?:\/\//i.test(value)) {
+        try {
+            const url = new URL(value);
+            value = url.pathname;
+        } catch {
+            return null;
+        }
+    }
+
+    value = value.replace(/^\/+/, '');
+    value = value.replace(/^characters\//i, '');
+
+    const parts = value.split('/').filter(Boolean);
+    if (parts.length < 2) {
+        return null;
+    }
+
+    return parts.join('/');
 }
 
 /**

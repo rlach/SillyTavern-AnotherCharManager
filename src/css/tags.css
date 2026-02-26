@@ -36,8 +36,9 @@
     gap: 5px;
     max-height: min(30vh, 220px);
     overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 4px;
-    padding-bottom: 53px;
+    padding-bottom: 0;
     box-sizing: border-box;
 }
 

@@ -3,6 +3,7 @@ import {
     selectAndDisplay,
     selectRandomCharacter,
     toggleFavoritesOnly,
+    toggleGroupsFilter,
     toggleTagQueries,
     updateSearchFilter,
     updateSortOrder
@@ -20,14 +21,31 @@ import { toggleCharacterCreationPopup } from "../components/characterCreation.js
  * @return {void} This function does not return a value.
  */
 export function initializeCharactersListEvents() {
-    // Trigger when a character is selected in the list
-    $(document).on('click', '.char_select', function () {
-        selectAndDisplay(this.dataset.avatar);
+    // Trigger when a character or group is selected in the list
+    $(document).on('click', '.char_select', function (e) {
+        const target = $(e.target).closest('.char_select')[0];
+        if (target.dataset.type === 'group') {
+            // Groups are not editable in this UI, just inform the user
+            toastr.info('Double-click to open group chat in main UI');
+        } else if (target.dataset.avatar) {
+            selectAndDisplay(target.dataset.avatar);
+        }
     });
 
-    $(document).on('dblclick', '.char_select', async function () {
-        await selectAndDisplay(this.dataset.avatar);
-        openCharacterChat();
+    $(document).on('dblclick', '.char_select', async function (e) {
+        const target = $(e.target).closest('.char_select')[0];
+        if (target.dataset.type === 'group') {
+            const groupId = target.dataset.groupId;
+            // Close the manager and select the group in main UI
+            $('#acm_popup_close').click();
+            // Use SillyTavern's group selection function
+            if (window.select_group_chats) {
+                await window.select_group_chats(groupId, true);
+            }
+        } else if (target.dataset.avatar) {
+            await selectAndDisplay(target.dataset.avatar);
+            openCharacterChat();
+        }
     });
 
     $(document).on('dblclick', '.char_selected', function () {
@@ -60,8 +78,19 @@ export function initializeToolbarEvents() {
         updateSearchFilter($(this).val());
     });
 
+    $(document).on('change', '#search_filter_dropdown', function () {
+        const searchValue = $('#char_search_bar').val();
+        if (searchValue && searchValue.trim() !== '') {
+            updateSearchFilter(searchValue);
+        }
+    });
+
     $('#acm_fav_filter_button').on("click", function () {
         toggleFavoritesOnly(!getSetting('favOnly'));
+    });
+
+    $('#acm_groups_filter_button').on("click", function () {
+        toggleGroupsFilter();
     });
 
     $('#acm_random_button').on("click", function () {

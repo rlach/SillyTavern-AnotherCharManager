@@ -34,6 +34,7 @@
                                 </div>
                             </label>
                             <div id="acm_fav_filter_button" class="menu_button fa-solid fa-star fav_off faSmallFontSquareFix acm_toolbar_button" title="Show favourites only" data-i18n="[title]Show favourites only" aria-pressed="false"></div>
+                            <div id="acm_groups_filter_button" class="menu_button fa-solid fa-users faSmallFontSquareFix acm_toolbar_button" title="Show groups" data-i18n="[title]Show groups" aria-pressed="false"></div>
                             <div id="acm_random_button" class="menu_button fa-solid fa-dice faSmallFontSquareFix acm_toolbar_button" title="Random character" data-i18n="[title]Random character"></div>
                             <div id="acm_trash_button" class="menu_button fa-solid fa-trash faSmallFontSquareFix acm_toolbar_button" title="Delete unlinked & untagged" data-i18n="[title]Delete unlinked & untagged"></div>
                         </form>
@@ -63,10 +64,13 @@
                         </div>
                     </div>
                     <hr>
-                    <div id="character-list"> </div>
-                    <hr id="char-sep" style="display:none">
-                    <div id="char-details">
-                        <div id="char-details-block">
+                    <div id="acm_main_content">
+                        <div id="character-list"> </div>
+                        <div id="acm_side_panel_container">
+                            <div id="acm_sidepanel_empty">Choose a character</div>
+                            <hr id="char-sep" style="display:none">
+                            <div id="char-details">
+                                <div id="char-details-block">
                             <div class="char-details-summary">
                                 <div class="acm_avatar" id="avatar_title">
                                     <img id="avatar_img" class="char-details-img" src="" alt="Character Avatar" draggable="false">
@@ -103,6 +107,7 @@
                                 <div id="acm_advanced_div" class="menu_button fa-solid fa-book faSmallFontSquareFix" title="Advanced Definitions" data-i18n="[title]Advanced Definition"></div>
                                 <div id="acm_export_button" class="menu_button fa-solid fa-file-export faSmallFontSquareFix" title="Export and Download" data-i18n="[title]Export and Download"></div>
                                 <div id="acm_dupe_button" class="menu_button fa-solid fa-clone faSmallFontSquareFix" title="Duplicate Character" data-i18n="[title]Duplicate Character"></div>
+                                <div id="acm_reimport_tags_button" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Reimport Tags" data-i18n="[title]Reimport Tags"></div>
                                 <div id="acm_delete_button" class="menu_button fa-solid fa-skull faSmallFontSquareFix" title="Delete Character" data-i18n="[title]Delete Character"></div>
                             </div>
                             <div class="char-details-tags">
@@ -114,8 +119,8 @@
                                 <div id="tag_List" class="tags"></div>
                             </div>
                         </div>
-                        <div id="char-details-desc">
-                            <div class="desc_container">
+                                <div id="char-details-desc">
+                                    <div class="desc_container">
                                 <div class="inline-drawer">
                                     <div id="desc_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
                                         <div style="display: flex;flex-grow: 1;">
@@ -187,6 +192,10 @@
                                         <label for="acm_creatornotes" title="Description">
                                             <textarea class="autoSetHeight" id="acm_creatornotes"></textarea>
                                         </label>
+                                        <!-- Display container for rendered creator notes with CSS -->
+                                        <div id="acm_creatornotes_display" class="text_pole" style="display: none; padding: 10px; overflow-y: auto; max-height: 400px; border: 1px solid var(--backgroundColor2); border-radius: 4px;"></div>
+                                    </div>
+                                </div>
                                     </div>
                                 </div>
                             </div>
@@ -197,6 +206,10 @@
             </div>
             <div class="popup-controls acm-popup-controls">
                 <div id="acm_switch_ui" class="menu_button">Switch UI</div>
+                <label id="acm_side_panel_switch" class="acm_side_panel_switch">
+                    <input id="acm_side_panel_checkbox" type="checkbox">
+                    <span>Side panel</span>
+                </label>
                 <div id="acm_popup_close" class="menu_button popup-button-ok">Close</div>
                 <div id="acm_popup_width">
                     <label for="acm_widthSlider">Width: </label>
@@ -306,6 +319,8 @@
                     <label for="acm_creator_notes_textarea" title="Creator Notes">
                         <textarea id="acm_creator_notes_textarea" name="creator_notes" data-i18n="[placeholder](Describe the bot, give use tips, or list the chat models it has been tested on. This will be displayed in the character list.)" placeholder="(Describe the bot, give use tips, or list the chat models it has been tested on. This will be displayed in the character list.)" class="text_pole" autocomplete="off" rows="4" maxlength="20000"></textarea>
                     </label>
+                    <!-- Display container for rendered creator notes with CSS in advanced definitions -->
+                    <div id="acm_creator_notes_display" class="text_pole" style="display: none; padding: 10px; overflow-y: auto; max-height: 300px; border: 1px solid var(--backgroundColor2); border-radius: 4px;"></div>
                 </div>
                 <div class="flex1">
                     <h4 data-i18n="Tags to Embed">Tags to Embed</h4>

@@ -28,6 +28,7 @@
     padding: 4px;
     background-color: var(--SmartThemeBlurTintColor);
     border-radius: var(--acm-border-radius-md);
+    height: 90svh;
     max-height: 90svh;
     display: flex;
     flex-direction: column;
@@ -58,14 +59,78 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
     overflow-y: hidden;
     padding: 0 10px;
 }
 
 #acm_popup_text {
     flex-grow: 1;
-    overflow-y: auto;
+    min-height: 0;
+    overflow-y: hidden;
     height: 100%;
+}
+
+#acm_main_content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+}
+
+#acm_side_panel_container {
+    min-height: 0;
+}
+
+#acm_sidepanel_empty {
+    display: none;
+    padding: 16px;
+    opacity: 0.8;
+    text-align: left;
+}
+
+.list-character-wrapper:not(.acm-side-panel-mode) #acm_main_content {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 0;
+    height: 100%;
+    flex: 1 1 auto;
+}
+
+.list-character-wrapper:not(.acm-side-panel-mode) #character-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.list-character-wrapper:not(.acm-side-panel-mode) #acm_side_panel_container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 50%;
+    min-height: 50%;
+    max-height: 50%;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    pointer-events: none;
+    background-color: var(--SmartThemeBlurTintColor);
+    backdrop-filter: blur(var(--SmartThemeBlurStrength));
+    -webkit-backdrop-filter: blur(var(--SmartThemeBlurStrength));
+    border-top: 1px solid var(--SmartThemeBorderColor);
+}
+
+.list-character-wrapper:not(.acm-side-panel-mode).acm-no-selection #acm_side_panel_container {
+    display: none;
+}
+
+.list-character-wrapper:not(.acm-side-panel-mode) #char-sep,
+.list-character-wrapper:not(.acm-side-panel-mode) #char-details {
+    pointer-events: auto;
 }
 
 /* Character popup */
@@ -132,6 +197,19 @@
     justify-content: space-between;
     align-items: center;
     width: 100%;
+}
+
+.acm_side_panel_switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    cursor: pointer;
+    margin: 0 8px;
+}
+
+.acm_side_panel_switch input {
+    cursor: pointer;
 }
 
 .acm-popup-controls > div {
