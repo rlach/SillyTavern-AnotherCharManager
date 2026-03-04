@@ -599,6 +599,29 @@ export function updateGroupsFilterButtonState(filterState) {
 }
 
 /**
+ * Updates the search mode button state based on current mode.
+ * @param {string} mode - Search mode value ('fuzzy' or 'exact')
+ */
+export function updateSearchModeButtonState(mode) {
+    const button = document.getElementById('acm_search_mode_button');
+    if (!button) return;
+
+    const normalizedMode = String(mode || getSetting('searchMode') || 'fuzzy').toLowerCase() === 'exact'
+        ? 'exact'
+        : 'fuzzy';
+    const isExact = normalizedMode === 'exact';
+    const title = isExact ? 'Search mode: Exact' : 'Search mode: Fuzzy';
+
+    button.classList.toggle('search_mode_exact', isExact);
+    button.classList.toggle('search_mode_fuzzy', !isExact);
+    button.classList.toggle('fa-crosshairs', isExact);
+    button.classList.toggle('fa-magnifying-glass', !isExact);
+    button.setAttribute('aria-pressed', isExact ? 'true' : 'false');
+    button.setAttribute('title', title);
+    button.setAttribute('data-i18n', `[title]${title}`);
+}
+
+/**
  * Updates the search filter by setting a normalized search value and triggering a refresh of the character list.
  *
  * @param {string} searchText - The text input used to update the search filter. It is converted to lowercase before being processed.

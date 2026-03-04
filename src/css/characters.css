@@ -363,3 +363,28 @@
 .list-character-wrapper:not(.acm-side-panel-mode) #acm_sidepanel_empty {
     display: none !important;
 }
+
+#acm_tagline_content {
+    display: none;
+    text-align: left;
+    padding: 8px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: var(--acm-border-radius-sm);
+    background: var(--SmartThemeBlurTintColor);
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.acm_tagline_loader,
+.acm_tagline_no_data {
+    opacity: 0.85;
+}
+
+.acm_tagline_header {
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.acm_tagline_body {
+    white-space: pre-wrap;
+}

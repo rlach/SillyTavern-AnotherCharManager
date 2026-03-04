@@ -3,7 +3,74 @@ import { groups } from '/scripts/group-chats.js';
 import { getSetting } from "./settings-service.js";
 import { characters, tagList, tagMap } from "../constants/context.js";
 import { searchValue } from "../constants/settings.js";
+import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from "../utils.js";
 const { Fuse } = SillyTavern.libs;
+
+function getSearchMode() {
+    return String(getSetting('searchMode') || 'fuzzy').toLowerCase() === 'exact' ? 'exact' : 'fuzzy';
+}
+
+function getCharacterFieldValue(item, field) {
+    if (field === 'name') {
+        return String(item?.name || '');
+    }
+
+    if (field === 'creator') {
+        return String(item?.data?.creator || '');
+    }
+
+    if (field === 'creator_notes') {
+        return String(item?.data?.creator_notes || item?.creatorcomment || '');
+    }
+
+    return '';
+}
+
+function filterCharactersExact(items, searchField, query) {
+    if (searchField === 'tags') {
+        const matchingTagIds = tagList
+            .filter(tag => equalsIgnoreCaseAndAccents(String(tag?.name || ''), query))
+            .map(tag => tag.id);
+
+        return items.filter(item => (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId)));
+    }
+
+    if (searchField === 'creator_notes') {
+        return items.filter(item => includesIgnoreCaseAndAccents(getCharacterFieldValue(item, searchField), query));
+    }
+
+    return items.filter(item => equalsIgnoreCaseAndAccents(getCharacterFieldValue(item, searchField), query));
+}
+
+function filterCharactersFuzzy(items, searchField, query) {
+    if (searchField === 'tags') {
+        const tagFuseOptions = {
+            keys: ['name'],
+            threshold: 0.3,
+            includeScore: true,
+        };
+        const tagFuse = new Fuse(tagList, tagFuseOptions);
+        const matchingTags = tagFuse.search(query);
+        const matchingTagIds = matchingTags.map(result => result.item.id);
+
+        return items.filter(item => (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId)));
+    }
+
+    const fieldKeys = {
+        name: ['name', 'data.name'],
+        creator: ['data.creator', 'creator'],
+        creator_notes: ['data.creator_notes', 'creatorcomment'],
+    };
+
+    const fuseOptions = {
+        keys: fieldKeys[searchField] || ['name'],
+        threshold: 0.3,
+        includeScore: true,
+    };
+    const fuse = new Fuse(items, fuseOptions);
+    const searchResults = fuse.search(query);
+    return searchResults.map(result => result.item);
+}
 /**
  * Filters and searches through characters and groups based on user-defined criteria.
  * Returns an array of objects with type 'character' or 'group'.
@@ -12,6 +79,7 @@ const { Fuse } = SillyTavern.libs;
  */
 export function searchAndFilter(){
     const groupsFilter = getSetting('groupsFilter'); // 0=no groups, 1=show groups, 2=only groups
+    const searchMode = getSearchMode();
     let results = [];
 
     // Handle characters (unless only groups)
@@ -50,29 +118,9 @@ export function searchAndFilter(){
             const searchValueTrimmed = searchValue.trim();
             const searchField = $('#search_filter_dropdown').val();
 
-            if (searchField === 'tags') {
-                const tagFuseOptions = {
-                    keys: ['name'],
-                    threshold: 0.3,
-                    includeScore: true,
-                };
-                const tagFuse = new Fuse(tagList, tagFuseOptions);
-                const matchingTags = tagFuse.search(searchValueTrimmed);
-                const matchingTagIds = matchingTags.map(result => result.item.id);
-
-                tagfilteredChars = tagfilteredChars.filter(item => {
-                    return (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId));
-                });
-            } else {
-                const fuseOptions = {
-                    keys: [`data.${searchField}`],
-                    threshold: 0.3,
-                    includeScore: true,
-                };
-                const fuse = new Fuse(tagfilteredChars, fuseOptions);
-                const searchResults = fuse.search(searchValueTrimmed);
-                tagfilteredChars = searchResults.map(result => result.item);
-            }
+            tagfilteredChars = searchMode === 'exact'
+                ? filterCharactersExact(tagfilteredChars, searchField, searchValueTrimmed)
+                : filterCharactersFuzzy(tagfilteredChars, searchField, searchValueTrimmed);
         }
 
         // Convert characters to result format
@@ -89,14 +137,18 @@ export function searchAndFilter(){
             const searchField = $('#search_filter_dropdown').val();
 
             if (searchField === 'name') {
-                const fuseOptions = {
-                    keys: ['name'],
-                    threshold: 0.3,
-                    includeScore: true,
-                };
-                const fuse = new Fuse(filteredGroups, fuseOptions);
-                const searchResults = fuse.search(searchValueTrimmed);
-                filteredGroups = searchResults.map(result => result.item);
+                if (searchMode === 'exact') {
+                    filteredGroups = filteredGroups.filter(group => equalsIgnoreCaseAndAccents(String(group?.name || ''), searchValueTrimmed));
+                } else {
+                    const fuseOptions = {
+                        keys: ['name'],
+                        threshold: 0.3,
+                        includeScore: true,
+                    };
+                    const fuse = new Fuse(filteredGroups, fuseOptions);
+                    const searchResults = fuse.search(searchValueTrimmed);
+                    filteredGroups = searchResults.map(result => result.item);
+                }
             }
             // Groups don't have creator or creator_notes, so ignore those search fields
         }

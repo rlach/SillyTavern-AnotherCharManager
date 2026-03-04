@@ -17,7 +17,7 @@ import { acmCreateTagInput } from "../components/tags.js";
  */
 export function initializeTagInput() {
     createTagInput('#acmTagInput', '#acmTagList', { tagOptions: { removable: true } });
-    createTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } });
+    acmCreateTagInput('#input_tag', '#tag_List', { tagOptions: { removable: true } }, 'classic');
     // Grouping the three interdependent inputs using the 'multiple' mode
     const multiInputs = [
         '#acm_mandatoryInput',
@@ -57,7 +57,7 @@ export function renameTagKey(oldKey, newKey) {
  * @return {Array<string>} - The filtered and sorted list of tag names matching the search term, including the term itself if no exact match is found.
  */
 export function findTag(request, resolve, listSelector) {
-    const skipIds = [...($(listSelector).find('.tag').map((_, el) => $(el).data('tagid')))];
+    const skipIds = [...($(listSelector).find('.tag').map((_, el) => $(el).data('tagid') || $(el).attr('id')))].filter(Boolean);
     const haystack = tagList
         .filter(t => !skipIds.includes(t.id))
         .sort(compareTagsForSort)

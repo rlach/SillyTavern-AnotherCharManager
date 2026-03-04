@@ -14,7 +14,7 @@ import { characterId, characters, menuType, renderExtensionTemplateAsync } from 
 import { getSetting } from "../services/settings-service.js";
 import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '/script.js';
-import { updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState } from "./charactersList.js";
+import { updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState, updateSearchModeButtonState } from "./charactersList.js";
 import { updateLayout } from "./characterCreation.js";
 
 /**
@@ -131,6 +131,9 @@ export function openModal() {
 
         option.selected = field === getSetting('sortingField') && order === getSetting('sortingOrder');
     });
+
+    updateSearchModeButtonState(getSetting('searchMode'));
+
     updateFavFilterButtonState(getSetting('favOnly'));
     updateGroupsFilterButtonState(getSetting('groupsFilter'));
     applySidePanelMode(getSetting('sidePanel'));

@@ -33,6 +33,7 @@
                                     <input id="char_search_bar" class="text_pole width100p search-with-dropdown-input" type="search" data-i18n="[placeholder]Search..." placeholder="Search..." maxlength="100">
                                 </div>
                             </label>
+                            <div id="acm_search_mode_button" class="menu_button fa-solid fa-magnifying-glass faSmallFontSquareFix acm_toolbar_button search_mode_fuzzy" title="Search mode: Fuzzy" data-i18n="[title]Search mode: Fuzzy" aria-pressed="false"></div>
                             <div id="acm_fav_filter_button" class="menu_button fa-solid fa-star fav_off faSmallFontSquareFix acm_toolbar_button" title="Show favourites only" data-i18n="[title]Show favourites only" aria-pressed="false"></div>
                             <div id="acm_groups_filter_button" class="menu_button fa-solid fa-users faSmallFontSquareFix acm_toolbar_button" title="Show groups" data-i18n="[title]Show groups" aria-pressed="false"></div>
                             <div id="acm_random_button" class="menu_button fa-solid fa-dice faSmallFontSquareFix acm_toolbar_button" title="Random character" data-i18n="[title]Random character"></div>
@@ -195,6 +196,15 @@
                                         <!-- Display container for rendered creator notes with CSS -->
                                         <div id="acm_creatornotes_display" class="text_pole" style="display: none; padding: 10px; overflow-y: auto; max-height: 400px; border: 1px solid var(--backgroundColor2); border-radius: 4px;"></div>
                                     </div>
+                                </div>
+                                <div id="tagline_drawer" class="inline-drawer">
+                                    <div id="tagline_header" class="tagline-drawer-toggle inline-drawer-header inline-drawer-design">
+                                        <div style="display: flex;flex-grow: 1;">
+                                            <span class="drawer-header-item"><b>Tagline</b></span>
+                                        </div>
+                                        <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
+                                    </div>
+                                    <div id="acm_tagline_content" class="inline-drawer-content"></div>
                                 </div>
                                     </div>
                                 </div>

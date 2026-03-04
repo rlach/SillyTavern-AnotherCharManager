@@ -267,6 +267,16 @@
     min-width: 130px;
 }
 
+
+#acm_search_mode_button.search_mode_fuzzy {
+    opacity: 0.75;
+}
+
+#acm_search_mode_button.search_mode_exact {
+    opacity: 1;
+    color: var(--SmartThemeHighlightColor);
+}
+
 .search-with-dropdown-input {
     border-radius: 0 var(--acm-border-radius-sm) var(--acm-border-radius-sm) 0 !important;
     flex: 1;

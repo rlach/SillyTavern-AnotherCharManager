@@ -15,6 +15,7 @@ import {
     openCharacterChat,
     reimportCharacterTags,
     renameCharacter,
+    loadTaglineForSelectedCharacter,
     toggleAdvancedDefinitionsPopup,
     toggleFavoriteStatus,
     update_avatar
@@ -24,6 +25,61 @@ import { checkApiAvailability, editCharDebounced, saveAltGreetings } from "../se
 import { refreshCharListDebounced } from "../components/charactersList.js";
 import { selectedChar } from "../constants/settings.js";
 import { delay, updateTokenCount } from "../utils.js";
+
+function getAutoTagCharacterApi() {
+    const candidate = globalThis?.SillyTavernTagOrganizer?.autoTagCharacter;
+    return typeof candidate === 'function' ? candidate : null;
+}
+
+function syncAutoTagCharacterButton() {
+    const existingButton = $('#acm_auto_tag_character_button');
+    const autoTagApi = getAutoTagCharacterApi();
+
+    if (!autoTagApi) {
+        existingButton.remove();
+        return;
+    }
+
+    if (existingButton.length) {
+        return;
+    }
+
+    const reimportButton = $('#acm_reimport_tags_button');
+    if (!reimportButton.length) {
+        return;
+    }
+
+    const button = $('<div id="acm_auto_tag_character_button" class="menu_button fa-solid fa-wand-magic-sparkles faSmallFontSquareFix" title="Auto Tag Character" data-i18n="[title]Auto Tag Character"></div>');
+    reimportButton.after(button);
+
+    button.on('click', async function () {
+        if (!selectedChar) {
+            toastr.warning('No character selected');
+            return;
+        }
+
+        const currentApi = getAutoTagCharacterApi();
+        if (!currentApi) {
+            syncAutoTagCharacterButton();
+            toastr.warning('Auto-tagger is not available.');
+            return;
+        }
+
+        const characterIndex = characters.findIndex(character => character?.avatar === selectedChar);
+        if (characterIndex < 0) {
+            toastr.warning('Character not found.');
+            return;
+        }
+
+        try {
+            const result = await currentApi(characterIndex);
+            // Odśwież listę i panel postaci po zmianie tagów
+            refreshCharListDebounced();
+        } catch (error) {
+            toastr.error(`Auto-tagger failed: ${error?.message || 'Unknown error'}`);
+        }
+    });
+}
 
 /**
  * Initializes a set of field updaters for designated DOM elements, enabling dynamic updates
@@ -84,6 +140,9 @@ export function initializeFieldUpdaters() {
  * @return {void} This function does not return a value.
  */
 export function initializeCharactersEvents() {
+    syncAutoTagCharacterButton();
+    $(document).on('click', '#acm-manager', syncAutoTagCharacterButton);
+
     // Add listener to refresh the display on characters edit
     eventSource.on('character_edited', function () {
         refreshCharListDebounced();
@@ -204,6 +263,25 @@ export function initializeCharactersEvents() {
         const inlineDrawer = this.closest('.inline-drawer');
         const greetingIndex = parseInt(this.closest('.altgreetings-drawer-toggle').querySelector('.greeting_index').textContent);
         delAltGreeting(greetingIndex, inlineDrawer);
+    });
+
+    $(document).on('click', '#tagline_header', async function () {
+        const drawer = $('#tagline_drawer');
+        const icon = drawer.find('.idit');
+        const content = $('#acm_tagline_content');
+        const isOpen = drawer.hasClass('open');
+
+        if (isOpen) {
+            drawer.removeClass('open');
+            icon.removeClass('up fa-circle-chevron-up').addClass('down fa-circle-chevron-down');
+            content.stop().slideUp(150);
+            return;
+        }
+
+        drawer.addClass('open');
+        icon.removeClass('down fa-circle-chevron-down').addClass('up fa-circle-chevron-up');
+        content.stop().slideDown(150);
+        await loadTaglineForSelectedCharacter();
     });
 
     const tagListObserver = new MutationObserver(function () {

@@ -32,6 +32,7 @@ import {
 import { addAltGreetingsTrigger } from "../events/characters-events.js";
 import { closeDetails } from "./modal.js";
 import { applyCreatorNotesDisplay } from "../services/creator-notes-css.js";
+import { getSetting, updateSetting } from "../services/settings-service.js";
 
 /**
  * Fills the character details in the user interface based on the provided avatar.
@@ -99,8 +100,107 @@ export async function fillDetails(avatar) {
     displayAltGreetings(char.data.alternate_greetings).then(html => {
         $('#altGreetings_content').html(html);
     });
+    $('#acm_tagline_content').empty();
+    if ($('#tagline_drawer').hasClass('open')) {
+        await loadTaglineForSelectedCharacter();
+    }
     $('#acm_favorite_button').toggleClass('fav_on', char.fav || char.data.extensions.fav).toggleClass('fav_off', !(char.fav || char.data.extensions.fav));
     addAltGreetingsTrigger()
+}
+
+/**
+ * Loads tagline data for currently selected character.
+ * Uses cache from extension settings and fetches only when needed.
+ *
+ * @return {Promise<void>}
+ */
+export async function loadTaglineForSelectedCharacter() {
+    if (!selectedChar || !$('#tagline_drawer').hasClass('open')) {
+        return;
+    }
+
+    const charId = getIdByAvatar(selectedChar);
+    const char = characters[charId];
+    if (!char) {
+        return;
+    }
+
+    const avatarKey = char.avatar;
+    const $content = $('#acm_tagline_content');
+    const taglineCache = getSetting('taglineCache') || {};
+
+    $content.html('<div class="acm_tagline_loader"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>');
+
+    if (taglineCache[avatarKey]) {
+        renderTagline(taglineCache[avatarKey]);
+        return;
+    }
+
+    const rawFullPath = char?.data?.extensions?.chub?.full_path;
+    const normalizedPath = normalizeChubCharacterPath(rawFullPath);
+
+    if (!normalizedPath) {
+        const noDataEntry = { projectName: '', tagline: '', noData: true };
+        updateTaglineCache(avatarKey, noDataEntry);
+        if (selectedChar === avatarKey && $('#tagline_drawer').hasClass('open')) {
+            renderTagline(noDataEntry);
+        }
+        return;
+    }
+
+    let entry;
+    try {
+        const encodedPath = normalizedPath.split('/').map(encodeURIComponent).join('/');
+        const response = await fetch(`https://gateway.chub.ai/api/characters/${encodedPath}?full=true`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch tagline metadata: ${response.status} ${response.statusText}`);
+        }
+
+        const payload = await response.json();
+        const projectName = String(payload?.node?.definition?.project_name || '').trim();
+        const tagline = String(payload?.node?.tagline || '').trim();
+        const noData = !projectName && !tagline;
+
+        entry = {
+            projectName,
+            tagline,
+            noData,
+        };
+    } catch (error) {
+        console.error('Failed to fetch tagline data', error);
+        entry = { projectName: '', tagline: '', noData: true };
+    }
+
+    updateTaglineCache(avatarKey, entry);
+
+    if (selectedChar === avatarKey && $('#tagline_drawer').hasClass('open')) {
+        renderTagline(entry);
+    }
+}
+
+function updateTaglineCache(avatarKey, entry) {
+    const cache = { ...(getSetting('taglineCache') || {}) };
+    cache[avatarKey] = entry;
+    updateSetting('taglineCache', cache);
+}
+
+function renderTagline(entry) {
+    const $content = $('#acm_tagline_content');
+    $content.empty();
+
+    if (!entry || entry.noData) {
+        $('<div class="acm_tagline_no_data"></div>').text('No data').appendTo($content);
+        return;
+    }
+
+    if (entry.projectName) {
+        $('<div class="acm_tagline_header"></div>').text(entry.projectName).appendTo($content);
+    }
+    $('<div class="acm_tagline_body"></div>').text(entry.tagline || 'No data').appendTo($content);
 }
 
 /**

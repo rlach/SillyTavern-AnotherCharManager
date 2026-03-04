@@ -31,6 +31,8 @@ export const setCrop_data = (value) => {
 export const defaultSettings = {
     popupWidth: 50,
     sidePanel: false,
+    searchMode: 'fuzzy',
+    taglineCache: {},
     sortingField: "name",
     sortingOrder: "asc",
     favOnly: false,

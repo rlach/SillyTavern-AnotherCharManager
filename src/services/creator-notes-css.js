@@ -14,8 +14,8 @@ import { formatCreatorNotes } from '../../../../../../scripts/chats.js';
  */
 export function applyCreatorNotesDisplay(creatorNotesContent, $textareaElement, $displayContainer, avatarId = '') {
     if (!creatorNotesContent) {
-        $textareaElement.val('');
-        $displayContainer.hide();
+        $textareaElement.hide();
+        $displayContainer.text('No data').show();
         return;
     }
 

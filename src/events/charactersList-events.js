@@ -2,6 +2,7 @@ import {
     refreshCharListDebounced,
     selectAndDisplay,
     selectRandomCharacter,
+    updateSearchModeButtonState,
     toggleFavoritesOnly,
     toggleGroupsFilter,
     toggleTagQueries,
@@ -10,8 +11,11 @@ import {
 } from "../components/charactersList.js";
 import { openCharacterChat } from "../components/characters.js";
 import { deleteUnlinkedUntaggedCharacters } from "../services/characters-service.js";
-import { getSetting } from "../services/settings-service.js";
+import { getSetting, updateSetting } from "../services/settings-service.js";
 import { toggleCharacterCreationPopup } from "../components/characterCreation.js";
+import { selectedChar } from "../constants/settings.js";
+import { tagList } from "../constants/context.js";
+import { removeTagFromEntity } from "/scripts/tags.js";
 
 /**
  * Initializes events for the characters list.
@@ -85,6 +89,20 @@ export function initializeToolbarEvents() {
         }
     });
 
+    $(document).on('click', '#acm_search_mode_button', function () {
+        const currentMode = String(getSetting('searchMode') || 'fuzzy').toLowerCase() === 'exact' ? 'exact' : 'fuzzy';
+        const mode = currentMode === 'exact' ? 'fuzzy' : 'exact';
+        updateSetting('searchMode', mode);
+        updateSearchModeButtonState(mode);
+
+        const currentSearchValue = $('#char_search_bar').val();
+        if (currentSearchValue && currentSearchValue.trim() !== '') {
+            updateSearchFilter(currentSearchValue);
+        } else {
+            refreshCharListDebounced();
+        }
+    });
+
     $('#acm_fav_filter_button').on("click", function () {
         toggleFavoritesOnly(!getSetting('favOnly'));
     });
@@ -111,8 +129,27 @@ export function initializeToolbarEvents() {
 
     $('#acm_character_create_button').on("click", toggleCharacterCreationPopup);
 
-    $(document).on("click", ".tag_acm_remove", function () {
-        $(this).closest('[data-tagid]').remove();
+    $(document).on("click", "#tag_List .tag_remove, #tag_List .tag_acm_remove", function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        const tagElement = $(this).closest('.tag');
+        const tagId = String(tagElement.attr('id') || tagElement.data('tagid') || '').trim();
+
+        if (!tagId || !selectedChar) {
+            tagElement.remove();
+            refreshCharListDebounced();
+            return;
+        }
+
+        const tag = tagList.find(item => String(item?.id) === tagId);
+        if (!tag) {
+            tagElement.remove();
+            refreshCharListDebounced();
+            return;
+        }
+
+        removeTagFromEntity(tag, selectedChar, { tagElement });
         refreshCharListDebounced();
     });
 }

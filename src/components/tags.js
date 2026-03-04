@@ -3,6 +3,8 @@ import { refreshCharListDebounced } from "./charactersList.js";
 import { acmFindTagMulti, findTag } from "../services/tags-service.js";
 import { equalsIgnoreCaseAndAccents } from "../utils.js";
 import { addTagToCategory } from "../services/presets-service.js";
+import { selectedChar } from "../constants/settings.js";
+import { addTagsToEntity } from "/scripts/tags.js";
 
 /**
  * Renders a tag as an HTML string based on the provided tag ID and an optional display mode.
@@ -136,7 +138,15 @@ function acmSelectTag(event, ui, listSelector, { tagListOptions = {}, mode = 'cl
         }
         case 'classic':
         default: {
-            $(listSelector).append(displayTag(tag.id));
+            const isCharacterDetailsList = String(listSelector) === '#tag_List';
+            if (isCharacterDetailsList && selectedChar) {
+                addTagsToEntity(tag, selectedChar, {
+                    tagListSelector: '#tag_List',
+                    tagListOptions: { tagOptions: { removable: true } },
+                });
+            } else {
+                $(listSelector).append(displayTag(tag.id));
+            }
             refreshCharListDebounced();
             break;
         }
