@@ -1,15 +1,314 @@
 import { setMenuType } from '/script.js';
-import { groups } from '/scripts/group-chats.js';
+import { editGroup, groups, openGroupById, select_group_chats } from '/scripts/group-chats.js';
 import { debounce, getIdByAvatar } from "../utils.js";
 import { characters, eventSource, getThumbnailUrl, tagList, tagMap } from "../constants/context.js";
-import { searchValue, selectedChar, setSearchValue, setSelectedChar } from "../constants/settings.js";
+import { searchValue, selectedChar, selectedGroupId, setSearchValue, setSelectedChar, setSelectedGroupId } from "../constants/settings.js";
 import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
 import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { getPreset } from "../services/presets-service.js";
 import { imageLoader } from '../services/imageLoader.js';
+import { AcmVirtualScrollerService } from '../services/virtual-scroller-service.js';
 
 export const refreshCharListDebounced = debounce(() => { refreshCharList(); }, 200);
+
+let classicVirtualScroller = null;
+let lastClassicSortedList = [];
+let shouldResetScrollTopOnNextRefresh = false;
+
+const DEFAULT_GROUP_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 300'%3E%3Crect width='200' height='300' fill='%23333333'/%3E%3Cpath d='M100 85c-22 0-40 18-40 40s18 40 40 40 40-18 40-40-18-40-40-40zm0 95c-31 0-57 21-64 50h128c-7-29-33-50-64-50z' fill='%23bbbbbb'/%3E%3C/svg%3E";
+
+function escapeHtml(text) {
+    return String(text ?? '').replace(/[&<>'"]/g, (match) => {
+        switch (match) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case "'": return '&#39;';
+            case '"': return '&quot;';
+            default: return match;
+        }
+    });
+}
+
+function waitForNextTick(ms = 40) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getGroupById(groupId) {
+    const normalizedGroupId = String(groupId ?? '').trim();
+    if (!normalizedGroupId) {
+        return undefined;
+    }
+
+    return groups.find(group => String(group?.id ?? '') === normalizedGroupId);
+}
+
+function setDetailsMode(isGroupMode) {
+    const detailsPanel = document.getElementById('char-details');
+    detailsPanel?.classList.toggle('acm-group-mode', isGroupMode);
+
+    const renameButton = document.getElementById('acm_rename_button');
+    const openChatButton = document.getElementById('acm_open_chat');
+
+    if (renameButton) {
+        const title = isGroupMode ? 'Rename Group' : 'Rename Character';
+        renameButton.setAttribute('title', title);
+        renameButton.setAttribute('data-i18n', `[title]${title}`);
+    }
+
+    if (openChatButton) {
+        const title = isGroupMode ? 'Open group chat' : 'Open chat';
+        openChatButton.setAttribute('title', title);
+        openChatButton.setAttribute('data-i18n', `[title]${title}`);
+    }
+}
+
+function ensureGroupDetailsPanel() {
+    const descContainer = document.querySelector('#char-details-desc .desc_container');
+    if (!descContainer) {
+        return null;
+    }
+
+    let panel = document.getElementById('acm_group_details_panel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'acm_group_details_panel';
+        panel.className = 'inline-drawer inline-drawer-design';
+        descContainer.prepend(panel);
+    }
+
+    return panel;
+}
+
+function getGroupMembersWithMeta(group) {
+    const members = Array.isArray(group?.members) ? group.members : [];
+
+    return members.map((memberAvatar) => {
+        const charIndex = characters.findIndex(character => character?.avatar === memberAvatar);
+        const memberName = charIndex !== -1
+            ? (characters[charIndex].name || memberAvatar)
+            : memberAvatar;
+
+        return {
+            avatar: memberAvatar,
+            name: memberName,
+        };
+    });
+}
+
+function renderGroupTags(group) {
+    const groupTagIds = Array.isArray(tagMap[group?.id]) ? tagMap[group.id] : [];
+    if (!groupTagIds.length) {
+        return '<span class="acm-group-empty">No tags</span>';
+    }
+
+    return groupTagIds.map((tagId) => {
+        const tag = tagList.find(item => String(item?.id) === String(tagId));
+        if (!tag) {
+            return '';
+        }
+
+        return `<span class="tag" style="background-color: ${tag.color}; color: ${tag.color2};"><span class="tag_name">${escapeHtml(tag.name)}</span></span>`;
+    }).join('');
+}
+
+function renderGroupDetails(group) {
+    const members = getGroupMembersWithMeta(group);
+    const groupAvatar = members.length > 0
+        ? getThumbnailUrl('avatar', members[0].avatar)
+        : DEFAULT_GROUP_AVATAR;
+
+    $('#avatar_title').attr('title', `group:${group.id}`);
+    $('#avatar_img').attr('src', groupAvatar);
+    $('#ch_name_details').text(group.name || 'Unnamed group');
+    $('#ch_infos_creator').text('Type: Group chat');
+    $('#ch_infos_version').text(`Members: ${members.length}`);
+    $('#ch_infos_date').text('Created: -');
+    $('#ch_infos_tok').text('Tokens: -');
+    $('#ch_infos_lastchat').text(`Last chat: ${group?.date_last_chat ? new Date(group.date_last_chat).toISOString().substring(0, 10) : ' - '}`);
+    $('#ch_infos_link').text('Link: -');
+    $('#ch_infos_adddate').text(`Added: ${group?.date_added ? new Date(group.date_added).toISOString().substring(0, 10) : ' - '}`);
+    $('#ch_infos_permtok').text('Perm. Tokens: -');
+
+    const panel = ensureGroupDetailsPanel();
+    if (panel) {
+        const membersListHtml = members.length
+            ? members.map(member => `<li class="acm-group-member-item">${escapeHtml(member.name)}</li>`).join('')
+            : '<li class="acm-group-member-item acm-group-empty">No members</li>';
+
+        panel.innerHTML = `
+            <div class="acm-group-details-title"><b>Group details</b></div>
+            <div class="acm-group-details-subtitle">ID: ${escapeHtml(group.id)}</div>
+            <div class="acm-group-members-title"><b>Members</b></div>
+            <ul class="acm-group-members-list">${membersListHtml}</ul>
+        `;
+    }
+
+    $('#tag_List').html(renderGroupTags(group));
+    $('#acm_favorite_button')
+        .toggleClass('fav_on', !!group.fav)
+        .toggleClass('fav_off', !group.fav);
+}
+
+async function scrollClassicToIndexWithRetry(index, { behavior = 'smooth', block = 'center', maxAttempts = 8 } = {}) {
+    if (!classicVirtualScroller || index < 0) {
+        return false;
+    }
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const didScroll = classicVirtualScroller.scrollToIndex(index, {
+            behavior: attempt === 0 ? behavior : 'auto',
+            block,
+        });
+
+        if (didScroll) {
+            return true;
+        }
+
+        classicVirtualScroller.refreshLayout();
+        await waitForNextTick(30 + (attempt * 20));
+    }
+
+    return false;
+}
+
+export function queueScrollTopOnNextRefresh() {
+    shouldResetScrollTopOnNextRefresh = true;
+}
+
+function getClassicItemId(item) {
+    if (item?.type === 'group') {
+        return `group:${String(item?.group?.id ?? '')}`;
+    }
+    return `char:${String(item?.avatar ?? '')}`;
+}
+
+function observeRenderedImages(container) {
+    const newImages = container.querySelectorAll('img[data-src]:not([data-observed])');
+    newImages.forEach(img => {
+        img.dataset.observed = 'true';
+        imageLoader.observe(img);
+    });
+}
+
+function attachMediaLoadingState(cardElement, useLazyLoading) {
+    if (useLazyLoading) {
+        return;
+    }
+
+    const mediaElement = cardElement.querySelector('.card__media');
+    if (!mediaElement) {
+        return;
+    }
+
+    const images = Array.from(mediaElement.querySelectorAll('img'));
+    if (images.length === 0) {
+        return;
+    }
+
+    mediaElement.classList.add('acm-media-loading');
+
+    let pending = 0;
+    const onMediaReady = () => {
+        pending = Math.max(0, pending - 1);
+        if (pending === 0) {
+            mediaElement.classList.remove('acm-media-loading');
+        }
+    };
+
+    images.forEach((img) => {
+        if (img.complete && img.naturalWidth > 0) {
+            return;
+        }
+
+        pending++;
+        img.addEventListener('load', onMediaReady, { once: true });
+        img.addEventListener('error', onMediaReady, { once: true });
+    });
+
+    if (pending === 0) {
+        mediaElement.classList.remove('acm-media-loading');
+    }
+}
+
+function destroyClassicVirtualScroller() {
+    if (!classicVirtualScroller) {
+        return;
+    }
+
+    classicVirtualScroller.destroy();
+    classicVirtualScroller = null;
+    lastClassicSortedList = [];
+}
+
+function measureClassicCardMetrics(container, sampleItem) {
+    if (!container || !sampleItem) {
+        return {
+            estimatedItemHeight: 230,
+            estimatedItemWidth: 145,
+            estimatedInterItemVerticalSpacing: 5,
+        };
+    }
+
+    const probe = sampleItem?.type === 'group'
+        ? createGroupBlock(sampleItem.group, false)
+        : createCharacterBlock(sampleItem.avatar, false);
+
+    probe.style.position = 'absolute';
+    probe.style.left = '-99999px';
+    probe.style.top = '0';
+    probe.style.visibility = 'hidden';
+    probe.style.pointerEvents = 'none';
+
+    container.appendChild(probe);
+
+    const rect = probe.getBoundingClientRect();
+    const style = window.getComputedStyle(probe);
+    const containerStyle = window.getComputedStyle(container);
+    const marginX = (parseFloat(style.marginLeft) || 0) + (parseFloat(style.marginRight) || 0);
+    const marginY = (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0);
+    const rowGap = parseFloat(containerStyle.rowGap || containerStyle.gap || '0') || 0;
+
+    probe.remove();
+
+    return {
+        estimatedItemHeight: Math.max(230, Math.ceil(rect.height + marginY)),
+        estimatedItemWidth: Math.max(145, Math.ceil(rect.width + marginX)),
+        estimatedInterItemVerticalSpacing: Math.max(0, Math.ceil(rowGap)),
+    };
+}
+
+function renderCharactersListVirtual(sortedList, preserveScroll = true) {
+    const container = document.getElementById('character-list');
+    if (!container) {
+        return;
+    }
+
+    if (!classicVirtualScroller) {
+        const sampleItem = sortedList.find(Boolean);
+        const { estimatedItemHeight, estimatedItemWidth, estimatedInterItemVerticalSpacing } = measureClassicCardMetrics(container, sampleItem);
+
+        classicVirtualScroller = new AcmVirtualScrollerService({
+            container,
+            getItemId: getClassicItemId,
+            estimatedItemHeight,
+            estimatedItemWidth,
+            estimatedInterItemVerticalSpacing,
+            renderItem: (item) => item?.type === 'group'
+                ? createGroupBlock(item.group, false)
+                : createCharacterBlock(item.avatar, false),
+            onRendered: null,
+        });
+    }
+
+    lastClassicSortedList = sortedList;
+    classicVirtualScroller.setItems(sortedList, preserveScroll);
+
+    if (!preserveScroll) {
+        container.scrollTop = 0;
+    }
+}
 
 /**
  * Creates and returns a character block element based on the provided avatar.
@@ -54,6 +353,8 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
         </div>
     `;
 
+    attachMediaLoadingState(div, useLazyLoading);
+
     return div;
 }
 
@@ -65,8 +366,12 @@ function createCharacterBlock(avatar, useLazyLoading = true) {
  */
 function createGroupBlock(group, useLazyLoading = true) {
     const div = document.createElement('div');
-    div.className = 'card char_select group-card';
-    div.title = `[Group] ${group.name} - Members: ${group.members?.length ?? 0}`;
+    const groupId = String(group?.id ?? '');
+    const selectionClass = selectedGroupId && String(selectedGroupId) === groupId ? 'char_selected' : 'char_select';
+    const favoriteClass = group?.fav ? 'fav' : '';
+
+    div.className = `card ${selectionClass} group-card ${favoriteClass}`;
+    div.title = `[Group] ${group.name} - Members: ${group.members?.length ?? 0} - Tags: ${tagMap[groupId]?.length ?? 0}`;
     div.setAttribute('data-group-id', group.id);
     div.setAttribute('data-type', 'group');
 
@@ -75,8 +380,9 @@ function createGroupBlock(group, useLazyLoading = true) {
     if (group && Array.isArray(group.members) && group.members.length) {
         for (const member of group.members) {
             const charIndex = characters.findIndex(x => x.avatar === member);
-            if (charIndex !== -1 && characters[charIndex].avatar !== 'none') {
-                const avatar = getThumbnailUrl('avatar', characters[charIndex].avatar);
+            const memberAvatar = characters[charIndex]?.avatar;
+            if (charIndex !== -1 && typeof memberAvatar === 'string') {
+                const avatar = getThumbnailUrl('avatar', memberAvatar);
                 memberAvatars.push(avatar);
             }
             if (memberAvatars.length === 4) {
@@ -114,6 +420,8 @@ function createGroupBlock(group, useLazyLoading = true) {
             <p class="card__header-meta">Members: ${group.members?.length ?? 0}</p>
         </div>
     `;
+
+    attachMediaLoadingState(div, useLazyLoading);
 
     return div;
 }
@@ -170,11 +478,7 @@ function renderCharactersListHTML(sortedList) {
 
         container.appendChild(fragment);
 
-        const newImages = container.querySelectorAll(`img[data-src]:not([data-observed])`);
-        newImages.forEach(img => {
-            img.dataset.observed = 'true';
-            imageLoader.observe(img);
-        });
+        observeRenderedImages(container);
 
         if (currentIndex < sortedList.length) {
             activeBatchHandle = requestIdle(processBatch);
@@ -190,14 +494,21 @@ function renderCharactersListHTML(sortedList) {
  * Ensures that any previously selected character is deselected before selecting the new one.
  *
  * @param {string} avatar - The identifier for the avatar to be selected and displayed.
- * @return {void} This function does not return a value.
+ * @return {Promise<void>} Resolves after details and selection state are updated.
  */
 export async function selectAndDisplay(avatar) {
     // Check if a visible character is already selected
-    if(typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null){
-        document.querySelector(`[data-avatar="${selectedChar}"]`).classList.replace('char_selected','char_select');
+    if (typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null) {
+        document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected', 'char_select');
     }
+
+    if (typeof selectedGroupId !== 'undefined' && document.querySelector(`[data-group-id="${selectedGroupId}"]`) !== null) {
+        document.querySelector(`[data-group-id="${selectedGroupId}"]`)?.classList.replace('char_selected', 'char_select');
+    }
+
+    setDetailsMode(false);
     setMenuType('character_edit');
+    setSelectedGroupId(undefined);
     setSelectedChar(avatar);
     // Keep global characterId unchanged while browsing details in ACM.
     // It is set only for actions that require it (e.g. delete).
@@ -209,9 +520,91 @@ export async function selectAndDisplay(avatar) {
 
     document.querySelector('.list-character-wrapper')?.classList.remove('acm-no-selection');
 
-    document.querySelector(`[data-avatar="${avatar}"]`).classList.replace('char_select','char_selected');
+    const currentCard = document.querySelector(`[data-avatar="${avatar}"]`);
+    currentCard?.classList.replace('char_select', 'char_selected');
+
+    if (!currentCard && classicVirtualScroller) {
+        const index = lastClassicSortedList.findIndex(item => item?.type !== 'group' && item?.avatar === avatar);
+        if (index !== -1) {
+            await scrollClassicToIndexWithRetry(index, { behavior: 'auto', block: 'center' });
+            document.querySelector(`[data-avatar="${avatar}"]`)?.classList.replace('char_select', 'char_selected');
+        }
+    }
+
     document.getElementById('char-sep').style.display = 'block';
     document.getElementById('char-details').classList.add("open");
+}
+
+export async function selectAndDisplayGroup(groupId, { scrollIntoView = true } = {}) {
+    const group = getGroupById(groupId);
+    if (!group) {
+        toastr.warning('Selected group no longer exists.');
+        return;
+    }
+
+    if (typeof selectedChar !== 'undefined' && document.querySelector(`[data-avatar="${selectedChar}"]`) !== null) {
+        document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected', 'char_select');
+    }
+
+    if (typeof selectedGroupId !== 'undefined' && document.querySelector(`[data-group-id="${selectedGroupId}"]`) !== null) {
+        document.querySelector(`[data-group-id="${selectedGroupId}"]`)?.classList.replace('char_selected', 'char_select');
+    }
+
+    setMenuType('group_edit');
+    setSelectedChar(undefined);
+    setSelectedGroupId(String(group.id));
+    setDetailsMode(true);
+
+    $('#acm_export_format_popup').hide();
+    renderGroupDetails(group);
+
+    document.querySelector('.list-character-wrapper')?.classList.remove('acm-no-selection');
+
+    let currentCard = document.querySelector(`[data-group-id="${group.id}"]`);
+    currentCard?.classList.replace('char_select', 'char_selected');
+
+    if (!currentCard && classicVirtualScroller) {
+        const index = lastClassicSortedList.findIndex(item => item?.type === 'group' && String(item?.group?.id ?? '') === String(group.id));
+        if (index !== -1 && scrollIntoView) {
+            await scrollClassicToIndexWithRetry(index, { behavior: 'auto', block: 'center' });
+            currentCard = document.querySelector(`[data-group-id="${group.id}"]`);
+            currentCard?.classList.replace('char_select', 'char_selected');
+        }
+    }
+
+    if (currentCard && scrollIntoView) {
+        currentCard.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+    }
+
+    document.getElementById('char-sep').style.display = 'block';
+    document.getElementById('char-details').classList.add('open');
+}
+
+export async function openSelectedGroupChat(groupId = selectedGroupId) {
+    const normalizedGroupId = String(groupId ?? '').trim();
+    if (!normalizedGroupId) {
+        toastr.warning('No group selected');
+        return;
+    }
+
+    const opened = await openGroupById(normalizedGroupId);
+    $('#acm_popup_close').click();
+    if (!opened) {
+        select_group_chats(normalizedGroupId, true);
+    }
+}
+
+export async function toggleSelectedGroupFavorite() {
+    const group = getGroupById(selectedGroupId);
+    if (!group) {
+        toastr.warning('No group selected');
+        return;
+    }
+
+    group.fav = !group.fav;
+    await editGroup(group.id, false, false);
+    renderGroupDetails(group);
+    refreshCharListDebounced();
 }
 
 /**
@@ -223,8 +616,11 @@ export async function selectAndDisplay(avatar) {
  */
 function refreshCharList() {
     const filteredChars = searchAndFilter();
+    const resetScrollTop = shouldResetScrollTopOnNextRefresh;
+    shouldResetScrollTopOnNextRefresh = false;
 
     if(filteredChars.length === 0){
+        destroyClassicVirtualScroller();
         $('#character-list').html(`<span>Hmm, it seems like the character you're looking for is hiding out in a secret lair. Try searching for someone else instead.</span>`);
     }
     else {
@@ -235,8 +631,12 @@ function refreshCharList() {
         const sortedList = sortCharAR(filteredChars, sortingField, sortingOrder);
 
         if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
+            destroyClassicVirtualScroller();
             $('#character-list').html(generateDropdown(sortedList, dropdownMode));
             const list = document.querySelector('#character-list');
+            if (resetScrollTop && list) {
+                list.scrollTop = 0;
+            }
             const openSections = getOpenDropdownSections();
             list.querySelectorAll('.dropdown-container').forEach(container => {
                 const title = container.querySelector('.dropdown-title');
@@ -259,7 +659,12 @@ function refreshCharList() {
                 });
             });
         } else {
-            renderCharactersListHTML(sortedList);
+            if (activeBatchHandle) {
+                cancelIdle(activeBatchHandle);
+                activeBatchHandle = null;
+            }
+
+            renderCharactersListVirtual(sortedList, !resetScrollTop);
         }
     }
     updateCharacterCount(filteredChars.length);
@@ -503,6 +908,7 @@ export function toggleTagQueries() {
 export function updateSortOrder(selectedOption) {
     updateSetting('sortingField', selectedOption.data('field'));
     updateSetting('sortingOrder', selectedOption.data('order'));
+    queueScrollTopOnNextRefresh();
     refreshCharListDebounced();
 }
 
@@ -641,6 +1047,7 @@ export function updateSearchFilter(searchText) {
 export function toggleFavoritesOnly(isChecked) {
     updateSetting('favOnly', isChecked);
     updateFavFilterButtonState(isChecked);
+    queueScrollTopOnNextRefresh();
     refreshCharListDebounced();
 }
 
@@ -652,6 +1059,7 @@ export function toggleGroupsFilter() {
     const nextState = (currentState + 1) % 3;
     updateSetting('groupsFilter', nextState);
     updateGroupsFilterButtonState(nextState);
+    queueScrollTopOnNextRefresh();
     refreshCharListDebounced();
 }
 
@@ -665,9 +1073,11 @@ export async function selectRandomCharacter() {
         return;
     }
 
-    let candidateAvatars = [];
+    let randomItem;
+    let sortedList = [];
 
     if (dropdownUI && ['allTags', 'custom', 'creators'].includes(dropdownMode)) {
+        const candidateAvatars = [];
         const openContainers = Array.from(document.querySelectorAll('#character-list .dropdown-container.open'));
         if (openContainers.length > 0) {
             const avatarSet = new Set();
@@ -676,22 +1086,55 @@ export async function selectRandomCharacter() {
                     avatarSet.add(card.dataset.avatar);
                 });
             });
-            candidateAvatars = Array.from(avatarSet);
+            candidateAvatars.push(...Array.from(avatarSet));
         } else {
             toastr.warning('Open a dropdown section to pick a random character.');
             return;
         }
+
+        if (candidateAvatars.length === 0) {
+            toastr.warning('No characters are available for random selection.');
+            return;
+        }
+
+        const randomAvatar = candidateAvatars[Math.floor(Math.random() * candidateAvatars.length)];
+        randomItem = filteredChars.find(item => item?.type !== 'group' && item?.avatar === randomAvatar);
     } else {
-        candidateAvatars = filteredChars.map(item => item.avatar);
+        const sortingField = getSetting('sortingField');
+        const sortingOrder = getSetting('sortingOrder');
+        sortedList = sortCharAR([...filteredChars], sortingField, sortingOrder);
+
+        renderCharactersListVirtual(sortedList, true);
+        randomItem = sortedList[Math.floor(Math.random() * sortedList.length)];
     }
 
-    if (candidateAvatars.length === 0) {
+    if (!randomItem) {
         toastr.warning('No characters are available for random selection.');
         return;
     }
 
-    const randomAvatar = candidateAvatars[Math.floor(Math.random() * candidateAvatars.length)];
+    if (randomItem.type === 'group') {
+        const groupId = String(randomItem?.group?.id ?? '').trim();
+        if (!groupId) {
+            toastr.warning('Random group has no valid id.');
+            return;
+        }
+
+        await selectAndDisplayGroup(groupId, { scrollIntoView: true });
+        return;
+    }
+
+    const randomAvatar = randomItem.avatar;
     await selectAndDisplay(randomAvatar);
+
+    if (!dropdownUI && classicVirtualScroller) {
+        const source = sortedList.length ? sortedList : lastClassicSortedList;
+        const index = source.findIndex(item => item?.type !== 'group' && item?.avatar === randomAvatar);
+        if (index !== -1) {
+            await scrollClassicToIndexWithRetry(index, { behavior: 'smooth', block: 'center' });
+            return;
+        }
+    }
 
     const card = document.querySelector(`[data-avatar="${randomAvatar}"]`);
     if (card) {

@@ -20,6 +20,44 @@
     padding-top: 5px;
 }
 
+#character-list.acm-virtual-scroll-container {
+    display: block;
+    flex-wrap: unset;
+    justify-content: initial;
+    align-content: initial;
+    gap: 0;
+    padding-right: 0;
+    padding-top: 0;
+}
+
+#character-list.acm-virtual-scroll-container > .acm-virtual-items {
+    min-height: 100%;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    flex-grow: 0;
+    contain: layout paint style;
+}
+
+#character-list.acm-virtual-scroll-container .card {
+    height: 220px;
+    box-sizing: border-box;
+}
+
+#character-list.acm-virtual-scroll-container .card:hover {
+    transform: none;
+}
+
+#character-list.acm-virtual-scroll-container .card,
+#character-list.acm-virtual-scroll-container .card:hover,
+#character-list.acm-virtual-scroll-container .card.char_selected,
+#character-list.acm-virtual-scroll-container .card.fav,
+#character-list.acm-virtual-scroll-container .card.fav.char_selected {
+    border-width: 1px;
+}
+
 .character_item {
     display: flex;
     gap: 5px;
@@ -97,6 +135,20 @@
     height: 120px;
     overflow: hidden;
     border-radius: 4px;
+    position: relative;
+}
+
+.card__media.acm-media-loading {
+    background: var(--SmartThemeBlurTintColor);
+}
+
+.card__media.acm-media-loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--white30a), transparent);
+    animation: acm-media-shimmer 1.1s linear infinite;
+    pointer-events: none;
 }
 
 /* Group card styles */
@@ -143,6 +195,22 @@
     height: 100%;
     object-fit: cover;
     display: block;
+    opacity: 0;
+    transition: opacity 0.18s ease-in;
+}
+
+.card__media img.loaded,
+.card__media:not(.acm-media-loading) img {
+    opacity: 1;
+}
+
+@keyframes acm-media-shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 .card__header {

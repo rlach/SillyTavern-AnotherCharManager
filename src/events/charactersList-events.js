@@ -1,7 +1,10 @@
 import {
+    queueScrollTopOnNextRefresh,
     refreshCharListDebounced,
     selectAndDisplay,
+    selectAndDisplayGroup,
     selectRandomCharacter,
+    openSelectedGroupChat,
     updateSearchModeButtonState,
     toggleFavoritesOnly,
     toggleGroupsFilter,
@@ -29,8 +32,7 @@ export function initializeCharactersListEvents() {
     $(document).on('click', '.char_select', function (e) {
         const target = $(e.target).closest('.char_select')[0];
         if (target.dataset.type === 'group') {
-            // Groups are not editable in this UI, just inform the user
-            toastr.info('Double-click to open group chat in main UI');
+            selectAndDisplayGroup(target.dataset.groupId, { scrollIntoView: false });
         } else if (target.dataset.avatar) {
             selectAndDisplay(target.dataset.avatar);
         }
@@ -40,19 +42,21 @@ export function initializeCharactersListEvents() {
         const target = $(e.target).closest('.char_select')[0];
         if (target.dataset.type === 'group') {
             const groupId = target.dataset.groupId;
-            // Close the manager and select the group in main UI
-            $('#acm_popup_close').click();
-            // Use SillyTavern's group selection function
-            if (window.select_group_chats) {
-                await window.select_group_chats(groupId, true);
-            }
+            await selectAndDisplayGroup(groupId, { scrollIntoView: true });
+            await openSelectedGroupChat(groupId);
         } else if (target.dataset.avatar) {
             await selectAndDisplay(target.dataset.avatar);
             openCharacterChat();
         }
     });
 
-    $(document).on('dblclick', '.char_selected', function () {
+    $(document).on('dblclick', '.char_selected', async function (e) {
+        const target = $(e.target).closest('.char_selected')[0];
+        if (target?.dataset?.type === 'group') {
+            await openSelectedGroupChat(target.dataset.groupId);
+            return;
+        }
+
         openCharacterChat();
     });
 }
@@ -111,8 +115,8 @@ export function initializeToolbarEvents() {
         toggleGroupsFilter();
     });
 
-    $('#acm_random_button').on("click", function () {
-        selectRandomCharacter();
+    $('#acm_random_button').on("click", async function () {
+        await selectRandomCharacter();
     });
 
     $('#acm_trash_button').on("click", function () {
@@ -150,6 +154,15 @@ export function initializeToolbarEvents() {
         }
 
         removeTagFromEntity(tag, selectedChar, { tagElement });
+        refreshCharListDebounced();
+    });
+
+    $(document).on('click', '#acm_mandatoryTags .tag_acm_remove, #acm_facultativeTags .tag_acm_remove, #acm_excludedTags .tag_acm_remove', function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        $(this).closest('.tag').remove();
+        queueScrollTopOnNextRefresh();
         refreshCharListDebounced();
     });
 }

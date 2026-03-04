@@ -5,9 +5,11 @@ import {
     mem_menu,
     oldExtensionName,
     selectedChar,
+    selectedGroupId,
     setMem_avatar,
     setMem_characterId,
     setMem_menu,
+    setSelectedGroupId,
     setSelectedChar,
 } from "../constants/settings.js";
 import { characterId, characters, menuType, renderExtensionTemplateAsync } from "../constants/context.js";
@@ -149,10 +151,13 @@ export function closeDetails( reset = true ) {
     // Clean up the character details UI
     $('#acm_export_format_popup').hide();
     document.querySelector(`[data-avatar="${selectedChar}"]`)?.classList.replace('char_selected','char_select');
+    document.querySelector(`[data-group-id="${selectedGroupId}"]`)?.classList.replace('char_selected','char_select');
     document.getElementById('char-details').classList.remove("open");
+    document.getElementById('char-details').classList.remove('acm-group-mode');
     document.getElementById('char-sep').style.display = 'none';
     document.querySelector('.list-character-wrapper')?.classList.add('acm-no-selection');
     setSelectedChar(undefined);
+    setSelectedGroupId(undefined);
 }
 
 /**
@@ -173,7 +178,7 @@ export function applySidePanelMode(enabled) {
         checkbox.checked = !!enabled;
     }
 
-    const hasSelection = Boolean(selectedChar);
+    const hasSelection = Boolean(selectedChar || selectedGroupId);
     wrapper.classList.toggle('acm-no-selection', !hasSelection);
 }
 

@@ -147,6 +147,7 @@ export async function dupeChar(avatar) {
         const data = await response.json();
         await eventSource.emit(event_types.CHARACTER_DUPLICATED, { oldAvatar: body.avatar_url, newAvatar: data.path });
         await getCharacters();
+        refreshCharListDebounced();
     }
 }
 

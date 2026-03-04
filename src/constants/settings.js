@@ -7,6 +7,11 @@ export const setSelectedChar = (value) => {
     selectedChar = value;
 };
 
+export let selectedGroupId;
+export const setSelectedGroupId = (value) => {
+    selectedGroupId = value;
+};
+
 export let searchValue = '';
 export const setSearchValue = (value) => {
     searchValue = value;

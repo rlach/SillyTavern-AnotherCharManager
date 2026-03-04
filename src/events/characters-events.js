@@ -6,6 +6,7 @@ import {
     getRequestHeaders,
     POPUP_TYPE,
 } from "../constants/context.js";
+import { editGroup, groups } from "/scripts/group-chats.js";
 import {
     addAltGreeting,
     closeCharacterPopup,
@@ -22,8 +23,13 @@ import {
 } from "../components/characters.js";
 import { closeDetails } from "../components/modal.js";
 import { checkApiAvailability, editCharDebounced, saveAltGreetings } from "../services/characters-service.js";
-import { refreshCharListDebounced } from "../components/charactersList.js";
-import { selectedChar } from "../constants/settings.js";
+import {
+    openSelectedGroupChat,
+    refreshCharListDebounced,
+    selectAndDisplayGroup,
+    toggleSelectedGroupFavorite,
+} from "../components/charactersList.js";
+import { selectedChar, selectedGroupId } from "../constants/settings.js";
 import { delay, updateTokenCount } from "../utils.js";
 
 function getAutoTagCharacterApi() {
@@ -79,6 +85,39 @@ function syncAutoTagCharacterButton() {
             toastr.error(`Auto-tagger failed: ${error?.message || 'Unknown error'}`);
         }
     });
+}
+
+function getSelectedGroup() {
+    const normalizedId = String(selectedGroupId ?? '').trim();
+    if (!normalizedId) {
+        return undefined;
+    }
+
+    return groups.find(group => String(group?.id ?? '') === normalizedId);
+}
+
+async function renameSelectedGroup() {
+    const group = getSelectedGroup();
+    if (!group) {
+        toastr.warning('No group selected');
+        return;
+    }
+
+    const newName = await callGenericPopup('<h3>New group name:</h3>', POPUP_TYPE.INPUT, group.name || '');
+    if (!newName) {
+        return;
+    }
+
+    const normalizedName = String(newName).trim();
+    if (!normalizedName || normalizedName === group.name) {
+        return;
+    }
+
+    group.name = normalizedName;
+    await editGroup(group.id, false, false);
+    refreshCharListDebounced();
+    await selectAndDisplayGroup(group.id, { scrollIntoView: false });
+    toastr.success('Group renamed');
 }
 
 /**
@@ -172,7 +211,14 @@ export function initializeCharactersEvents() {
     initializeFieldUpdaters();
 
     // Trigger when the favorites button is clicked
-    $('#acm_favorite_button').on('click', toggleFavoriteStatus);
+    $('#acm_favorite_button').on('click', async function () {
+        if (selectedGroupId) {
+            await toggleSelectedGroupFavorite();
+            return;
+        }
+
+        toggleFavoriteStatus();
+    });
 
     // Export character
     $('#acm_export_button').on("click", function () {
@@ -188,7 +234,14 @@ export function initializeCharactersEvents() {
     });
 
     // Duplicate character
-    $('#acm_dupe_button').on("click", duplicateCharacter);
+    $('#acm_dupe_button').on("click", function () {
+        if (selectedGroupId) {
+            toastr.warning('Group duplication is not supported here.');
+            return;
+        }
+
+        duplicateCharacter();
+    });
 
     // Reimport tags
     $('#acm_reimport_tags_button').on("click", reimportCharacterTags);
@@ -241,10 +294,24 @@ export function initializeCharactersEvents() {
     });
 
     // Rename character
-    $('#acm_rename_button').on("click", renameCharacter);
+    $('#acm_rename_button').on("click", async function () {
+        if (selectedGroupId) {
+            await renameSelectedGroup();
+            return;
+        }
+
+        renameCharacter();
+    });
 
     // Trigger when the Open Chat button is clicked
-    $('#acm_open_chat').on('click', openCharacterChat);
+    $('#acm_open_chat').on('click', async function () {
+        if (selectedGroupId) {
+            await openSelectedGroupChat();
+            return;
+        }
+
+        openCharacterChat();
+    });
 
     // Display Advanced Definitions popup
     $('#acm_advanced_div').on("click", toggleAdvancedDefinitionsPopup);

@@ -3,7 +3,7 @@ import { groups } from '/scripts/group-chats.js';
 import { getSetting } from "./settings-service.js";
 import { characters, tagList, tagMap } from "../constants/context.js";
 import { searchValue } from "../constants/settings.js";
-import { equalsIgnoreCaseAndAccents, includesIgnoreCaseAndAccents } from "../utils.js";
+import { includesIgnoreCaseAndAccents } from "../utils.js";
 const { Fuse } = SillyTavern.libs;
 
 function getSearchMode() {
@@ -29,17 +29,13 @@ function getCharacterFieldValue(item, field) {
 function filterCharactersExact(items, searchField, query) {
     if (searchField === 'tags') {
         const matchingTagIds = tagList
-            .filter(tag => equalsIgnoreCaseAndAccents(String(tag?.name || ''), query))
+            .filter(tag => includesIgnoreCaseAndAccents(String(tag?.name || ''), query))
             .map(tag => tag.id);
 
         return items.filter(item => (tagMap[item.avatar] || []).some(tagId => matchingTagIds.includes(tagId)));
     }
 
-    if (searchField === 'creator_notes') {
-        return items.filter(item => includesIgnoreCaseAndAccents(getCharacterFieldValue(item, searchField), query));
-    }
-
-    return items.filter(item => equalsIgnoreCaseAndAccents(getCharacterFieldValue(item, searchField), query));
+    return items.filter(item => includesIgnoreCaseAndAccents(getCharacterFieldValue(item, searchField), query));
 }
 
 function filterCharactersFuzzy(items, searchField, query) {
@@ -138,7 +134,7 @@ export function searchAndFilter(){
 
             if (searchField === 'name') {
                 if (searchMode === 'exact') {
-                    filteredGroups = filteredGroups.filter(group => equalsIgnoreCaseAndAccents(String(group?.name || ''), searchValueTrimmed));
+                    filteredGroups = filteredGroups.filter(group => includesIgnoreCaseAndAccents(String(group?.name || ''), searchValueTrimmed));
                 } else {
                     const fuseOptions = {
                         keys: ['name'],
@@ -173,21 +169,43 @@ export function sortCharAR(chars, sort_data, sort_order) {
     return chars.sort((a, b) => {
         let comparison = 0;
 
+        const getName = (item) => item?.type === 'group'
+            ? String(item?.group?.name || item?.name || '')
+            : String(item?.name || '');
+
+        const getTagsCount = (item) => {
+            if (item?.type === 'group') {
+                const groupId = String(item?.group?.id ?? '');
+                return tagMap[groupId]?.length || 0;
+            }
+
+            return tagMap[item?.avatar]?.length || 0;
+        };
+
+        const getNumericField = (item, field) => {
+            if (item?.type === 'group') {
+                const value = item?.group?.[field];
+                return Number(value) || 0;
+            }
+
+            return Number(item?.[field]) || 0;
+        };
+
         switch (sort_data) {
             case 'name':
-                comparison = a[sort_data].localeCompare(b[sort_data]);
+                comparison = getName(a).localeCompare(getName(b));
                 break;
             case 'tags':
-                comparison = (tagMap[a.avatar]?.length || 0) - (tagMap[b.avatar]?.length || 0);
+                comparison = getTagsCount(a) - getTagsCount(b);
                 break;
             case 'date_last_chat':
-                comparison = b[sort_data] - a[sort_data];
+                comparison = getNumericField(b, sort_data) - getNumericField(a, sort_data);
                 break;
             case 'date_added':
-                comparison = b[sort_data] - a[sort_data];
+                comparison = getNumericField(b, sort_data) - getNumericField(a, sort_data);
                 break;
             case 'data_size':
-                comparison = a[sort_data] - b[sort_data];
+                comparison = getNumericField(a, sort_data) - getNumericField(b, sort_data);
                 break;
         }
         return sort_order === 'desc' ? comparison * -1 : comparison;
