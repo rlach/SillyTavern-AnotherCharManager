@@ -16,7 +16,7 @@ import { characterId, characters, menuType, renderExtensionTemplateAsync } from 
 import { getSetting } from "../services/settings-service.js";
 import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '/script.js';
-import { updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState, updateSearchModeButtonState } from "./charactersList.js";
+import { updateChatsFilterButtonState, updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState, updateSearchModeButtonState } from "./charactersList.js";
 import { updateLayout } from "./characterCreation.js";
 
 /**
@@ -138,6 +138,7 @@ export function openModal() {
 
     updateFavFilterButtonState(getSetting('favOnly'));
     updateGroupsFilterButtonState(getSetting('groupsFilter'));
+    updateChatsFilterButtonState(getSetting('chatsFilter'));
     applySidePanelMode(getSetting('sidePanel'));
 }
 

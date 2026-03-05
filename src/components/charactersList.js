@@ -947,10 +947,11 @@ function updateDropdownOpenState(type, content, isOpen) {
 function hasActiveFilters() {
     const hasSearch = String(searchValue || '').trim().length > 0;
     const hasFavOnly = getSetting('favOnly');
+    const hasChatsFilter = Number(getSetting('chatsFilter') || 0) !== 0;
     const hasExcluded = $('#acm_excludedTags > span').length > 0;
     const hasMandatory = $('#acm_mandatoryTags > span').length > 0;
     const hasFacultative = $('#acm_facultativeTags > span').length > 0;
-    return hasSearch || hasFavOnly || hasExcluded || hasMandatory || hasFacultative;
+    return hasSearch || hasFavOnly || hasChatsFilter || hasExcluded || hasMandatory || hasFacultative;
 }
 
 function updateCharacterCount(visibleCount) {
@@ -1002,6 +1003,39 @@ export function updateGroupsFilterButtonState(filterState) {
     ];
     button.setAttribute('title', titles[filterState]);
     button.setAttribute('data-i18n', `[title]${titles[filterState]}`);
+}
+
+/**
+ * Updates the chats filter button state based on current setting.
+ * @param {number} filterState - 0 = all chats, 1 = with chats only, 2 = without chats only
+ */
+export function updateChatsFilterButtonState(filterState) {
+    const button = document.getElementById('acm_chats_filter_button');
+    if (!button) return;
+
+    const normalizedState = Number(filterState);
+    const state = Number.isNaN(normalizedState) ? 0 : ((normalizedState % 3) + 3) % 3;
+
+    button.classList.remove('chats_all', 'chats_with', 'chats_without');
+
+    const classByState = ['chats_all', 'chats_with', 'chats_without'];
+    const titleByState = ['All chats', 'With chats only', 'Without chats only'];
+
+    button.classList.remove('fa-solid', 'fa-regular', 'fa-comment', 'fa-comment-dots', 'fa-comments');
+
+    button.classList.add(classByState[state]);
+
+    if (state === 0) {
+        button.classList.add('fa-solid', 'fa-comment');
+    } else if (state === 1) {
+        button.classList.add('fa-regular', 'fa-comment-dots');
+    } else {
+        button.classList.add('fa-regular', 'fa-comment');
+    }
+
+    button.setAttribute('title', titleByState[state]);
+    button.setAttribute('data-i18n', `[title]${titleByState[state]}`);
+    button.setAttribute('aria-pressed', state === 0 ? 'false' : 'true');
 }
 
 /**
@@ -1059,6 +1093,18 @@ export function toggleGroupsFilter() {
     const nextState = (currentState + 1) % 3;
     updateSetting('groupsFilter', nextState);
     updateGroupsFilterButtonState(nextState);
+    queueScrollTopOnNextRefresh();
+    refreshCharListDebounced();
+}
+
+/**
+ * Toggles the chats filter through three states: all -> with chats -> without chats -> all.
+ */
+export function toggleChatsFilter() {
+    const currentState = Number(getSetting('chatsFilter') || 0);
+    const nextState = (currentState + 1) % 3;
+    updateSetting('chatsFilter', nextState);
+    updateChatsFilterButtonState(nextState);
     queueScrollTopOnNextRefresh();
     refreshCharListDebounced();
 }

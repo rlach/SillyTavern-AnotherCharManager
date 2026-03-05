@@ -1,7 +1,9 @@
 import {
     depth_prompt_depth_default,
     depth_prompt_role_default,
+    getPastCharacterChats,
     setCharacterId,
+    system_message_types,
     talkativeness_default
 } from '/script.js';
 import { importTags, tag_import_setting } from '/scripts/tags.js';
@@ -10,6 +12,7 @@ import { getBase64Async, getIdByAvatar } from '../utils.js';
 import {
     callGenericPopup,
     characters,
+    getRequestHeaders,
     getThumbnailUrl,
     getTokenCountAsync,
     POPUP_TYPE,
@@ -101,11 +104,187 @@ export async function fillDetails(avatar) {
         $('#altGreetings_content').html(html);
     });
     $('#acm_tagline_content').empty();
-    if ($('#tagline_drawer').hasClass('open')) {
+    if (isDrawerExpanded('#tagline_drawer', '#acm_tagline_content')) {
         await loadTaglineForSelectedCharacter();
+    }
+    $('#acm_last_message_content').empty();
+    if (isDrawerExpanded('#last_message_drawer', '#acm_last_message_content')) {
+        await loadLastMessageForSelectedCharacter();
     }
     $('#acm_favorite_button').toggleClass('fav_on', char.fav || char.data.extensions.fav).toggleClass('fav_off', !(char.fav || char.data.extensions.fav));
     addAltGreetingsTrigger()
+}
+
+function findLastAgentNonSystemMessage(chatMessages) {
+    if (!Array.isArray(chatMessages)) {
+        return '';
+    }
+
+    for (let i = chatMessages.length - 1; i >= 0; i--) {
+        const message = chatMessages[i];
+        if (!message) {
+            continue;
+        }
+
+        const isSystem = Boolean(message.is_system) || message.extra?.type === system_message_types.NARRATOR;
+        const isUser = Boolean(message.is_user);
+        if (isSystem || isUser) {
+            continue;
+        }
+
+        const text = String(message?.mes ?? '').trim();
+        if (text.length > 0) {
+            return text;
+        }
+    }
+
+    return '';
+}
+
+function normalizeChatFileName(value) {
+    const rawValue = String(value || '').trim();
+    if (!rawValue) {
+        return '';
+    }
+
+    return rawValue.replace(/\.jsonl$/i, '');
+}
+
+function getChatNameFromFileName(fileName, fallbackName) {
+    const baseName = normalizeChatFileName(fileName);
+    if (!baseName) {
+        return String(fallbackName || '');
+    }
+
+    const splitMarker = ' - ';
+    const markerIndex = baseName.indexOf(splitMarker);
+    if (markerIndex > 0) {
+        return baseName.slice(0, markerIndex);
+    }
+
+    return String(fallbackName || '');
+}
+
+async function fetchCharacterChatMessages(char, chatFileName) {
+    const normalizedFileName = normalizeChatFileName(chatFileName);
+    if (!normalizedFileName) {
+        return [];
+    }
+
+    const response = await fetch('/api/chats/get', {
+        method: 'POST',
+        headers: getRequestHeaders(),
+        body: JSON.stringify({
+            ch_name: getChatNameFromFileName(normalizedFileName, char.name),
+            file_name: normalizedFileName,
+            avatar_url: char.avatar,
+        }),
+        cache: 'no-cache',
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to load chat: ${response.status}`);
+    }
+
+    const chat = await response.json();
+    if (!Array.isArray(chat)) {
+        return [];
+    }
+
+    const messages = [...chat];
+    if (messages.length > 0 && messages[0] && Object.prototype.hasOwnProperty.call(messages[0], 'chat_metadata')) {
+        messages.shift();
+    }
+
+    return messages;
+}
+
+function renderLastMessage(text, { noChats = false } = {}) {
+    const $content = $('#acm_last_message_content');
+    $content.empty();
+
+    if (noChats) {
+        $('<div class="acm_tagline_no_data"></div>').text('No chats yet').appendTo($content);
+        return;
+    }
+
+    if (!text) {
+        $('<div class="acm_tagline_no_data"></div>').text('No messages yet').appendTo($content);
+        return;
+    }
+
+    $('<div class="acm_tagline_body"></div>').text(text).appendTo($content);
+}
+
+function isDrawerExpanded(drawerSelector, contentSelector) {
+    const drawer = $(drawerSelector);
+    const content = $(contentSelector);
+    const iconIsUp = drawer.find('>.inline-drawer-header .inline-drawer-icon').hasClass('up');
+    return iconIsUp || content.is(':visible');
+}
+
+export async function loadLastMessageForSelectedCharacter() {
+    if (!selectedChar || !isDrawerExpanded('#last_message_drawer', '#acm_last_message_content')) {
+        return;
+    }
+
+    const charId = getIdByAvatar(selectedChar);
+    const char = characters[charId];
+    if (!char) {
+        return;
+    }
+
+    const avatarKey = char.avatar;
+    const $content = $('#acm_last_message_content');
+    $content.html('<div class="acm_tagline_loader"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>');
+
+    try {
+        const chatCandidates = [];
+        const currentChat = normalizeChatFileName(char.chat);
+        if (currentChat) {
+            chatCandidates.push(currentChat);
+        }
+
+        const chats = await getPastCharacterChats(charId);
+        if (selectedChar !== avatarKey || !isDrawerExpanded('#last_message_drawer', '#acm_last_message_content')) {
+            return;
+        }
+
+        if (Array.isArray(chats) && chats.length > 0) {
+            const latestFromHistory = normalizeChatFileName(chats[0]?.file_name);
+            if (latestFromHistory && !chatCandidates.includes(latestFromHistory)) {
+                chatCandidates.push(latestFromHistory);
+            }
+        }
+
+        if (chatCandidates.length === 0) {
+            renderLastMessage('', { noChats: true });
+            return;
+        }
+
+        let chatMessages = [];
+        for (const candidate of chatCandidates) {
+            try {
+                chatMessages = await fetchCharacterChatMessages(char, candidate);
+                if (Array.isArray(chatMessages) && chatMessages.length > 0) {
+                    break;
+                }
+            } catch {
+                // Try next candidate.
+            }
+        }
+
+        if (selectedChar !== avatarKey || !isDrawerExpanded('#last_message_drawer', '#acm_last_message_content')) {
+            return;
+        }
+
+        renderLastMessage(findLastAgentNonSystemMessage(chatMessages));
+    } catch (error) {
+        console.error('Failed to load last message', error);
+        if (selectedChar === avatarKey && isDrawerExpanded('#last_message_drawer', '#acm_last_message_content')) {
+            renderLastMessage('');
+        }
+    }
 }
 
 /**
@@ -115,7 +294,7 @@ export async function fillDetails(avatar) {
  * @return {Promise<void>}
  */
 export async function loadTaglineForSelectedCharacter() {
-    if (!selectedChar || !$('#tagline_drawer').hasClass('open')) {
+    if (!selectedChar || !isDrawerExpanded('#tagline_drawer', '#acm_tagline_content')) {
         return;
     }
 
@@ -142,7 +321,7 @@ export async function loadTaglineForSelectedCharacter() {
     if (!normalizedPath) {
         const noDataEntry = { projectName: '', tagline: '', noData: true };
         updateTaglineCache(avatarKey, noDataEntry);
-        if (selectedChar === avatarKey && $('#tagline_drawer').hasClass('open')) {
+        if (selectedChar === avatarKey && isDrawerExpanded('#tagline_drawer', '#acm_tagline_content')) {
             renderTagline(noDataEntry);
         }
         return;
@@ -177,7 +356,7 @@ export async function loadTaglineForSelectedCharacter() {
 
     updateTaglineCache(avatarKey, entry);
 
-    if (selectedChar === avatarKey && $('#tagline_drawer').hasClass('open')) {
+    if (selectedChar === avatarKey && isDrawerExpanded('#tagline_drawer', '#acm_tagline_content')) {
         renderTagline(entry);
     }
 }

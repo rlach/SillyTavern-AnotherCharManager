@@ -4,6 +4,7 @@ import {
     selectAndDisplay,
     selectAndDisplayGroup,
     selectRandomCharacter,
+    toggleChatsFilter,
     openSelectedGroupChat,
     updateSearchModeButtonState,
     toggleFavoritesOnly,
@@ -113,6 +114,10 @@ export function initializeToolbarEvents() {
 
     $('#acm_groups_filter_button').on("click", function () {
         toggleGroupsFilter();
+    });
+
+    $('#acm_chats_filter_button').on("click", function () {
+        toggleChatsFilter();
     });
 
     $('#acm_random_button').on("click", async function () {

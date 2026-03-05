@@ -13,6 +13,7 @@ import {
     delAltGreeting,
     duplicateCharacter,
     exportCharacter,
+    loadLastMessageForSelectedCharacter,
     openCharacterChat,
     reimportCharacterTags,
     renameCharacter,
@@ -332,23 +333,24 @@ export function initializeCharactersEvents() {
         delAltGreeting(greetingIndex, inlineDrawer);
     });
 
-    $(document).on('click', '#tagline_header', async function () {
-        const drawer = $('#tagline_drawer');
-        const icon = drawer.find('.idit');
-        const content = $('#acm_tagline_content');
-        const isOpen = drawer.hasClass('open');
-
-        if (isOpen) {
-            drawer.removeClass('open');
-            icon.removeClass('up fa-circle-chevron-up').addClass('down fa-circle-chevron-down');
-            content.stop().slideUp(150);
+    $(document).on('inline-drawer-toggle', '#tagline_drawer', async function () {
+        const drawer = $(this);
+        const isOpening = drawer.find('>.inline-drawer-header .inline-drawer-icon').hasClass('up');
+        if (!isOpening) {
             return;
         }
 
-        drawer.addClass('open');
-        icon.removeClass('down fa-circle-chevron-down').addClass('up fa-circle-chevron-up');
-        content.stop().slideDown(150);
         await loadTaglineForSelectedCharacter();
+    });
+
+    $(document).on('inline-drawer-toggle', '#last_message_drawer', async function () {
+        const drawer = $(this);
+        const isOpening = drawer.find('>.inline-drawer-header .inline-drawer-icon').hasClass('up');
+        if (!isOpening) {
+            return;
+        }
+
+        await loadLastMessageForSelectedCharacter();
     });
 
     const tagListObserver = new MutationObserver(function () {

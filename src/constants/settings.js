@@ -42,6 +42,7 @@ export const defaultSettings = {
     sortingOrder: "asc",
     favOnly: false,
     groupsFilter: 1, // 0 = no groups, 1 = show groups, 2 = only groups
+    chatsFilter: 0, // 0 = all, 1 = with chats only, 2 = without chats only
     dropdownUI: false,
     dropdownMode: "allTags",
     presetId: 0,

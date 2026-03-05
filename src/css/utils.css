@@ -31,3 +31,18 @@
     opacity: 1;
     color: var(--fullgreen);
 }
+
+/* Chats filter button states */
+#acm_chats_filter_button.chats_all {
+    opacity: 1;
+}
+
+#acm_chats_filter_button.chats_with {
+    opacity: 1;
+    color: var(--SmartThemeHighlightColor);
+}
+
+#acm_chats_filter_button.chats_without {
+    opacity: 0.65;
+    color: var(--SmartThemeBodyColor);
+}

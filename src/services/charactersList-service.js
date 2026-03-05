@@ -10,6 +10,40 @@ function getSearchMode() {
     return String(getSetting('searchMode') || 'fuzzy').toLowerCase() === 'exact' ? 'exact' : 'fuzzy';
 }
 
+function matchesChatsFilter(hasChats, chatsFilter) {
+    if (chatsFilter === 1) {
+        return hasChats;
+    }
+
+    if (chatsFilter === 2) {
+        return !hasChats;
+    }
+
+    return true;
+}
+
+function parsePositiveNumber(value) {
+    if (typeof value === 'number') {
+        return Number.isFinite(value) && value > 0;
+    }
+
+    const text = String(value ?? '').trim();
+    if (!text) {
+        return false;
+    }
+
+    const numericValue = Number(text);
+    return Number.isFinite(numericValue) && numericValue > 0;
+}
+
+function characterHasChats(character) {
+    return parsePositiveNumber(character?.chat_size) || parsePositiveNumber(character?.date_last_chat);
+}
+
+function groupHasChats(group) {
+    return parsePositiveNumber(group?.chat_size) || parsePositiveNumber(group?.date_last_chat);
+}
+
 function getCharacterFieldValue(item, field) {
     if (field === 'name') {
         return String(item?.name || '');
@@ -75,6 +109,7 @@ function filterCharactersFuzzy(items, searchField, query) {
  */
 export function searchAndFilter(){
     const groupsFilter = getSetting('groupsFilter'); // 0=no groups, 1=show groups, 2=only groups
+    const chatsFilter = Number(getSetting('chatsFilter') || 0); // 0=all, 1=with chats, 2=without chats
     const searchMode = getSearchMode();
     let results = [];
 
@@ -84,11 +119,13 @@ export function searchAndFilter(){
             ? [...characters].filter(character => character.fav === true || character.data.extensions.fav === true)
             : [...characters];
 
+        const chatsFilteredChars = charactersCopy.filter(character => matchesChatsFilter(characterHasChats(character), chatsFilter));
+
         const excludedTags = $('#acm_excludedTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
         const mandatoryTags = $('#acm_mandatoryTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
         const facultativeTags = $('#acm_facultativeTags > span').map(function() { return $(this).data('tagid'); }).get().filter(id => id);
 
-        let tagfilteredChars = charactersCopy.filter(item => {
+        let tagfilteredChars = chatsFilteredChars.filter(item => {
             const characterTags = tagMap[item.avatar] || [];
 
             if (excludedTags.length > 0) {
@@ -125,7 +162,7 @@ export function searchAndFilter(){
 
     // Handle groups (if show or only)
     if (groupsFilter >= 1) {
-        let filteredGroups = [...groups];
+        let filteredGroups = [...groups].filter(group => matchesChatsFilter(groupHasChats(group), chatsFilter));
 
         // Apply search to groups if needed
         if (searchValue !== '') {
