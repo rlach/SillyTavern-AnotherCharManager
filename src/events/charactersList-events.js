@@ -21,6 +21,19 @@ import { selectedChar } from "../constants/settings.js";
 import { tagList } from "../constants/context.js";
 import { removeTagFromEntity } from "/scripts/tags.js";
 
+let isRandomSelectionInProgress = false;
+
+function setRandomButtonBusyState(isBusy) {
+    const button = document.getElementById('acm_random_button');
+    if (!button) {
+        return;
+    }
+
+    button.classList.toggle('is-busy', isBusy);
+    button.setAttribute('aria-disabled', isBusy ? 'true' : 'false');
+    button.setAttribute('title', isBusy ? 'Random jump in progress...' : 'Random character');
+}
+
 /**
  * Initializes events for the characters list.
  * Sets up a click event listener for elements with the class "char_select",
@@ -121,7 +134,19 @@ export function initializeToolbarEvents() {
     });
 
     $('#acm_random_button').on("click", async function () {
-        await selectRandomCharacter();
+        if (isRandomSelectionInProgress) {
+            return;
+        }
+
+        isRandomSelectionInProgress = true;
+        setRandomButtonBusyState(true);
+
+        try {
+            await selectRandomCharacter();
+        } finally {
+            isRandomSelectionInProgress = false;
+            setRandomButtonBusyState(false);
+        }
     });
 
     $('#acm_trash_button').on("click", function () {

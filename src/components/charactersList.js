@@ -47,6 +47,25 @@ function buildDataSelector(attributeName, value) {
     return `[${attributeName}="${escapeSelectorValue(value)}"]`;
 }
 
+function centerNodeInClassicContainer(targetNode, { block = 'center' } = {}) {
+    const container = document.getElementById('character-list');
+    if (!(container instanceof HTMLElement) || !(targetNode instanceof HTMLElement)) {
+        return false;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = targetNode.getBoundingClientRect();
+    const targetTop = container.scrollTop + (targetRect.top - containerRect.top);
+
+    let nextTop = targetTop;
+    if (block === 'center') {
+        nextTop = targetTop - Math.max(0, (container.clientHeight - targetRect.height) / 2);
+    }
+
+    container.scrollTo({ top: Math.max(0, nextTop), behavior: 'auto' });
+    return true;
+}
+
 function getGroupById(groupId) {
     const normalizedGroupId = String(groupId ?? '').trim();
     if (!normalizedGroupId) {
@@ -164,36 +183,79 @@ function renderGroupDetails(group) {
 }
 
 async function scrollClassicToIndexWithRetry(index, {
-    behavior = 'smooth',
     block = 'center',
-    maxAttempts = 8,
+    maxAttempts = 80,
     targetSelector = null,
 } = {}) {
     if (!classicVirtualScroller || index < 0) {
         return false;
     }
 
+    const resolveTargetNode = () => {
+        if (!targetSelector) {
+            return null;
+        }
+
+        const container = document.getElementById('character-list');
+        if (!container) {
+            return null;
+        }
+
+        return container.querySelector(targetSelector);
+    };
+
+    const didScroll = classicVirtualScroller.scrollToIndex(index, {
+        behavior: 'auto',
+        block,
+    });
+
+    if (!didScroll) {
+        return false;
+    }
+
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        const didScroll = classicVirtualScroller.scrollToIndex(index, {
-            behavior: attempt === 0 ? behavior : 'auto',
-            block,
-        });
+        await waitForNextTick(14);
 
-        if (didScroll) {
-            if (!targetSelector) {
-                return true;
-            }
+        if (!targetSelector) {
+            return true;
+        }
 
-            await waitForNextTick(20 + (attempt * 15));
-            const targetNode = document.querySelector(targetSelector);
-            if (targetNode) {
-                targetNode.scrollIntoView({ block, inline: 'nearest', behavior: 'auto' });
+        const targetNode = resolveTargetNode();
+        if (targetNode) {
+            centerNodeInClassicContainer(targetNode, { block });
+            await waitForNextTick(12);
+
+            // Require a stable presence after positioning to avoid transient false positives.
+            if (resolveTargetNode()) {
                 return true;
             }
         }
 
-        classicVirtualScroller.refreshLayout();
-        await waitForNextTick(30 + (attempt * 20));
+        const renderedRange = classicVirtualScroller.getRenderedRange?.();
+        const viewportHeight = classicVirtualScroller.getViewportHeight?.() || 0;
+        const estimatedRowHeight = classicVirtualScroller.getEstimatedRowHeight?.() || 200;
+        const nudgeStep = Math.max(120, Math.floor(viewportHeight * 0.85), estimatedRowHeight * 2);
+
+        let didNudge = false;
+        if (renderedRange) {
+            const visibleItems = Math.max(1, (renderedRange.lastShownItemIndex - renderedRange.firstShownItemIndex) + 1);
+
+            if (index < renderedRange.firstShownItemIndex) {
+                const itemDistance = renderedRange.firstShownItemIndex - index;
+                const windowDistance = Math.max(1, Math.floor(itemDistance / visibleItems));
+                const adaptiveStep = nudgeStep * Math.min(6, windowDistance);
+                didNudge = classicVirtualScroller.scrollBy?.(-adaptiveStep, { behavior: 'auto' }) === true;
+            } else if (index > renderedRange.lastShownItemIndex) {
+                const itemDistance = index - renderedRange.lastShownItemIndex;
+                const windowDistance = Math.max(1, Math.floor(itemDistance / visibleItems));
+                const adaptiveStep = nudgeStep * Math.min(6, windowDistance);
+                didNudge = classicVirtualScroller.scrollBy?.(adaptiveStep, { behavior: 'auto' }) === true;
+            }
+        }
+
+        if (!didNudge) {
+            classicVirtualScroller.refreshLayout();
+        }
     }
 
     return false;
@@ -324,6 +386,12 @@ function measureClassicCardMetrics(container, sampleItem) {
 function renderCharactersListVirtual(sortedList, preserveScroll = true) {
     const container = document.getElementById('character-list');
     if (!container) {
+        return;
+    }
+
+    // Virtual scroller shouldn't measure while popup is hidden, otherwise it may capture 0-height items.
+    if (container.offsetWidth <= 0 || container.offsetHeight <= 0 || container.getClientRects().length === 0) {
+        lastClassicSortedList = sortedList;
         return;
     }
 
@@ -531,6 +599,57 @@ function renderCharactersListHTML(sortedList) {
     activeBatchHandle = requestIdle(processBatch);
 }
 
+function renderCharactersListImmediate(sortedList) {
+    const container = document.getElementById('character-list');
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+
+    for (const item of (Array.isArray(sortedList) ? sortedList : [])) {
+        if (!item) {
+            continue;
+        }
+
+        const node = item.type === 'group'
+            ? createGroupBlock(item.group, false)
+            : createCharacterBlock(item.avatar, false);
+        fragment.appendChild(node);
+    }
+
+    container.appendChild(fragment);
+    observeRenderedImages(container);
+}
+
+async function forceScrollByFullRender(targetSelector, { block = 'center' } = {}) {
+    if (!targetSelector || !Array.isArray(lastClassicSortedList) || lastClassicSortedList.length === 0) {
+        return false;
+    }
+
+    destroyClassicVirtualScroller();
+
+    if (activeBatchHandle) {
+        cancelIdle(activeBatchHandle);
+        activeBatchHandle = null;
+    }
+
+    renderCharactersListImmediate(lastClassicSortedList);
+    await waitForNextTick(0);
+
+    const targetNode = document.querySelector(targetSelector);
+    if (!(targetNode instanceof HTMLElement)) {
+        return false;
+    }
+
+    const safeBlock = (block === 'start' || block === 'end' || block === 'nearest' || block === 'center')
+        ? block
+        : 'center';
+    targetNode.scrollIntoView({ block: safeBlock, inline: 'nearest', behavior: 'auto' });
+    return true;
+}
+
 /**
  * Selects a character based on the provided avatar identifier and updates the UI to display the character's details.
  * Ensures that any previously selected character is deselected before selecting the new one.
@@ -568,11 +687,15 @@ export async function selectAndDisplay(avatar) {
     if (!currentCard && classicVirtualScroller) {
         const index = lastClassicSortedList.findIndex(item => item?.type !== 'group' && item?.avatar === avatar);
         if (index !== -1) {
-            await scrollClassicToIndexWithRetry(index, {
-                behavior: 'auto',
+            const didReachTarget = await scrollClassicToIndexWithRetry(index, {
                 block: 'center',
                 targetSelector: buildDataSelector('data-avatar', avatar),
             });
+
+            if (!didReachTarget) {
+                await forceScrollByFullRender(buildDataSelector('data-avatar', avatar), { block: 'center' });
+            }
+
             document.querySelector(buildDataSelector('data-avatar', avatar))?.classList.replace('char_select', 'char_selected');
         }
     }
@@ -612,17 +735,21 @@ export async function selectAndDisplayGroup(groupId, { scrollIntoView = true } =
     if (!currentCard && classicVirtualScroller) {
         const index = lastClassicSortedList.findIndex(item => item?.type === 'group' && String(item?.group?.id ?? '') === String(group.id));
         if (index !== -1 && scrollIntoView) {
-            await scrollClassicToIndexWithRetry(index, {
-                behavior: 'auto',
+            const didReachTarget = await scrollClassicToIndexWithRetry(index, {
                 block: 'center',
                 targetSelector: buildDataSelector('data-group-id', group.id),
             });
+
+            if (!didReachTarget) {
+                await forceScrollByFullRender(buildDataSelector('data-group-id', group.id), { block: 'center' });
+            }
+
             currentCard = document.querySelector(buildDataSelector('data-group-id', group.id));
             currentCard?.classList.replace('char_select', 'char_selected');
         }
     }
 
-    if (currentCard && scrollIntoView) {
+    if (currentCard && scrollIntoView && !classicVirtualScroller) {
         currentCard.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
     }
 
@@ -1200,8 +1327,10 @@ export async function selectRandomCharacter() {
         const sortingOrder = getSetting('sortingOrder');
         sortedList = sortCharAR([...filteredChars], sortingField, sortingOrder);
 
-        renderCharactersListVirtual(sortedList, true);
-        randomItem = sortedList[Math.floor(Math.random() * sortedList.length)];
+        const sourceList = (classicVirtualScroller && Array.isArray(lastClassicSortedList) && lastClassicSortedList.length)
+            ? lastClassicSortedList
+            : sortedList;
+        randomItem = sourceList[Math.floor(Math.random() * sourceList.length)];
     }
 
     if (!randomItem) {
@@ -1223,25 +1352,8 @@ export async function selectRandomCharacter() {
     const randomAvatar = randomItem.avatar;
     await selectAndDisplay(randomAvatar);
 
-    if (!dropdownUI && classicVirtualScroller) {
-        const source = sortedList.length ? sortedList : lastClassicSortedList;
-        const index = source.findIndex(item => item?.type !== 'group' && item?.avatar === randomAvatar);
-        if (index !== -1) {
-            await scrollClassicToIndexWithRetry(index, {
-                behavior: 'smooth',
-                block: 'center',
-                targetSelector: buildDataSelector('data-avatar', randomAvatar),
-            });
-            const selectedCard = document.querySelector(`[data-avatar="${randomAvatar}"]`);
-            if (selectedCard) {
-                selectedCard.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
-            }
-            return;
-        }
-    }
-
     const card = document.querySelector(`[data-avatar="${randomAvatar}"]`);
-    if (card) {
+    if (card && !classicVirtualScroller) {
         card.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
     }
 }

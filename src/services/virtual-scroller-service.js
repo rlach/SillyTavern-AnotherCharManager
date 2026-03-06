@@ -24,7 +24,9 @@ export class AcmVirtualScrollerService {
         this.measuredColumnsCount = null;
         this.measuredColumnsContainerWidth = null;
         this.measuredItemOuterWidth = null;
+        this.measuredRowStep = null;
         this.pendingLayoutRefresh = false;
+        this.lastRenderedRange = null;
     }
 
     static WIDTH_CHANGE_INVALIDATION_THRESHOLD_PX = 24;
@@ -43,7 +45,9 @@ export class AcmVirtualScrollerService {
         this.measuredColumnsCount = null;
         this.measuredColumnsContainerWidth = null;
         this.measuredItemOuterWidth = null;
+        this.measuredRowStep = null;
         this.pendingLayoutRefresh = false;
+        this.lastRenderedRange = null;
         if (this.container) {
             this.container.classList.remove('acm-virtual-scroll-container');
             this.container.innerHTML = '';
@@ -94,6 +98,59 @@ export class AcmVirtualScrollerService {
         }
 
         return columns;
+    }
+
+    #measureRenderedItemOuterHeight() {
+        if (!this.itemsContainer) {
+            return null;
+        }
+
+        const sampleNode = this.itemsContainer.querySelector('.card, [data-avatar], [data-group-id]');
+        if (!(sampleNode instanceof HTMLElement)) {
+            return null;
+        }
+
+        const rect = sampleNode.getBoundingClientRect();
+        const style = window.getComputedStyle(sampleNode);
+        const marginY = (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0);
+        const measured = Math.ceil((rect.height || 0) + marginY);
+        return Number.isFinite(measured) && measured > 0 ? measured : null;
+    }
+
+    #measureRenderedRowStep() {
+        if (!this.itemsContainer) {
+            return null;
+        }
+
+        const renderedItems = Array.from(this.itemsContainer.querySelectorAll('.card, [data-avatar], [data-group-id]'));
+        if (renderedItems.length < 2) {
+            return null;
+        }
+
+        const firstTop = renderedItems[0].getBoundingClientRect().top;
+        const tolerancePx = 1;
+
+        for (let index = 1; index < renderedItems.length; index++) {
+            const currentTop = renderedItems[index].getBoundingClientRect().top;
+            const delta = currentTop - firstTop;
+            if (delta > tolerancePx) {
+                return Math.ceil(delta);
+            }
+        }
+
+        return null;
+    }
+
+    #getVerticalGap() {
+        const source = this.itemsContainer || this.container;
+        if (!source) {
+            return 0;
+        }
+
+        const style = window.getComputedStyle(source);
+        const rawGap = style.rowGap || style.gap || '0';
+        const gap = parseFloat(rawGap);
+        return Number.isFinite(gap) && gap > 0 ? gap : 0;
     }
 
     #getHorizontalGap() {
@@ -181,6 +238,52 @@ export class AcmVirtualScrollerService {
         this.measuredColumnsContainerWidth = null;
     }
 
+    getRenderedRange() {
+        if (!this.lastRenderedRange) {
+            return null;
+        }
+
+        return {
+            firstShownItemIndex: this.lastRenderedRange.firstShownItemIndex,
+            lastShownItemIndex: this.lastRenderedRange.lastShownItemIndex,
+            itemsCount: this.lastRenderedRange.itemsCount,
+        };
+    }
+
+    getViewportHeight() {
+        return this.container?.clientHeight || 0;
+    }
+
+    getEstimatedRowHeight() {
+        if (Number.isFinite(this.measuredRowStep) && this.measuredRowStep > 0) {
+            return this.measuredRowStep;
+        }
+
+        const measuredOuterHeight = this.#measureRenderedItemOuterHeight();
+        if (measuredOuterHeight) {
+            return Math.max(1, measuredOuterHeight + this.#getVerticalGap());
+        }
+
+        return Math.max(1, Number(this.estimatedItemHeight) + Number(this.estimatedInterItemVerticalSpacing || 0));
+    }
+
+    scrollBy(deltaY, { behavior = 'auto' } = {}) {
+        if (!this.container) {
+            return false;
+        }
+
+        const currentTop = this.container.scrollTop || 0;
+        const maxTop = Math.max(0, (this.container.scrollHeight || 0) - (this.container.clientHeight || 0));
+        const targetTop = Math.max(0, Math.min(maxTop, currentTop + Number(deltaY || 0)));
+
+        if (Math.abs(targetTop - currentTop) < 1) {
+            return false;
+        }
+
+        this.container.scrollTo({ top: targetTop, behavior });
+        return true;
+    }
+
     scrollToIndex(index, { behavior = 'smooth', block = 'center' } = {}) {
         if (!this.instance || !this.container || !Array.isArray(this.items)) {
             return false;
@@ -190,18 +293,20 @@ export class AcmVirtualScrollerService {
             return false;
         }
 
+        const columnsCount = this.#getColumnsCountForWidth(this.container.offsetWidth || 1);
+        const rowHeight = this.getEstimatedRowHeight();
+        const fallbackTop = Math.floor(index / columnsCount) * rowHeight;
+
         let top = this.instance.getItemScrollPosition(index);
 
         if (typeof top !== 'number' || Number.isNaN(top)) {
-            this.instance.updateLayout();
-            top = this.instance.getItemScrollPosition(index);
-        }
-
-        if (typeof top !== 'number' || Number.isNaN(top)) {
-            const columnsCount = this.#getColumnsCountForWidth(this.container.offsetWidth || 1);
-            const itemRow = Math.floor(index / columnsCount);
-            const rowHeight = Math.max(1, this.estimatedItemHeight + this.estimatedInterItemVerticalSpacing);
-            top = itemRow * rowHeight;
+            top = fallbackTop;
+        } else if (Number.isFinite(this.measuredRowStep) && this.measuredRowStep > 0) {
+            const delta = Math.abs(top - fallbackTop);
+            // If virtual-scroller offset drifts far from measured grid, prefer measured grid.
+            if (delta > (rowHeight * 0.75)) {
+                top = fallbackTop;
+            }
         }
 
         const centerOffset = block === 'center'
@@ -266,14 +371,22 @@ export class AcmVirtualScrollerService {
         this.itemsContainer.style.paddingBottom = `${Math.max(0, Number(afterItemsHeight) || 0)}px`;
 
         if (!Array.isArray(items) || items.length === 0) {
+            this.lastRenderedRange = null;
             this.itemsContainer.replaceChildren();
             return;
         }
 
         if (typeof firstShownItemIndex !== 'number' || typeof lastShownItemIndex !== 'number') {
+            this.lastRenderedRange = null;
             this.itemsContainer.replaceChildren();
             return;
         }
+
+        this.lastRenderedRange = {
+            firstShownItemIndex,
+            lastShownItemIndex,
+            itemsCount: items.length,
+        };
 
         const fragment = document.createDocumentFragment();
 
@@ -313,6 +426,12 @@ export class AcmVirtualScrollerService {
         const latestMeasuredWidth = this.#measureRenderedItemOuterWidth();
         if (latestMeasuredWidth && latestMeasuredWidth !== this.measuredItemOuterWidth) {
             this.measuredItemOuterWidth = latestMeasuredWidth;
+            this.#scheduleLayoutRefresh();
+        }
+
+        const latestMeasuredRowStep = this.#measureRenderedRowStep();
+        if (latestMeasuredRowStep && latestMeasuredRowStep !== this.measuredRowStep) {
+            this.measuredRowStep = latestMeasuredRowStep;
             this.#scheduleLayoutRefresh();
         }
 
