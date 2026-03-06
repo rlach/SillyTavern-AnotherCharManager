@@ -8,7 +8,7 @@ import {
     toggleDropdownMenus
 } from "../components/modal.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
-import { refreshCharListDebounced } from "../components/charactersList.js";
+import { refreshCharListDebounced, refreshClassicVirtualLayout } from "../components/charactersList.js";
 import { manageCustomCategories, printCategoriesList } from "../components/presets.js";
 
 /**
@@ -76,6 +76,7 @@ export function initializeModalEvents() {
         $popup.css('width', newWidth + '%');
         $preview.hide();
         updateSetting('popupWidth', newWidth);
+        refreshClassicVirtualLayout({ invalidateColumns: true });
     });
 
     $('#acm_side_panel_checkbox').on('change', function () {

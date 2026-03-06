@@ -21,7 +21,13 @@ export class AcmVirtualScrollerService {
         this.items = [];
         this.instance = null;
         this.itemsContainer = null;
+        this.measuredColumnsCount = null;
+        this.measuredColumnsContainerWidth = null;
+        this.measuredItemOuterWidth = null;
+        this.pendingLayoutRefresh = false;
     }
+
+    static WIDTH_CHANGE_INVALIDATION_THRESHOLD_PX = 24;
 
     destroy() {
         if (this.instance) {
@@ -34,10 +40,125 @@ export class AcmVirtualScrollerService {
         this.instance = null;
         this.items = [];
         this.itemsContainer = null;
+        this.measuredColumnsCount = null;
+        this.measuredColumnsContainerWidth = null;
+        this.measuredItemOuterWidth = null;
+        this.pendingLayoutRefresh = false;
         if (this.container) {
             this.container.classList.remove('acm-virtual-scroll-container');
             this.container.innerHTML = '';
         }
+    }
+
+    #measureRenderedItemOuterWidth() {
+        if (!this.itemsContainer) {
+            return null;
+        }
+
+        const sampleNode = this.itemsContainer.querySelector('.card, [data-avatar], [data-group-id]');
+        if (!(sampleNode instanceof HTMLElement)) {
+            return null;
+        }
+
+        const rect = sampleNode.getBoundingClientRect();
+        const style = window.getComputedStyle(sampleNode);
+        const marginX = (parseFloat(style.marginLeft) || 0) + (parseFloat(style.marginRight) || 0);
+        const measured = Math.ceil((rect.width || 0) + marginX);
+        return Number.isFinite(measured) && measured > 0 ? measured : null;
+    }
+
+    #measureRenderedColumnsCount() {
+        if (!this.itemsContainer) {
+            return null;
+        }
+
+        const renderedItems = Array.from(this.itemsContainer.querySelectorAll('.card, [data-avatar], [data-group-id]'));
+        if (renderedItems.length === 0) {
+            return null;
+        }
+
+        const firstTop = renderedItems[0].getBoundingClientRect().top;
+        const tolerancePx = 1;
+        let columns = 0;
+
+        for (const node of renderedItems) {
+            const top = node.getBoundingClientRect().top;
+            if (Math.abs(top - firstTop) > tolerancePx) {
+                break;
+            }
+            columns++;
+        }
+
+        if (!Number.isFinite(columns) || columns < 1) {
+            return null;
+        }
+
+        return columns;
+    }
+
+    #getHorizontalGap() {
+        const source = this.itemsContainer || this.container;
+        if (!source) {
+            return 0;
+        }
+
+        const style = window.getComputedStyle(source);
+        const rawGap = style.columnGap || style.gap || '0';
+        const gap = parseFloat(rawGap);
+        return Number.isFinite(gap) && gap > 0 ? gap : 0;
+    }
+
+    #getEffectiveItemOuterWidth() {
+        const measured = this.#measureRenderedItemOuterWidth();
+        if (measured) {
+            this.measuredItemOuterWidth = measured;
+            return measured;
+        }
+
+        if (Number.isFinite(this.measuredItemOuterWidth) && this.measuredItemOuterWidth > 0) {
+            return this.measuredItemOuterWidth;
+        }
+
+        return Math.max(1, Number(this.estimatedItemWidth) || 1);
+    }
+
+    #getColumnsCountForWidth(width) {
+        const safeWidth = Math.max(1, Number(width) || this.container?.offsetWidth || 1);
+        const measuredWidth = Number(this.measuredColumnsContainerWidth) || 0;
+        const widthDelta = measuredWidth > 0 ? Math.abs(measuredWidth - safeWidth) : 0;
+
+        if (
+            Number.isFinite(this.measuredColumnsCount)
+            && this.measuredColumnsCount > 0
+            && measuredWidth > 0
+            && widthDelta > AcmVirtualScrollerService.WIDTH_CHANGE_INVALIDATION_THRESHOLD_PX
+        ) {
+            this.invalidateColumnMeasurements();
+        }
+
+        if (
+            Number.isFinite(this.measuredColumnsCount)
+            && this.measuredColumnsCount > 0
+        ) {
+            return this.measuredColumnsCount;
+        }
+
+        const itemOuterWidth = this.#getEffectiveItemOuterWidth();
+        const horizontalGap = this.#getHorizontalGap();
+        const step = Math.max(1, itemOuterWidth + horizontalGap);
+        return Math.max(1, Math.floor((safeWidth + horizontalGap) / step));
+    }
+
+    #scheduleLayoutRefresh() {
+        if (!this.instance || this.pendingLayoutRefresh) {
+            return;
+        }
+
+        this.pendingLayoutRefresh = true;
+        requestAnimationFrame(() => {
+            this.pendingLayoutRefresh = false;
+            this.instance?.updateLayout();
+        });
     }
 
     setItems(items, preserveScroll = false) {
@@ -55,6 +176,11 @@ export class AcmVirtualScrollerService {
         this.instance?.updateLayout();
     }
 
+    invalidateColumnMeasurements() {
+        this.measuredColumnsCount = null;
+        this.measuredColumnsContainerWidth = null;
+    }
+
     scrollToIndex(index, { behavior = 'smooth', block = 'center' } = {}) {
         if (!this.instance || !this.container || !Array.isArray(this.items)) {
             return false;
@@ -64,11 +190,15 @@ export class AcmVirtualScrollerService {
             return false;
         }
 
-        const item = this.items[index];
-        let top = this.instance.getItemScrollPosition(item);
+        let top = this.instance.getItemScrollPosition(index);
 
         if (typeof top !== 'number' || Number.isNaN(top)) {
-            const columnsCount = Math.max(1, Math.floor((this.container.clientWidth || 1) / Math.max(1, this.estimatedItemWidth)));
+            this.instance.updateLayout();
+            top = this.instance.getItemScrollPosition(index);
+        }
+
+        if (typeof top !== 'number' || Number.isNaN(top)) {
+            const columnsCount = this.#getColumnsCountForWidth(this.container.offsetWidth || 1);
             const itemRow = Math.floor(index / columnsCount);
             const rowHeight = Math.max(1, this.estimatedItemHeight + this.estimatedInterItemVerticalSpacing);
             top = itemRow * rowHeight;
@@ -109,7 +239,7 @@ export class AcmVirtualScrollerService {
                 },
                 getColumnsCount: ({ getWidth }) => {
                     const width = Number(getWidth?.()) || this.container.clientWidth || 1;
-                    return Math.max(1, Math.floor(width / this.estimatedItemWidth));
+                    return this.#getColumnsCountForWidth(width);
                 },
                 measureItemsBatchSize: 150,
                 render: (state) => this.#render(state),
@@ -146,6 +276,7 @@ export class AcmVirtualScrollerService {
         }
 
         const fragment = document.createDocumentFragment();
+
         for (let index = firstShownItemIndex; index <= lastShownItemIndex; index++) {
             const item = items[index];
             if (!item) {
@@ -159,6 +290,32 @@ export class AcmVirtualScrollerService {
         }
 
         this.itemsContainer.replaceChildren(fragment);
+
+        const latestMeasuredColumns = this.#measureRenderedColumnsCount();
+        const renderedCount = Math.max(0, (lastShownItemIndex - firstShownItemIndex) + 1);
+        const hasItemsBelowViewport = lastShownItemIndex < (items.length - 1);
+        const isPotentiallyPartialSingleRowAtEnd = !hasItemsBelowViewport && renderedCount <= latestMeasuredColumns;
+
+        if (
+            latestMeasuredColumns
+            && !isPotentiallyPartialSingleRowAtEnd
+            && latestMeasuredColumns !== this.measuredColumnsCount
+        ) {
+            this.measuredColumnsCount = latestMeasuredColumns;
+            this.measuredColumnsContainerWidth = this.container?.offsetWidth || null;
+            this.#scheduleLayoutRefresh();
+        }
+
+        if (latestMeasuredColumns) {
+            this.measuredColumnsContainerWidth = this.container?.offsetWidth || this.measuredColumnsContainerWidth;
+        }
+
+        const latestMeasuredWidth = this.#measureRenderedItemOuterWidth();
+        if (latestMeasuredWidth && latestMeasuredWidth !== this.measuredItemOuterWidth) {
+            this.measuredItemOuterWidth = latestMeasuredWidth;
+            this.#scheduleLayoutRefresh();
+        }
+
         this.onRendered?.(state, this.itemsContainer);
     }
 }

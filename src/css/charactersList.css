@@ -38,6 +38,8 @@
     height: auto !important;
     max-height: none !important;
     flex-grow: 0;
+    justify-content: flex-start;
+    align-content: flex-start;
     contain: layout paint style;
 }
 

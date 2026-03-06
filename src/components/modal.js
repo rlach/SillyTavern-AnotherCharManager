@@ -16,7 +16,7 @@ import { characterId, characters, menuType, renderExtensionTemplateAsync } from 
 import { getSetting } from "../services/settings-service.js";
 import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '/script.js';
-import { updateChatsFilterButtonState, updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState, updateSearchModeButtonState } from "./charactersList.js";
+import { refreshClassicVirtualLayout, updateChatsFilterButtonState, updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState, updateSearchModeButtonState } from "./charactersList.js";
 import { updateLayout } from "./characterCreation.js";
 
 /**
@@ -181,6 +181,11 @@ export function applySidePanelMode(enabled) {
 
     const hasSelection = Boolean(selectedChar || selectedGroupId);
     wrapper.classList.toggle('acm-no-selection', !hasSelection);
+
+    // Layout settles over multiple frames because mode switch changes flex structure.
+    requestAnimationFrame(() => refreshClassicVirtualLayout({ invalidateColumns: true }));
+    setTimeout(() => refreshClassicVirtualLayout({ invalidateColumns: true }), 90);
+    setTimeout(() => refreshClassicVirtualLayout({ invalidateColumns: true }), 220);
 }
 
 /**
