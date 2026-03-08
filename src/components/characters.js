@@ -1,8 +1,11 @@
 import {
     depth_prompt_depth_default,
+    doNewChat,
     depth_prompt_role_default,
     getPastCharacterChats,
+    messageFormatting,
     setCharacterId,
+    swipe,
     system_message_types,
     talkativeness_default
 } from '/script.js';
@@ -34,8 +37,798 @@ import {
 } from "../services/characters-service.js";
 import { addAltGreetingsTrigger } from "../events/characters-events.js";
 import { closeDetails } from "./modal.js";
-import { applyCreatorNotesDisplay } from "../services/creator-notes-css.js";
+import { applyCreatorNotesDisplay, renderFormattedNotes } from "../services/creator-notes-css.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
+
+// ===== TABS SYSTEM STATE =====
+let currentActiveTab = 'description';
+let currentSelectedGreeting = 'default';
+let currentAltGreetings = [];
+let hasLoadedTagline = false;
+let hasLoadedLastMessage = false;
+let currentLastMessageText = '';
+let currentTaglineEntry = null;
+let descriptionEditMode = true;
+let greetingsEditMode = true;
+
+/**
+ * Auto-resizes a textarea to fit its content without scrollbars.
+ * @param {HTMLElement} element - The element to resize if it's a textarea
+ */
+function autoResizeTextarea(element) {
+    if (!(element instanceof HTMLTextAreaElement)) return;
+
+    const textarea = element;
+
+    // Save current scroll position of parent
+    const parent = textarea.closest('.acm-details-content-wrapper');
+    const scrollTop = parent ? parent.scrollTop : 0;
+
+    // Reset first so wrapping recalculates against current width.
+    textarea.style.height = '0px';
+    textarea.offsetHeight;
+
+    const computed = window.getComputedStyle(textarea);
+    const lineHeight = Number.parseFloat(computed.lineHeight) || 18;
+    const safety = Math.ceil(lineHeight * 2);
+
+    // First pass.
+    let targetHeight = Math.max(100, textarea.scrollHeight + safety);
+    textarea.style.height = `${targetHeight}px`;
+
+    // Ensure there is never hidden textarea content (single outer scroll only).
+    // Repeat a few times because font/layout transitions can shift metrics.
+    for (let i = 0; i < 4; i++) {
+        const hidden = textarea.scrollHeight - textarea.clientHeight;
+        if (hidden <= 1) break;
+        targetHeight += hidden + safety;
+        textarea.style.height = `${targetHeight}px`;
+    }
+
+    // Restore scroll position
+    if (parent) {
+        parent.scrollTop = scrollTop;
+    }
+}
+
+function scheduleTextareaResize(tabName) {
+    const resizeForTab = () => {
+        $(`.acm-tab-content[data-tab-content="${tabName}"] textarea`).each(function() {
+            autoResizeTextarea(this);
+        });
+    };
+
+    // Run multiple passes because panel/layout transitions can affect scrollHeight.
+    setTimeout(resizeForTab, 0);
+    setTimeout(resizeForTab, 80);
+    setTimeout(resizeForTab, 220);
+    setTimeout(resizeForTab, 420);
+    setTimeout(resizeForTab, 900);
+    setTimeout(resizeForTab, 1400);
+}
+
+/**
+ * Updates the top-bar token counter for the currently active tab.
+ * @param {string} tabName - Active tab key
+ */
+async function updateTopBarTokenCount(tabName) {
+    const $counter = $('#acm_firstMess_tokens');
+    if (!$counter.length || !selectedChar) {
+        return;
+    }
+
+    const char = characters[getIdByAvatar(selectedChar)];
+    if (!char) {
+        $counter.text('');
+        return;
+    }
+
+    let content = '';
+
+    if (tabName === 'description') {
+        content = String($('#acm_description').val() || char.description || '');
+    } else if (tabName === 'greetings') {
+        if (currentSelectedGreeting === 'default') {
+            content = String($('#acm_firstMess').val() || char.first_mes || '');
+        } else {
+            const greetingIndex = Number.parseInt(currentSelectedGreeting, 10);
+            const altGreetings = char.data.alternate_greetings || [];
+            content = String($('#acm_firstMess').val() || altGreetings[greetingIndex] || '');
+        }
+    } else if (tabName === 'tagline_creator') {
+        content = String($('#acm_creatornotes').val() || char.data?.creator_notes || char.creatorcomment || '');
+    } else {
+        $counter.text('');
+        return;
+    }
+
+    const count = await getTokenCountAsync(substituteParams(content));
+    $counter.text(`Tokens: ${count}`);
+}
+
+function getFullscreenTargetForTab(tabName) {
+    if (tabName === 'description') return 'acm_description';
+    if (tabName === 'greetings') return 'acm_firstMess';
+    if (tabName === 'tagline_creator') return 'acm_tagline_creator_fullscreen_proxy';
+    if (tabName === 'lastmessage') return 'acm_lastmessage_fullscreen_proxy';
+    return 'acm_description';
+}
+
+function setLastMessageProxy(text) {
+    const value = String(text || '');
+    currentLastMessageText = value;
+    $('#acm_lastmessage_fullscreen_proxy').val(value);
+}
+
+function buildTaglineCreatorFullscreenText() {
+    const notesText = String($('#acm_creatornotes').val() || '').trim();
+    const hasTaglineData = Boolean(currentTaglineEntry) && !currentTaglineEntry?.noData;
+    const taglineHeader = hasTaglineData ? String(currentTaglineEntry?.projectName || '').trim() : '';
+    const taglineBody = hasTaglineData ? String(currentTaglineEntry?.tagline || '').trim() : '';
+
+    const taglineText = taglineHeader
+        ? `${taglineHeader}\n${taglineBody || 'No data'}`
+        : (taglineBody || 'No data');
+
+    return `Tagline:\n${taglineText}\n\nCreator's Notes:\n${notesText || 'No data'}`;
+}
+
+function updateTaglineCreatorFullscreenProxy() {
+    $('#acm_tagline_creator_fullscreen_proxy').val(buildTaglineCreatorFullscreenText());
+}
+
+function getSelectedCharacterName() {
+    if (!selectedChar) return '';
+    const char = characters[getIdByAvatar(selectedChar)];
+    return String(char?.name || '');
+}
+
+function clampImagesInContainer(container) {
+    if (!container) {
+        return;
+    }
+
+    const root = container instanceof HTMLElement ? container : $(container)[0];
+    if (!root) {
+        return;
+    }
+
+    root.querySelectorAll('img').forEach((img) => {
+        const inlinePosition = String(img.style.position || '').trim().toLowerCase();
+        if (inlinePosition === 'fixed') {
+            return;
+        }
+
+        const computedPosition = String(window.getComputedStyle(img).position || '').trim().toLowerCase();
+        if (computedPosition === 'fixed') {
+            return;
+        }
+
+        img.style.setProperty('max-width', '100%', 'important');
+    });
+}
+
+function getGreetingEntriesForSelectedCharacter() {
+    if (!selectedChar) {
+        return [{ value: 'default', label: 'Default greeting', text: '' }];
+    }
+
+    const char = characters[getIdByAvatar(selectedChar)];
+    if (!char) {
+        return [{ value: 'default', label: 'Default greeting', text: '' }];
+    }
+
+    const altGreetings = Array.isArray(char.data?.alternate_greetings) ? char.data.alternate_greetings : [];
+    const entries = [{
+        value: 'default',
+        label: 'Default greeting',
+        text: String(char.first_mes || ''),
+    }];
+
+    altGreetings.forEach((greeting, index) => {
+        entries.push({
+            value: String(index),
+            label: `Alt Greeting #${index + 1}`,
+            text: String(greeting || ''),
+        });
+    });
+
+    return entries;
+}
+
+function syncGreetingSelection(value) {
+    const normalized = value === 'default' ? 'default' : String(value);
+    $('#acm_greeting_selector').val(normalized);
+    currentSelectedGreeting = normalized;
+    handleGreetingSelectionChange();
+}
+
+function bindFullscreenGreetingNavigation({ prevButtonId, nextButtonId, titleId, bodyId }) {
+    const prevButton = document.getElementById(prevButtonId);
+    const nextButton = document.getElementById(nextButtonId);
+    const titleElement = document.getElementById(titleId);
+    const bodyElement = document.getElementById(bodyId);
+
+    if (!(prevButton instanceof HTMLButtonElement) || !(nextButton instanceof HTMLButtonElement) || !titleElement || !bodyElement) {
+        return;
+    }
+
+    const entries = getGreetingEntriesForSelectedCharacter();
+    const selected = String(currentSelectedGreeting || 'default');
+    let currentIndex = entries.findIndex((entry) => entry.value === selected);
+    if (currentIndex < 0) {
+        currentIndex = 0;
+    }
+
+    const updateHeaderButtonsState = () => {
+        const disabled = entries.length <= 1;
+        prevButton.disabled = disabled;
+        nextButton.disabled = disabled;
+        prevButton.classList.toggle('disabled', disabled);
+        nextButton.classList.toggle('disabled', disabled);
+    };
+
+    const renderCurrentGreeting = () => {
+        const entry = entries[currentIndex] || entries[0];
+        if (!entry) {
+            return;
+        }
+
+        syncGreetingSelection(entry.value);
+        titleElement.textContent = entry.label;
+        bodyElement.innerHTML = $('#acm_firstMess_preview').html() || '<div class="acm_tagline_no_data">No data</div>';
+        clampImagesInContainer(bodyElement);
+        updateHeaderButtonsState();
+    };
+
+    prevButton.addEventListener('click', () => {
+        if (entries.length <= 1) {
+            return;
+        }
+        currentIndex = (currentIndex - 1 + entries.length) % entries.length;
+        renderCurrentGreeting();
+    });
+
+    nextButton.addEventListener('click', () => {
+        if (entries.length <= 1) {
+            return;
+        }
+        currentIndex = (currentIndex + 1) % entries.length;
+        renderCurrentGreeting();
+    });
+
+    const keyHandler = (event) => {
+        const target = event.target;
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target?.isContentEditable) {
+            return;
+        }
+
+        if (event.key === 'ArrowLeft') {
+            event.preventDefault();
+            prevButton.click();
+        } else if (event.key === 'ArrowRight') {
+            event.preventDefault();
+            nextButton.click();
+        }
+    };
+
+    document.addEventListener('keydown', keyHandler);
+
+    renderCurrentGreeting();
+
+    return () => {
+        document.removeEventListener('keydown', keyHandler);
+    };
+}
+
+function renderMessageLikeChat(rawText, $container, emptyText = 'No data') {
+    const text = String(rawText || '').trim();
+    if (!text) {
+        $container.html(`<div class="acm_tagline_no_data">${emptyText}</div>`).show();
+        return;
+    }
+
+    const formatted = messageFormatting(text, getSelectedCharacterName(), false, false, 0);
+    $container.html(`
+        <div class="mes acm-chat-preview-message">
+            <div class="mes_block">
+                <div class="mes_text">${formatted}</div>
+            </div>
+        </div>
+    `).show();
+    clampImagesInContainer($container[0]);
+}
+
+function renderDescriptionPreview() {
+    const text = String($('#acm_description').val() || '');
+    const $preview = $('#acm_description_preview');
+    renderFormattedNotes(text, $preview, selectedChar || '');
+    clampImagesInContainer($preview[0]);
+}
+
+function renderGreetingsPreview() {
+    const text = String($('#acm_firstMess').val() || '');
+    renderMessageLikeChat(text, $('#acm_firstMess_preview'));
+}
+
+function applyTabEditModeUi() {
+    const $toggle = $('#acm_tab_edit_toggle');
+    if (!$toggle.length) {
+        return;
+    }
+
+    const setToggleState = (enabled) => {
+        $toggle.attr('aria-pressed', enabled ? 'true' : 'false');
+        $toggle.attr('title', enabled ? 'Edit mode: ON' : 'Edit mode: OFF');
+        $toggle.toggleClass('active', enabled);
+    };
+
+    if (currentActiveTab === 'description') {
+        $toggle.css('display', 'inline-flex');
+        setToggleState(descriptionEditMode);
+        $('#acm_description').closest('label').toggle(descriptionEditMode);
+        if (!descriptionEditMode) {
+            renderDescriptionPreview();
+        }
+        $('#acm_description_preview').toggle(!descriptionEditMode);
+        return;
+    }
+
+    if (currentActiveTab === 'greetings') {
+        $toggle.css('display', 'inline-flex');
+        setToggleState(greetingsEditMode);
+        $('#acm_firstMess').closest('label').toggle(greetingsEditMode);
+        if (!greetingsEditMode) {
+            renderGreetingsPreview();
+        }
+        $('#acm_firstMess_preview').toggle(!greetingsEditMode);
+        return;
+    }
+
+    $toggle.hide();
+}
+
+function shouldOpenParsedFullscreen() {
+    if (currentActiveTab === 'tagline_creator' || currentActiveTab === 'lastmessage') return true;
+    if (currentActiveTab === 'greetings' && !greetingsEditMode) return true;
+    if (currentActiveTab === 'description' && !descriptionEditMode) return true;
+    return false;
+}
+
+async function openParsedFullscreenForTab() {
+    let title = '';
+    let htmlContent = '';
+    let showDefaultHeading = true;
+    let onOpen = null;
+    let onClose = null;
+
+    if (currentActiveTab === 'tagline_creator') {
+        title = 'Tagline + Creator\'s Notes';
+        const taglineHtml = $('#acm_tagline_content').html() || '<div class="acm_tagline_no_data">No data</div>';
+        const notesHtml = $('#acm_creatornotes_display').html() || '<div class="acm_tagline_no_data">No data</div>';
+        htmlContent = `<h4>Tagline</h4>${taglineHtml}<h4>Creator's Notes</h4>${notesHtml}`;
+    } else if (currentActiveTab === 'lastmessage') {
+        title = 'Last message';
+        const body = $('#acm_last_message_content').html() || '<div class="acm_tagline_no_data">No messages yet</div>';
+        htmlContent = `${body}`;
+    } else if (currentActiveTab === 'greetings' && !greetingsEditMode) {
+        title = 'Greeting';
+        showDefaultHeading = false;
+
+        const popupId = `acm_fs_greeting_${Date.now()}`;
+        const prevButtonId = `${popupId}_prev`;
+        const nextButtonId = `${popupId}_next`;
+        const titleId = `${popupId}_title`;
+        const bodyId = `${popupId}_body`;
+
+        htmlContent = `
+            <div class="acm-fullscreen-greeting-header" id="${popupId}">
+                <button id="${prevButtonId}" class="menu_button acm-fullscreen-greeting-nav" type="button" title="Previous greeting">&lt;</button>
+                <h4 id="${titleId}" class="acm-fullscreen-greeting-title">Default greeting</h4>
+                <button id="${nextButtonId}" class="menu_button acm-fullscreen-greeting-nav" type="button" title="Next greeting">&gt;</button>
+            </div>
+            <div id="${bodyId}" class="acm-fullscreen-greeting-body"></div>
+        `;
+
+        let cleanupNavigation = null;
+        onOpen = () => {
+            cleanupNavigation = bindFullscreenGreetingNavigation({ prevButtonId, nextButtonId, titleId, bodyId });
+        };
+
+        onClose = () => {
+            if (typeof cleanupNavigation === 'function') {
+                cleanupNavigation();
+            }
+        };
+    } else if (currentActiveTab === 'description' && !descriptionEditMode) {
+        title = 'Description';
+        const body = $('#acm_description_preview').html() || '<div class="acm_tagline_no_data">No data</div>';
+        htmlContent = `${body}`;
+    }
+
+    if (!title || !htmlContent) {
+        return false;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'acm-fullscreen-html';
+    wrapper.innerHTML = showDefaultHeading ? `<h4>${title}</h4>${htmlContent}` : htmlContent;
+    clampImagesInContainer(wrapper);
+
+    await callGenericPopup(wrapper.outerHTML, POPUP_TYPE.DISPLAY, '', {
+        wide: true,
+        wider: true,
+        large: true,
+        allowVerticalScrolling: true,
+        onOpen,
+        onClose,
+    });
+    return true;
+}
+
+function updateTopBarFullscreenTarget(tabName) {
+    const targetId = getFullscreenTargetForTab(tabName);
+    $('#acm_tab_fullscreen').attr('data-for', targetId);
+
+    if (tabName === 'lastmessage') {
+        const fallbackText = $('#acm_last_message_content').text();
+        if (!currentLastMessageText && fallbackText) {
+            setLastMessageProxy(fallbackText);
+        }
+    }
+}
+
+/**
+ * Switches to a different tab in the character details panel.
+ * @param {string} tabName - The name of the tab to switch to ('description', 'greetings', 'tagline_creator', 'lastmessage')
+ */
+function switchTab(tabName) {
+    // Update active tab state
+    currentActiveTab = tabName;
+    
+    // Save to localStorage for persistence
+    try {
+        localStorage.setItem('acm_active_tab', tabName);
+    } catch (e) {
+        console.warn('Failed to save active tab to localStorage', e);
+    }
+
+    // Update tab buttons
+    $('.acm-tab-button').removeClass('active');
+    $(`.acm-tab-button[data-tab="${tabName}"]`).addClass('active');
+
+    // Update tab content
+    $('.acm-tab-content').removeClass('active');
+    $(`.acm-tab-content[data-tab-content="${tabName}"]`).addClass('active');
+
+    // Show/hide greeting controls (the bar stays visible)
+    if (tabName === 'greetings') {
+        $('.acm-greetings-controls').css('display', 'flex');
+    } else {
+        $('.acm-greetings-controls').hide();
+    }
+
+    applyTabEditModeUi();
+
+    // Scroll content to top
+    const contentWrapper = $('.acm-details-content-wrapper')[0];
+    if (contentWrapper) {
+        contentWrapper.scrollTop = 0;
+    }
+
+    // Auto-resize textareas in the active tab
+    scheduleTextareaResize(tabName);
+
+    updateTaglineCreatorFullscreenProxy();
+    updateTopBarTokenCount(tabName);
+    updateTopBarFullscreenTarget(tabName);
+
+    // Lazy load content for certain tabs
+    if (tabName === 'tagline_creator' && !hasLoadedTagline) {
+        hasLoadedTagline = true;
+        loadTaglineForSelectedCharacter();
+    }
+
+    if (tabName === 'lastmessage' && !hasLoadedLastMessage) {
+        hasLoadedLastMessage = true;
+        loadLastMessageForSelectedCharacter();
+    }
+}
+
+/**
+ * Builds greeting options for the dropdown selector.
+ * @param {Array} altGreetings - Array of alternate greetings
+ * @returns {string} HTML string with option elements
+ */
+function buildGreetingsDropdownOptions(altGreetings) {
+    let options = '<option value="default">Default Greeting</option>';
+    
+    if (Array.isArray(altGreetings)) {
+        altGreetings.forEach((greeting, index) => {
+            options += `<option value="${index}">Alt Greeting #${index + 1}</option>`;
+        });
+    }
+    
+    return options;
+}
+
+/**
+ * Handles greeting selection change from the dropdown.
+ */
+function handleGreetingSelectionChange() {
+    const selectedValue = String($('#acm_greeting_selector').val());
+    currentSelectedGreeting = selectedValue;
+    
+    const char = characters[getIdByAvatar(selectedChar)];
+    if (!char) return;
+
+    // Load the appropriate greeting into the textarea
+    if (selectedValue === 'default') {
+        $('#acm_firstMess').val(char.first_mes || '');
+    } else {
+        const greetingIndex = parseInt(selectedValue, 10);
+        const altGreetings = char.data.alternate_greetings || [];
+        $('#acm_firstMess').val(altGreetings[greetingIndex] || '');
+    }
+
+    // Update delete button state
+    updateGreetingDeleteButtonState(selectedValue);
+
+    // Auto-resize textarea
+    setTimeout(() => autoResizeTextarea($('#acm_firstMess')[0]), 0);
+
+    if (!greetingsEditMode) {
+        renderGreetingsPreview();
+    }
+
+    // Scroll to top
+    const contentWrapper = $('.acm-details-content-wrapper')[0];
+    if (contentWrapper) {
+        contentWrapper.scrollTop = 0;
+    }
+
+    updateTopBarTokenCount('greetings');
+}
+
+/**
+ * Handles adding a new greeting.
+ */
+async function handleGreetingAdd() {
+    const char = characters[getIdByAvatar(selectedChar)];
+    if (!char) return;
+
+    // Add new empty greeting
+    if (!Array.isArray(char.data.alternate_greetings)) {
+        char.data.alternate_greetings = [];
+    }
+
+    const newGreetingText = '';
+    char.data.alternate_greetings.push(newGreetingText);
+    
+    // Save the changes
+    await saveAltGreetings(char.avatar, char.name);
+
+    // Update dropdown
+    const newIndex = char.data.alternate_greetings.length - 1;
+    $('#acm_greeting_selector').html(buildGreetingsDropdownOptions(char.data.alternate_greetings));
+    $('#acm_greeting_selector').val(newIndex.toString());
+    
+    // Load the new greeting
+    currentSelectedGreeting = newIndex.toString();
+    $('#acm_firstMess').val(newGreetingText);
+    updateGreetingDeleteButtonState(currentSelectedGreeting);
+    setTimeout(() => autoResizeTextarea($('#acm_firstMess')[0]), 0);
+    updateTopBarTokenCount('greetings');
+
+    // Update the greeting number display (legacy support for alt greetings drawer)
+    $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings.length}`);
+    
+    // Focus the textarea
+    $('#acm_firstMess').focus();
+
+    toastr.success('New greeting added');
+}
+
+/**
+ * Handles deleting the currently selected greeting.
+ */
+async function handleGreetingDelete() {
+    const selectedValue = String($('#acm_greeting_selector').val());
+    
+    // Can't delete default greeting
+    if (selectedValue === 'default') return;
+
+    const char = characters[getIdByAvatar(selectedChar)];
+    if (!char) return;
+
+    const greetingIndex = parseInt(selectedValue, 10);
+    const altGreetings = char.data.alternate_greetings || [];
+
+    if (greetingIndex < 0 || greetingIndex >= altGreetings.length) return;
+
+    // Confirm deletion
+    const confirmed = await callGenericPopup('Delete this greeting?', POPUP_TYPE.CONFIRM);
+    if (!confirmed) return;
+
+    // Remove the greeting
+    altGreetings.splice(greetingIndex, 1);
+    char.data.alternate_greetings = altGreetings;
+
+    // Save the changes
+    await saveAltGreetings(char.avatar, char.name);
+
+    // Update dropdown
+    $('#acm_greeting_selector').html(buildGreetingsDropdownOptions(char.data.alternate_greetings));
+
+    // Select previous greeting or default
+    let newSelection = 'default';
+    if (greetingIndex > 0) {
+        newSelection = (greetingIndex - 1).toString();
+    }
+    
+    $('#acm_greeting_selector').val(newSelection);
+    currentSelectedGreeting = newSelection;
+
+    // Load the selected greeting
+    handleGreetingSelectionChange();
+
+    // Update the greeting number display
+    $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings.length}`);
+
+    toastr.success('Greeting deleted');
+}
+
+/**
+ * Updates the delete button state based on the selected greeting.
+ * @param {string} selectedValue - The selected greeting value ('default' or index)
+ */
+function updateGreetingDeleteButtonState(selectedValue) {
+    const deleteButton = $('#acm_greeting_delete');
+    if (selectedValue === 'default') {
+        deleteButton.prop('disabled', true);
+    } else {
+        deleteButton.prop('disabled', false);
+    }
+}
+
+function closeDetailsPopupWithFade() {
+    closeDetails(false);
+
+    $('#acm_shadow_popup').transition({
+        opacity: 0,
+        duration: 125,
+        easing: 'ease-in-out',
+    });
+    setTimeout(function () {
+        $('#acm_shadow_popup').css('display', 'none');
+        $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
+    }, 125);
+}
+
+async function handleGreetingStartNewChat() {
+    if (!selectedChar) {
+        return;
+    }
+
+    const charId = Number(getIdByAvatar(selectedChar));
+    if (Number.isNaN(charId) || !characters[charId]) {
+        toastr.warning('Cannot resolve selected character');
+        return;
+    }
+
+    const selectedValue = String($('#acm_greeting_selector').val() ?? currentSelectedGreeting ?? 'default');
+    const selectedAltIndex = selectedValue === 'default' ? -1 : Number.parseInt(selectedValue, 10);
+    const targetSwipeId = selectedAltIndex >= 0 ? selectedAltIndex + 1 : 0;
+
+    try {
+        await selectCharacterById(charId, { switchMenu: false });
+        await doNewChat({ deleteCurrentChat: false });
+
+        await swipe(null, 'right', {
+            forceMesId: 0,
+            forceSwipeId: targetSwipeId,
+            source: 'slash_command',
+        });
+
+        closeDetailsPopupWithFade();
+        toastr.success('Started new chat with selected greeting');
+    } catch (error) {
+        console.error('Failed to start new chat with selected greeting', error);
+        toastr.error('Failed to start new chat with selected greeting');
+    }
+}
+
+/**
+ * Initializes the tabs system event handlers.
+ */
+export function initializeTabs() {
+    descriptionEditMode = getSetting('descriptionEditMode') !== false;
+    greetingsEditMode = getSetting('greetingsEditMode') !== false;
+
+    // Restore last active tab from localStorage
+    try {
+        const savedTab = localStorage.getItem('acm_active_tab');
+        if (savedTab && ['description', 'greetings', 'tagline_creator', 'lastmessage'].includes(savedTab)) {
+            currentActiveTab = savedTab;
+        }
+    } catch (e) {
+        console.warn('Failed to load active tab from localStorage', e);
+    }
+
+    // Tab button clicks
+    $(document).on('click', '.acm-tab-button:not(.disabled)', function() {
+        const tabName = $(this).data('tab');
+        switchTab(tabName);
+    });
+
+    // Greeting dropdown change
+    $(document).on('change', '#acm_greeting_selector', handleGreetingSelectionChange);
+
+    // Greeting add button
+    $(document).on('click', '#acm_greeting_add', handleGreetingAdd);
+
+    // Greeting delete button
+    $(document).on('click', '#acm_greeting_delete', handleGreetingDelete);
+
+    // Greeting new chat button
+    $(document).on('click', '#acm_greeting_new_chat', handleGreetingStartNewChat);
+
+    // Fullscreen button with parsed preview fallback for non-edit views
+    $(document).on('click', '#acm_tab_fullscreen', async function (event) {
+        if (!shouldOpenParsedFullscreen()) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        await openParsedFullscreenForTab();
+    });
+
+    // Shared edit toggle (Description/Greetings only)
+    $(document).on('click', '#acm_tab_edit_toggle', function () {
+        if (currentActiveTab === 'description') {
+            descriptionEditMode = !descriptionEditMode;
+            updateSetting('descriptionEditMode', descriptionEditMode);
+            applyTabEditModeUi();
+            if (descriptionEditMode) {
+                setTimeout(() => autoResizeTextarea($('#acm_description')[0]), 0);
+            }
+        } else if (currentActiveTab === 'greetings') {
+            greetingsEditMode = !greetingsEditMode;
+            updateSetting('greetingsEditMode', greetingsEditMode);
+            applyTabEditModeUi();
+            if (greetingsEditMode) {
+                setTimeout(() => autoResizeTextarea($('#acm_firstMess')[0]), 0);
+            }
+        }
+    });
+
+    // Auto-resize textareas on input
+    $(document).on('input', '.acm-tab-content textarea', function() {
+        autoResizeTextarea(this);
+        if (this.id === 'acm_description' && !descriptionEditMode) {
+            renderDescriptionPreview();
+        }
+        if (this.id === 'acm_firstMess' && !greetingsEditMode) {
+            renderGreetingsPreview();
+        }
+        if (this.id === 'acm_creatornotes') {
+            updateTaglineCreatorFullscreenProxy();
+        }
+        updateTopBarTokenCount(currentActiveTab);
+    });
+
+    // Re-run resize on caret navigation/focus to avoid hidden bottom lines.
+    $(document).on('focus click keyup', '.acm-tab-content textarea', function() {
+        autoResizeTextarea(this);
+    });
+
+    $(window).off('resize.acm-tabs').on('resize.acm-tabs', function() {
+        scheduleTextareaResize(currentActiveTab);
+    });
+
+    console.log('ACM Tabs system initialized');
+}
 
 /**
  * Fills the character details in the user interface based on the provided avatar.
@@ -84,9 +877,7 @@ export async function fillDetails(avatar) {
     );
     const permTokens = await getTokenCountAsync(permText);
     $('#ch_infos_permtok').text(`Perm. Tokens: ${permTokens}`);
-    $('#acm_description_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.description))}`);
     $('#acm_description').val(char.description);
-    $('#acm_firstMess_tokens').text(`Tokens: ${await getTokenCountAsync(substituteParams(char.first_mes))}`);
     $('#acm_firstMess').val(char.first_mes);
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings?.length ?? 0}`);
     
@@ -98,19 +889,69 @@ export async function fillDetails(avatar) {
         $('#acm_creatornotes_display'),
         char.avatar
     );
+
+    renderDescriptionPreview();
+    renderGreetingsPreview();
+    updateTaglineCreatorFullscreenProxy();
     const characterTags = Array.isArray(tagMap[char.avatar]) ? tagMap[char.avatar] : [];
     $('#tag_List').html(`${characterTags.map((tag) => displayTag(tag, 'details')).join('')}`);
     displayAltGreetings(char.data.alternate_greetings).then(html => {
         $('#altGreetings_content').html(html);
     });
+    
+    // ===== TABS SYSTEM: Initialize greetings dropdown =====
+    const altGreetings = char.data.alternate_greetings || [];
+    $('#acm_greeting_selector').html(buildGreetingsDropdownOptions(altGreetings));
+    
+    // Select current greeting (default or previously selected)
+    if (currentSelectedGreeting === 'default' || !altGreetings[parseInt(currentSelectedGreeting, 10)]) {
+        $('#acm_greeting_selector').val('default');
+        currentSelectedGreeting = 'default';
+    } else {
+        $('#acm_greeting_selector').val(currentSelectedGreeting);
+    }
+    updateGreetingDeleteButtonState(currentSelectedGreeting);
+    
+    // ===== TABS SYSTEM: Check if character has chats for Last message tab =====
+    const hasChats = Boolean(char.date_last_chat);
+    const $lastMessageTab = $('.acm-tab-button[data-tab="lastmessage"]');
+    
+    if (hasChats) {
+        $lastMessageTab.removeClass('disabled');
+    } else {
+        $lastMessageTab.addClass('disabled');
+        
+        // Auto-switch to Description if Last message was selected but no chats
+        if (currentActiveTab === 'lastmessage') {
+            currentActiveTab = 'description';
+        }
+    }
+    
+    // ===== TABS SYSTEM: Reset lazy load flags when switching characters =====
+    hasLoadedTagline = false;
+    hasLoadedLastMessage = false;
+    currentLastMessageText = '';
+    currentTaglineEntry = null;
+    
+    // Clear content
     $('#acm_tagline_content').empty();
-    if (isDrawerExpanded('#tagline_drawer', '#acm_tagline_content')) {
-        await loadTaglineForSelectedCharacter();
-    }
     $('#acm_last_message_content').empty();
-    if (isDrawerExpanded('#last_message_drawer', '#acm_last_message_content')) {
-        await loadLastMessageForSelectedCharacter();
-    }
+    $('#acm_tagline_creator_fullscreen_proxy').val('');
+    $('#acm_lastmessage_fullscreen_proxy').val('');
+
+    // Ensure textarea heights match full content after panel transitions settle
+    const resizeAllMainTextareas = () => {
+        autoResizeTextarea($('#acm_description')[0]);
+        autoResizeTextarea($('#acm_firstMess')[0]);
+        autoResizeTextarea($('#acm_creatornotes')[0]);
+    };
+    setTimeout(resizeAllMainTextareas, 0);
+    setTimeout(resizeAllMainTextareas, 80);
+    setTimeout(resizeAllMainTextareas, 220);
+    
+    // ===== TABS SYSTEM: Switch to the appropriate tab =====
+    switchTab(currentActiveTab);
+    
     $('#acm_favorite_button').toggleClass('fav_on', char.fav || char.data.extensions.fav).toggleClass('fav_off', !(char.fav || char.data.extensions.fav));
     addAltGreetingsTrigger()
 }
@@ -204,27 +1045,25 @@ function renderLastMessage(text, { noChats = false } = {}) {
     $content.empty();
 
     if (noChats) {
+        setLastMessageProxy('No chats yet');
         $('<div class="acm_tagline_no_data"></div>').text('No chats yet').appendTo($content);
         return;
     }
 
     if (!text) {
+        setLastMessageProxy('No messages yet');
         $('<div class="acm_tagline_no_data"></div>').text('No messages yet').appendTo($content);
         return;
     }
 
-    $('<div class="acm_tagline_body"></div>').text(text).appendTo($content);
+    setLastMessageProxy(text);
+    renderMessageLikeChat(text, $content, 'No messages yet');
 }
 
-function isDrawerExpanded(drawerSelector, contentSelector) {
-    const drawer = $(drawerSelector);
-    const content = $(contentSelector);
-    const iconIsUp = drawer.find('>.inline-drawer-header .inline-drawer-icon').hasClass('up');
-    return iconIsUp || content.is(':visible');
-}
+
 
 export async function loadLastMessageForSelectedCharacter() {
-    if (!selectedChar || !isDrawerExpanded('#last_message_drawer', '#acm_last_message_content')) {
+    if (!selectedChar) {
         return;
     }
 
@@ -246,7 +1085,7 @@ export async function loadLastMessageForSelectedCharacter() {
         }
 
         const chats = await getPastCharacterChats(charId);
-        if (selectedChar !== avatarKey || !isDrawerExpanded('#last_message_drawer', '#acm_last_message_content')) {
+        if (selectedChar !== avatarKey) {
             return;
         }
 
@@ -274,14 +1113,14 @@ export async function loadLastMessageForSelectedCharacter() {
             }
         }
 
-        if (selectedChar !== avatarKey || !isDrawerExpanded('#last_message_drawer', '#acm_last_message_content')) {
+        if (selectedChar !== avatarKey) {
             return;
         }
 
         renderLastMessage(findLastAgentNonSystemMessage(chatMessages));
     } catch (error) {
         console.error('Failed to load last message', error);
-        if (selectedChar === avatarKey && isDrawerExpanded('#last_message_drawer', '#acm_last_message_content')) {
+        if (selectedChar === avatarKey) {
             renderLastMessage('');
         }
     }
@@ -294,7 +1133,7 @@ export async function loadLastMessageForSelectedCharacter() {
  * @return {Promise<void>}
  */
 export async function loadTaglineForSelectedCharacter() {
-    if (!selectedChar || !isDrawerExpanded('#tagline_drawer', '#acm_tagline_content')) {
+    if (!selectedChar) {
         return;
     }
 
@@ -321,7 +1160,7 @@ export async function loadTaglineForSelectedCharacter() {
     if (!normalizedPath) {
         const noDataEntry = { projectName: '', tagline: '', noData: true };
         updateTaglineCache(avatarKey, noDataEntry);
-        if (selectedChar === avatarKey && isDrawerExpanded('#tagline_drawer', '#acm_tagline_content')) {
+        if (selectedChar === avatarKey) {
             renderTagline(noDataEntry);
         }
         return;
@@ -356,7 +1195,7 @@ export async function loadTaglineForSelectedCharacter() {
 
     updateTaglineCache(avatarKey, entry);
 
-    if (selectedChar === avatarKey && isDrawerExpanded('#tagline_drawer', '#acm_tagline_content')) {
+    if (selectedChar === avatarKey) {
         renderTagline(entry);
     }
 }
@@ -370,16 +1209,18 @@ function updateTaglineCache(avatarKey, entry) {
 function renderTagline(entry) {
     const $content = $('#acm_tagline_content');
     $content.empty();
+    currentTaglineEntry = entry || null;
 
-    if (!entry || entry.noData) {
-        $('<div class="acm_tagline_no_data"></div>').text('No data').appendTo($content);
-        return;
-    }
+    const projectName = String(entry?.projectName || '').trim();
+    const tagline = String(entry?.tagline || '').trim();
+    const combined = (!entry || entry.noData)
+        ? ''
+        : [projectName, tagline].filter(Boolean).join('\n\n');
 
-    if (entry.projectName) {
-        $('<div class="acm_tagline_header"></div>').text(entry.projectName).appendTo($content);
-    }
-    $('<div class="acm_tagline_body"></div>').text(entry.tagline || 'No data').appendTo($content);
+    // Render with the same HTML/CSS behavior as creator notes.
+    renderFormattedNotes(combined, $content, selectedChar || '');
+    clampImagesInContainer($content[0]);
+    updateTaglineCreatorFullscreenProxy();
 }
 
 /**
@@ -655,17 +1496,7 @@ export function openCharacterChat() {
     setCharacterId(undefined);
     setMem_avatar(undefined);
     selectCharacterById(getIdByAvatar(selectedChar));
-    closeDetails(false);
-
-    $('#acm_shadow_popup').transition({
-        opacity: 0,
-        duration: 125,
-        easing: 'ease-in-out',
-    });
-    setTimeout(function () {
-        $('#acm_shadow_popup').css('display', 'none');
-        $('#acm_popup').removeClass('large_dialogue_popup wide_dialogue_popup');
-    }, 125);
+    closeDetailsPopupWithFade();
 }
 
 /**

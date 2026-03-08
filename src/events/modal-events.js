@@ -84,6 +84,13 @@ export function initializeModalEvents() {
         updateSetting('sidePanel', enabled);
         applySidePanelMode(enabled);
     });
+
+    $('#acm_side_panel_pos_toggle').on('click', function () {
+        const currentPosition = getSetting('sidePanelPosition') === 'left' ? 'left' : 'right';
+        const nextPosition = currentPosition === 'left' ? 'right' : 'left';
+        updateSetting('sidePanelPosition', nextPosition);
+        applySidePanelMode(getSetting('sidePanel'));
+    });
 }
 
 /**

@@ -122,100 +122,78 @@
                             </div>
                         </div>
                                 <div id="char-details-desc">
-                                    <div class="desc_container">
-                                <div class="inline-drawer">
-                                    <div id="desc_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <div style="display: flex;flex-grow: 1;">
-                                             <span class="drawer-header-item">
-                                                <b>Description</b>
-                                                <i class="editor_maximize fa-solid fa-maximize" data-for="acm_description" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
-                                                <a href="https://docs.sillytavern.app/usage/core-concepts/characterdesign/#character-description" class="notes-link" target="_blank">
-                                                    <span class="fa-solid fa-circle-question note-link-span"></span>
-                                                </a>
-                                            </span>
-                                            <span id="acm_description_tokens" class="drawer-header-item"></span>
+                                    <div class="acm-details-tabs-wrapper">
+                                        <!-- Tab Navigation -->
+                                        <div class="acm-details-tabs-header">
+                                            <button class="acm-tab-button active" type="button" data-tab="description">Description</button>
+                                            <button class="acm-tab-button" type="button" data-tab="greetings">Greetings</button>
+                                            <button class="acm-tab-button" type="button" data-tab="tagline_creator">Tagline/Notes</button>
+                                            <button class="acm-tab-button" type="button" data-tab="lastmessage">Last message</button>
                                         </div>
-                                        <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div class="inline-drawer-content">
-                                        <label for="acm_description" title="Description">
-                                            <textarea id="acm_description" class="autoSetHeight"></textarea>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="inline-drawer">
-                                    <div id="firstMes_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <div style="display: flex;flex-grow: 1;">
-                                            <span class="drawer-header-item">
-                                                <b>Greeting</b>
-                                                <i class="editor_maximize fa-solid fa-maximize" data-for="acm_firstMess" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
-                                                <a href="https://docs.sillytavern.app/usage/core-concepts/characterdesign/#first-message" class="notes-link" target="_blank">
-                                                    <span class="fa-solid fa-circle-question note-link-span"></span>
-                                                </a>
-                                            </span>
-                                            <span id="acm_firstMess_tokens" class="drawer-header-item"></span>
+
+                                        <!-- Greeting Management / Token Bar -->
+                                        <div class="acm-greetings-management">
+                                            <i id="acm_tab_fullscreen" class="fa-solid fa-maximize" data-for="acm_description" title="Expand the editor" data-i18n="[title]Expand the editor"></i>
+                                            <button id="acm_tab_edit_toggle" class="menu_button acm-tab-edit-toggle-button" type="button" style="display: none;" title="Toggle edit mode" aria-label="Toggle edit mode" aria-pressed="true">
+                                                <i class="fa-solid fa-edit"></i>
+                                            </button>
+                                            <div class="acm-greetings-controls" style="display: none;">
+                                                <select id="acm_greeting_selector" class="text_pole">
+                                                    <option value="default">Default Greeting</option>
+                                                </select>
+                                                <button id="acm_greeting_add" class="menu_button acm-greeting-add-button" type="button" title="Add new greeting">
+                                                    <i class="fa-solid fa-plus"></i>
+                                                </button>
+                                                <button id="acm_greeting_delete" class="menu_button acm-greeting-delete-button" type="button" title="Delete greeting" disabled>
+                                                    <i class="fa-solid fa-minus"></i>
+                                                </button>
+                                                <button id="acm_greeting_new_chat" class="menu_button acm-greeting-chat-button" type="button" title="Start new chat with this greeting" data-i18n="[title]Start new chat with this greeting">
+                                                    <i class="fa-solid fa-comments"></i>
+                                                </button>
+                                            </div>
+                                            <span id="acm_firstMess_tokens" class="acm-token-count"></span>
                                         </div>
-                                        <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div class="inline-drawer-content">
-                                        <label for="acm_firstMess" title="First message">
-                                            <textarea id="acm_firstMess" class="autoSetHeight"></textarea>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div id="altGreetings_drawer" class="inline-drawer">
-                                    <div id="altGreetings_header" class="altgreetings-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <div style="display: flex;flex-grow: 1;">
-                                            <span class="drawer-header-item"><b>Alt. Greetings</b></span>
-                                            <span id="altGreetings_number" class="drawer-header-item"></span>
+
+                                        <!-- Content Wrapper (scrollable area) -->
+                                        <div class="acm-details-content-wrapper">
+                                            <!-- Description Tab -->
+                                            <div class="acm-tab-content active" data-tab-content="description">
+                                                <label for="acm_description" title="Description">
+                                                    <textarea id="acm_description" class="text_pole"></textarea>
+                                                </label>
+                                                <div id="acm_description_preview" class="acm-preview-html text_pole" style="display: none;"></div>
+                                            </div>
+
+                                            <!-- Greetings Tab -->
+                                            <div class="acm-tab-content" data-tab-content="greetings">
+                                                <label for="acm_firstMess" title="Greeting">
+                                                    <textarea id="acm_firstMess" class="text_pole"></textarea>
+                                                </label>
+                                                <div id="acm_firstMess_preview" class="acm-preview-html text_pole" style="display: none;"></div>
+                                                <!-- Hidden container for alt greetings data -->
+                                                <div id="altGreetings_content" style="display: none;"></div>
+                                            </div>
+
+                                            <!-- Tagline + Creator Notes Tab -->
+                                            <div class="acm-tab-content" data-tab-content="tagline_creator">
+                                                <h4>Tagline</h4>
+                                                <div id="acm_tagline_content"></div>
+                                                <h4>Creator's Notes</h4>
+                                                <label for="acm_creatornotes" title="Creator's Notes">
+                                                    <textarea class="text_pole" id="acm_creatornotes"></textarea>
+                                                </label>
+                                                <!-- Display container for rendered creator notes with CSS -->
+                                                <div id="acm_creatornotes_display" class="text_pole" style="display: none;"></div>
+                                            </div>
+
+                                            <!-- Last Message Tab -->
+                                            <div class="acm-tab-content" data-tab-content="lastmessage">
+                                                <div id="acm_last_message_content"></div>
+                                            </div>
+
+                                            <textarea id="acm_tagline_creator_fullscreen_proxy" class="text_pole" style="display: none;"></textarea>
+                                            <textarea id="acm_lastmessage_fullscreen_proxy" class="text_pole" style="display: none;"></textarea>
                                         </div>
-                                        <div class="altGreetings_buttons">
-                                            <i class="inline-drawer-icon fa-solid fa-circle-plus"></i>
-                                            <i class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></i>
-                                        </div>
-                                    </div>
-                                    <div id="altGreetings_content" class="inline-drawer-content">
-                                    </div>
-                                </div>
-                                <div class="inline-drawer">
-                                    <div class="inline-drawer-toggle inline-drawer-header inline-drawer-design"
-                                         id="CN_header">
-                                        <div style="display: flex;flex-grow: 1;">
-                                             <span class="drawer-header-item">
-                                                <b>Creator's Notes</b>
-                                                <i class="editor_maximize fa-solid fa-maximize"
-                                                   data-for="acm_creatornotes" data-i18n="[title]Expand the editor"
-                                                   title="Expand the editor"></i>
-                                            </span>
-                                        </div>
-                                        <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div class="inline-drawer-content">
-                                        <label for="acm_creatornotes" title="Description">
-                                            <textarea class="autoSetHeight" id="acm_creatornotes"></textarea>
-                                        </label>
-                                        <!-- Display container for rendered creator notes with CSS -->
-                                        <div id="acm_creatornotes_display" class="text_pole" style="display: none; padding: 10px; overflow-y: auto; max-height: 400px; border: 1px solid var(--backgroundColor2); border-radius: 4px;"></div>
-                                    </div>
-                                </div>
-                                <div id="tagline_drawer" class="inline-drawer">
-                                    <div id="tagline_header" class="tagline-drawer-toggle inline-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <div style="display: flex;flex-grow: 1;">
-                                            <span class="drawer-header-item"><b>Tagline</b></span>
-                                        </div>
-                                        <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div id="acm_tagline_content" class="inline-drawer-content"></div>
-                                </div>
-                                <div id="last_message_drawer" class="inline-drawer">
-                                    <div id="last_message_header" class="inline-drawer-toggle inline-drawer-header inline-drawer-design">
-                                        <div style="display: flex;flex-grow: 1;">
-                                            <span class="drawer-header-item"><b>Last message</b></span>
-                                        </div>
-                                        <div class="inline-drawer-icon idit fa-solid fa-circle-chevron-down down"></div>
-                                    </div>
-                                    <div id="acm_last_message_content" class="inline-drawer-content"></div>
-                                </div>
                                     </div>
                                 </div>
                             </div>
@@ -225,11 +203,16 @@
                 </div>
             </div>
             <div class="popup-controls acm-popup-controls">
-                <div id="acm_switch_ui" class="menu_button">Switch UI</div>
-                <label id="acm_side_panel_switch" class="acm_side_panel_switch">
-                    <input id="acm_side_panel_checkbox" type="checkbox">
-                    <span>Side panel</span>
-                </label>
+                <div class="acm-popup-left-controls">
+                    <div id="acm_switch_ui" class="menu_button">Switch UI</div>
+                    <label id="acm_side_panel_switch" class="acm_side_panel_switch">
+                        <input id="acm_side_panel_checkbox" type="checkbox">
+                        <span>Side panel</span>
+                    </label>
+                    <div id="acm_side_panel_position" class="acm_side_panel_position">
+                        <button id="acm_side_panel_pos_toggle" class="menu_button" type="button" title="Side panel position: Right">Right</button>
+                    </div>
+                </div>
                 <div id="acm_popup_close" class="menu_button popup-button-ok">Close</div>
                 <div id="acm_popup_width">
                     <label for="acm_widthSlider">Width: </label>

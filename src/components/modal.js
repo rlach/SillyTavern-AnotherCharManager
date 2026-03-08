@@ -168,15 +168,24 @@ export function closeDetails( reset = true ) {
 export function applySidePanelMode(enabled) {
     const wrapper = document.querySelector('.list-character-wrapper');
     const checkbox = document.getElementById('acm_side_panel_checkbox');
+    const positionToggle = document.getElementById('acm_side_panel_pos_toggle');
 
     if (!wrapper) {
         return;
     }
 
+    const sidePanelPosition = getSetting('sidePanelPosition') === 'left' ? 'left' : 'right';
     wrapper.classList.toggle('acm-side-panel-mode', !!enabled);
+    wrapper.classList.toggle('acm-side-panel-left', !!enabled && sidePanelPosition === 'left');
 
     if (checkbox instanceof HTMLInputElement) {
         checkbox.checked = !!enabled;
+    }
+
+    if (positionToggle) {
+        positionToggle.textContent = sidePanelPosition === 'left' ? 'Left' : 'Right';
+        positionToggle.setAttribute('title', sidePanelPosition === 'left' ? 'Side panel position: Left' : 'Side panel position: Right');
+        positionToggle.toggleAttribute('disabled', !enabled);
     }
 
     const hasSelection = Boolean(selectedChar || selectedGroupId);

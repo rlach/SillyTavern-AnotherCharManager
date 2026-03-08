@@ -13,6 +13,7 @@ import {
     delAltGreeting,
     duplicateCharacter,
     exportCharacter,
+    initializeTabs,
     loadLastMessageForSelectedCharacter,
     openCharacterChat,
     reimportCharacterTags,
@@ -210,6 +211,9 @@ export function initializeCharactersEvents() {
 
     // Adding textarea trigger on input
     initializeFieldUpdaters();
+    
+    // Initialize tabs system
+    initializeTabs();
 
     // Trigger when the favorites button is clicked
     $('#acm_favorite_button').on('click', async function () {

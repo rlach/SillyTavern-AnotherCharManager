@@ -1,33 +1,58 @@
 import { formatCreatorNotes } from '../../../../../../scripts/chats.js';
 
 /**
- * Applies creator notes display using the main app's formatCreatorNotes renderer.
- * Hides the raw textarea and shows the rendered HTML in the display container.
- * Re-scopes any sanitized CSS from the main app's #creator_notes_spoiler prefix
- * to our actual container element so scoped styles work correctly.
+ * Renders text with the same HTML/CSS pipeline as creator notes.
  *
- * @param {string} creatorNotesContent - The raw creator notes content
- * @param {jQuery} $textareaElement - The textarea element (hidden when content is shown)
- * @param {jQuery} $displayContainer - The display container for rendered HTML
- * @param {string} [avatarId] - The character's avatar filename (used to check per-character style preference)
+ * @param {string} content - Raw content to render
+ * @param {JQuery<HTMLElement>} $container - Destination container
+ * @param {string} [avatarId] - Character avatar for style lookups
  * @returns {void}
  */
-export function applyCreatorNotesDisplay(creatorNotesContent, $textareaElement, $displayContainer, avatarId = '') {
-    if (!creatorNotesContent) {
-        $textareaElement.hide();
-        $displayContainer.text('No data').show();
+export function renderFormattedNotes(content, $container, avatarId = '') {
+    const raw = String(content || '');
+    if (!raw.trim()) {
+        $container.text('No data').show();
         return;
     }
 
-    let html = formatCreatorNotes(creatorNotesContent, avatarId);
+    let html = formatCreatorNotes(raw, avatarId);
 
-    // formatCreatorNotes scopes sanitized CSS with "#creator_notes_spoiler ".
-    // Re-scope those selectors to our actual container so scoped styles apply correctly.
-    const containerId = $displayContainer.attr('id');
+    // Re-scope CSS selectors emitted by formatCreatorNotes to this container id.
+    const containerId = $container.attr('id');
     if (containerId) {
         html = html.replaceAll('#creator_notes_spoiler ', `#${containerId} `);
     }
 
-    $textareaElement.hide();
-    $displayContainer.html(html).scrollTop(0).show();
+    $container.html(html).scrollTop(0).show();
+    $container.find('img').each(function () {
+        const inlinePosition = String(this.style.position || '').trim().toLowerCase();
+        if (inlinePosition === 'fixed') {
+            return;
+        }
+
+        const computedPosition = String(window.getComputedStyle(this).position || '').trim().toLowerCase();
+        if (computedPosition === 'fixed') {
+            return;
+        }
+
+        this.style.setProperty('max-width', '100%', 'important');
+    });
+}
+
+/**
+ * Applies creator notes display with HTML rendering while keeping textarea data for fullscreen.
+ *
+ * @param {string} creatorNotesContent - The raw creator notes content
+ * @param {JQuery<HTMLElement>} $textareaElement - Hidden textarea used as source for fullscreen/edit flows
+ * @param {JQuery<HTMLElement>} $displayContainer - Rendered HTML display container
+ * @param {string} [avatarId] - Character avatar id
+ * @returns {void}
+ */
+export function applyCreatorNotesDisplay(creatorNotesContent, $textareaElement, $displayContainer, avatarId = '') {
+    const raw = String(creatorNotesContent || '');
+
+    // Keep raw source in textarea for existing logic (tokens/fullscreen proxy).
+    $textareaElement.val(raw).hide();
+
+    renderFormattedNotes(raw, $displayContainer, avatarId);
 }

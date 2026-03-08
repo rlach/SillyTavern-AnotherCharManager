@@ -36,6 +36,9 @@ export const setCrop_data = (value) => {
 export const defaultSettings = {
     popupWidth: 50,
     sidePanel: false,
+    sidePanelPosition: 'right',
+    descriptionEditMode: true,
+    greetingsEditMode: true,
     searchMode: 'fuzzy',
     taglineCache: {},
     sortingField: "name",
