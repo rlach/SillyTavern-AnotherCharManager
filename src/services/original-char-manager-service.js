@@ -1,131 +1,53 @@
-import { getSetting } from './settings-service.js';
+import { clearChat, getCurrentChatId, setActiveCharacter, setActiveGroup, setCharacterId, setCharacterName } from '/script.js';
+import { eventSource, event_types } from '../constants/context.js';
 
-/** @type {((...args: any[]) => any) | null} */
-let originalPagination = null;
-/** @type {((...args: any[]) => any) | null} */
-let originalSelectRmCharacters = null;
-/** @type {((...args: any[]) => Promise<any> | any) | null} */
-let originalPrintCharacters = null;
-let paginationPatched = false;
-let selectPatched = false;
-let printPatched = false;
+const STORAGE_KEY = 'acm_disable_original_char_manager';
 /** @type {boolean | null} */
 let lastAppliedDisabled = null;
-
-const globalAny = /** @type {any} */ (globalThis);
+let closeChatInterceptionInstalled = false;
+let isFastClosing = false;
 
 function isOriginalCharManagerDisabled() {
-    return getSetting('disableOriginalCharManager') === true;
+    return localStorage.getItem(STORAGE_KEY) === 'true';
 }
 
-function patchPagination() {
-    if (paginationPatched || typeof $.fn.pagination !== 'function') {
+async function fastCloseChatWithoutOriginalCharacterRefresh() {
+    if (isFastClosing) {
         return;
     }
 
-    originalPagination = $.fn.pagination;
-    /** @type {(...args: any[]) => any} */
-    $.fn.pagination = function (...args) {
-        const original = originalPagination;
-        if (typeof original !== 'function') {
-            return this;
-        }
-
-        const isOriginalPagination = this?.is?.('#rm_print_characters_pagination');
-
-        if (isOriginalCharManagerDisabled() && isOriginalPagination) {
-            return this;
-        }
-
-        return original.apply(this, args);
-    };
-
-    paginationPatched = true;
+    isFastClosing = true;
+    try {
+        await clearChat({ clearData: true });
+        setCharacterId(undefined);
+        setCharacterName('');
+        setActiveCharacter(null);
+        setActiveGroup(null);
+        await eventSource.emit(event_types.CHAT_CHANGED, getCurrentChatId());
+    } finally {
+        isFastClosing = false;
+    }
 }
 
-function unpatchPagination() {
-    if (!paginationPatched || typeof originalPagination !== 'function') {
+function installCloseChatInterception() {
+    if (closeChatInterceptionInstalled) {
         return;
     }
 
-    $.fn.pagination = originalPagination;
-    paginationPatched = false;
-}
+    document.addEventListener('click', async (event) => {
+        const target = /** @type {HTMLElement | null} */ (event.target instanceof HTMLElement ? event.target : null);
+        const closeOption = target?.closest?.('#option_close_chat');
 
-function patchSelectCharacters() {
-    if (selectPatched || typeof globalAny.select_rm_characters !== 'function') {
-        return;
-    }
-
-    originalSelectRmCharacters = globalAny.select_rm_characters;
-    /** @type {(...args: any[]) => any} */
-    globalAny.select_rm_characters = function (...args) {
-        const original = originalSelectRmCharacters;
-        if (typeof original !== 'function') {
-            return true;
+        if (!closeOption || !isOriginalCharManagerDisabled()) {
+            return;
         }
 
-        if (isOriginalCharManagerDisabled()) {
-            return true;
-        }
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        await fastCloseChatWithoutOriginalCharacterRefresh();
+    }, true);
 
-        return original.apply(this, args);
-    };
-
-    selectPatched = true;
-}
-
-function unpatchSelectCharacters() {
-    if (!selectPatched || typeof originalSelectRmCharacters !== 'function') {
-        return;
-    }
-
-    globalAny.select_rm_characters = originalSelectRmCharacters;
-    selectPatched = false;
-}
-
-function patchPrintCharacters() {
-    if (printPatched || typeof globalAny.printCharacters !== 'function') {
-        return;
-    }
-
-    originalPrintCharacters = globalAny.printCharacters;
-    /** @type {(...args: any[]) => Promise<any>} */
-    globalAny.printCharacters = async function (...args) {
-        const original = originalPrintCharacters;
-        if (typeof original !== 'function') {
-            return true;
-        }
-
-        if (isOriginalCharManagerDisabled()) {
-            return true;
-        }
-
-        return original.apply(this, args);
-    };
-
-    printPatched = true;
-}
-
-function unpatchPrintCharacters() {
-    if (!printPatched || typeof originalPrintCharacters !== 'function') {
-        return;
-    }
-
-    globalAny.printCharacters = originalPrintCharacters;
-    printPatched = false;
-}
-
-function patchAll() {
-    patchPagination();
-    patchSelectCharacters();
-    patchPrintCharacters();
-}
-
-function unpatchAll() {
-    unpatchPagination();
-    unpatchSelectCharacters();
-    unpatchPrintCharacters();
+    closeChatInterceptionInstalled = true;
 }
 
 /**
@@ -145,12 +67,8 @@ function updateOriginalManagerUi(disabled) {
  */
 export function applyOriginalCharManagerToggle(disabled) {
     const isDisabled = disabled === true;
-
-    if (isDisabled) {
-        patchAll();
-    } else {
-        unpatchAll();
-    }
+    localStorage.setItem(STORAGE_KEY, String(isDisabled));
+    installCloseChatInterception();
 
     updateOriginalManagerUi(isDisabled);
 
