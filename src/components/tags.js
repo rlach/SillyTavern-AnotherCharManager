@@ -69,7 +69,8 @@ export function acmCreateTagInput(inputSelector, listSelector, tagListOptions = 
                 },
                 minLength: 0,
             })
-            .on('focus', onTagInputFocus);
+            .on('focus', onTagInputFocus)
+            .on('click', onTagInputClick);
     });
 }
 
@@ -81,13 +82,25 @@ export function acmCreateTagInput(inputSelector, listSelector, tagListOptions = 
  * @return {void} This method does not return a value.
  */
 function onTagInputFocus() {
-    const value = String($(this).val() || '').trim();
-    if (!value) {
-        return;
-    }
+    openTagAutocomplete(this);
+}
 
+/**
+ * Handles click events for inputs that are already focused.
+ * This keeps suggestions discoverable on repeated clicks.
+ */
+function onTagInputClick() {
+    openTagAutocomplete(this);
+}
+
+/**
+ * Opens autocomplete suggestions using the current input value.
+ * Empty value is allowed to show the default limited suggestion list.
+ */
+function openTagAutocomplete(input) {
+    const value = String($(input).val() || '').trim();
     // @ts-ignore
-    $(this).autocomplete('search', value);
+    $(input).autocomplete('search', value);
 }
 
 /**
