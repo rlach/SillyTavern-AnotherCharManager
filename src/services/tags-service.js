@@ -8,6 +8,9 @@ import {
 import { createTagInput } from '/scripts/tags.js';
 import { acmCreateTagInput } from "../components/tags.js";
 
+const MAX_EMPTY_TERM_RESULTS = 50;
+const MAX_FILTERED_RESULTS = 150;
+
 
 /**
  * Initializes multiple tag input components on specified elements with provided configurations.
@@ -57,18 +60,36 @@ export function renameTagKey(oldKey, newKey) {
  * @return {Array<string>} - The filtered and sorted list of tag names matching the search term, including the term itself if no exact match is found.
  */
 export function findTag(request, resolve, listSelector) {
-    const skipIds = [...($(listSelector).find('.tag').map((_, el) => $(el).data('tagid') || $(el).attr('id')))].filter(Boolean);
-    const haystack = tagList
-        .filter(t => !skipIds.includes(t.id))
-        .sort(compareTagsForSort)
-        .map(t => t.name);
-    const needle = request.term;
-    const hasExactMatch = haystack.findIndex(x => equalsIgnoreCaseAndAccents(x, needle)) !== -1;
-    const result = haystack.filter(x => includesIgnoreCaseAndAccents(x, needle));
+    const skipIds = new Set(
+        [...($(listSelector).find('.tag').map((_, el) => $(el).data('tagid') || $(el).attr('id')))].filter(Boolean)
+    );
+    const needle = String(request.term || '').trim();
+    const usageCounts = buildTagUsageCounts();
+    const availableTags = tagList
+        .filter(t => !skipIds.has(t.id))
+        .sort((a, b) => compareTagsForSort(a, b, usageCounts));
 
-    if (needle && !hasExactMatch) {
-        result.unshift(request.term);
+    if (!needle) {
+        resolve(availableTags.slice(0, MAX_EMPTY_TERM_RESULTS).map(t => t.name));
+        return;
     }
+
+    const hasExactMatch = availableTags.some(t => equalsIgnoreCaseAndAccents(t.name, needle));
+    const result = [];
+
+    for (const tag of availableTags) {
+        if (includesIgnoreCaseAndAccents(tag.name, needle)) {
+            result.push(tag.name);
+            if (result.length >= MAX_FILTERED_RESULTS) {
+                break;
+            }
+        }
+    }
+
+    if (!hasExactMatch) {
+        result.unshift(needle);
+    }
+
     resolve(result);
 }
 
@@ -77,22 +98,38 @@ export function findTag(request, resolve, listSelector) {
  */
 export function acmFindTagMulti(request, resolve, listSelectors) {
     const selectors = Array.isArray(listSelectors) ? listSelectors : [listSelectors];
-    const skipIds = [];
+    const skipIds = new Set();
 
     selectors.forEach(selector => {
         $(selector).find('.tag').each((_, el) => {
             const id = $(el).attr('data-tagid');
-            if (id) skipIds.push(id);
+            if (id) {
+                skipIds.add(id);
+            }
         });
     });
 
-    const haystack = tagList
-        .filter(t => !skipIds.includes(t.id))
-        .sort(compareTagsForSort)
-        .map(t => t.name);
+    const needle = String(request.term || '').trim();
+    const usageCounts = buildTagUsageCounts();
+    const availableTags = tagList
+        .filter(t => !skipIds.has(t.id))
+        .sort((a, b) => compareTagsForSort(a, b, usageCounts));
 
-    const needle = request.term;
-    const result = haystack.filter(x => includesIgnoreCaseAndAccents(x, needle));
+    if (!needle) {
+        resolve(availableTags.slice(0, MAX_EMPTY_TERM_RESULTS).map(t => t.name));
+        return;
+    }
+
+    const result = [];
+    for (const tag of availableTags) {
+        if (includesIgnoreCaseAndAccents(tag.name, needle)) {
+            result.push(tag.name);
+            if (result.length >= MAX_FILTERED_RESULTS) {
+                break;
+            }
+        }
+    }
+
     resolve(result);
 }
 
@@ -103,7 +140,13 @@ export function acmFindTagMulti(request, resolve, listSelectors) {
  * @param {Tag} b - Second tag
  * @returns {number} The compare result
  */
-function compareTagsForSort(a, b) {
+function compareTagsForSort(a, b, usageCounts = null) {
+    const aUsage = usageCounts?.get(a.id) || 0;
+    const bUsage = usageCounts?.get(b.id) || 0;
+    if (aUsage !== bUsage) {
+        return bUsage - aUsage;
+    }
+
     const defaultSort = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
     if (power_user.auto_sort_tags) {
         return defaultSort;
@@ -118,4 +161,27 @@ function compareTagsForSort(a, b) {
     } else {
         return defaultSort;
     }
+}
+
+/**
+ * Builds a usage count map for tags based on current tag assignments.
+ * The count is the number of entities that have a given tag.
+ *
+ * @returns {Map<string, number>} A map of tag id to usage count.
+ */
+function buildTagUsageCounts() {
+    const usageCounts = new Map();
+
+    Object.values(tagMap || {}).forEach(tagIds => {
+        if (!Array.isArray(tagIds)) {
+            return;
+        }
+
+        tagIds.forEach(tagId => {
+            const key = String(tagId);
+            usageCounts.set(key, (usageCounts.get(key) || 0) + 1);
+        });
+    });
+
+    return usageCounts;
 }

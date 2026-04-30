@@ -81,8 +81,13 @@ export function acmCreateTagInput(inputSelector, listSelector, tagListOptions = 
  * @return {void} This method does not return a value.
  */
 function onTagInputFocus() {
+    const value = String($(this).val() || '').trim();
+    if (!value) {
+        return;
+    }
+
     // @ts-ignore
-    $(this).autocomplete('search', $(this).val());
+    $(this).autocomplete('search', value);
 }
 
 /**
