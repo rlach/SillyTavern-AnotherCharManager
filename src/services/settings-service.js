@@ -16,6 +16,26 @@ export async function initializeSettings() {
             extensionSettings.acm[key] = defaultSettings[key];
         }
     }
+
+    // Normalize legacy boolean values that may be stored as strings.
+    const booleanKeys = new Set([
+        'sidePanel',
+        'descriptionEditMode',
+        'greetingsEditMode',
+        'favOnly',
+        'dropdownUI',
+        'disableOriginalCharManager',
+    ]);
+
+    for (const key of booleanKeys) {
+        const value = extensionSettings.acm[key];
+        if (value === 'true') {
+            extensionSettings.acm[key] = true;
+        } else if (value === 'false') {
+            extensionSettings.acm[key] = false;
+        }
+    }
+
     return extensionSettings.acm;
 }
 

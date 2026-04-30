@@ -10,6 +10,7 @@ import {
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { refreshCharListDebounced, refreshClassicVirtualLayout } from "../components/charactersList.js";
 import { manageCustomCategories, printCategoriesList } from "../components/presets.js";
+import { applyOriginalCharManagerToggle } from '../services/original-char-manager-service.js';
 
 /**
  * Initializes external menu events by attaching event listeners to specified menu elements.
@@ -90,6 +91,12 @@ export function initializeModalEvents() {
         const nextPosition = currentPosition === 'left' ? 'right' : 'left';
         updateSetting('sidePanelPosition', nextPosition);
         applySidePanelMode(getSetting('sidePanel'));
+    });
+
+    $('#acm_disable_original_char_manager_checkbox').on('change', function () {
+        const enabled = $(this).is(':checked');
+        updateSetting('disableOriginalCharManager', enabled);
+        applyOriginalCharManagerToggle(enabled);
     });
 }
 

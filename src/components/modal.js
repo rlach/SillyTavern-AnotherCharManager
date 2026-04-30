@@ -14,6 +14,7 @@ import {
 } from "../constants/settings.js";
 import { characterId, characters, menuType, renderExtensionTemplateAsync } from "../constants/context.js";
 import { getSetting } from "../services/settings-service.js";
+import { applyOriginalCharManagerToggle } from '../services/original-char-manager-service.js';
 import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '/script.js';
 import { refreshClassicVirtualLayout, updateChatsFilterButtonState, updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState, updateSearchModeButtonState } from "./charactersList.js";
@@ -48,6 +49,8 @@ export async function initializeModal() {
     const initialWidth = getSetting('popupWidth');
     $('#acm_popup').css('width', initialWidth + '%');
     $('#acm_widthSlider').val(initialWidth);
+    $('#acm_disable_original_char_manager_checkbox').prop('checked', !!getSetting('disableOriginalCharManager'));
+    applyOriginalCharManagerToggle(!!getSetting('disableOriginalCharManager'));
 
 
     // Put the button before rm_button_group_chats in the form_character_search_form
@@ -140,6 +143,7 @@ export function openModal() {
     updateGroupsFilterButtonState(getSetting('groupsFilter'));
     updateChatsFilterButtonState(getSetting('chatsFilter'));
     applySidePanelMode(getSetting('sidePanel'));
+    $('#acm_disable_original_char_manager_checkbox').prop('checked', !!getSetting('disableOriginalCharManager'));
 }
 
 /**

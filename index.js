@@ -5,6 +5,8 @@ import { initializeModal, openModal } from "./src/components/modal.js";
 import { initializeEventHandlers } from "./src/events/global-events.js";
 import { initializeCharacterModule } from "./src/services/imageLoader.js";
 import { refreshCharListDebounced } from "./src/components/charactersList.js";
+import { getSetting } from './src/services/settings-service.js';
+import { applyOriginalCharManagerToggle } from './src/services/original-char-manager-service.js';
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
 
@@ -15,6 +17,7 @@ jQuery(async () => {
     initializeEventHandlers();
     initializeTagInput();
     initializeCharacterModule();
+    applyOriginalCharManagerToggle(!!getSetting('disableOriginalCharManager'));
 
     SlashCommandParser.addCommandObject(SlashCommand.fromProps({
         name: 'another-char-manager',

@@ -37,6 +37,7 @@ export const defaultSettings = {
     popupWidth: 50,
     sidePanel: false,
     sidePanelPosition: 'right',
+    disableOriginalCharManager: false,
     descriptionEditMode: true,
     greetingsEditMode: true,
     searchMode: 'fuzzy',
