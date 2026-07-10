@@ -47,6 +47,7 @@ export const defaultSettings = {
     favOnly: false,
     groupsFilter: 1, // 0 = no groups, 1 = show groups, 2 = only groups
     chatsFilter: 0, // 0 = all, 1 = with chats only, 2 = without chats only
+    sourceFilter: { chub: 0, botbooru: 0 }, // per-source: 0 = not filtering, 1 = include only, 2 = exclude
     dropdownUI: false,
     dropdownMode: "allTags",
     presetId: 0,

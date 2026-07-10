@@ -17,7 +17,7 @@ import { getSetting } from "../services/settings-service.js";
 import { applyOriginalCharManagerToggle } from '../services/original-char-manager-service.js';
 import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '/script.js';
-import { refreshClassicVirtualLayout, updateChatsFilterButtonState, updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState, updateSearchModeButtonState } from "./charactersList.js";
+import { refreshClassicVirtualLayout, updateChatsFilterButtonState, updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState, updateSearchModeButtonState, updateSourceFilterButtonsState } from "./charactersList.js";
 import { updateLayout } from "./characterCreation.js";
 
 /**
@@ -142,6 +142,7 @@ export function openModal() {
     updateFavFilterButtonState(getSetting('favOnly'));
     updateGroupsFilterButtonState(getSetting('groupsFilter'));
     updateChatsFilterButtonState(getSetting('chatsFilter'));
+    updateSourceFilterButtonsState(getSetting('sourceFilter'));
     applySidePanelMode(getSetting('sidePanel'));
     $('#acm_disable_original_char_manager_checkbox').prop('checked', !!getSetting('disableOriginalCharManager'));
 }

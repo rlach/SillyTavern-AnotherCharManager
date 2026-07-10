@@ -830,6 +830,14 @@ export function initializeTabs() {
     console.log('ACM Tabs system initialized');
 }
 
+function getCharacterLinkHtml(char) {
+    if(!char.data.extensions.chub?.full_path && !char.data.extensions.botbooru?.post_id) {
+        return "Links: -";
+    }
+
+    return `Links: ${char.data.extensions.chub?.full_path ? `<a href="https://chub.ai/${char.data.extensions.chub.full_path}" target="_blank">Chub</a>` : ''}${(char.data.extensions.chub?.full_path && char.data.extensions.botbooru?.post_id) ? ' | ' : ''}${char.data.extensions.botbooru?.post_id ? `<a href="https://botbooru.com/character/${char.data.extensions.botbooru.post_id}" target="_blank">Botbooru</a>` : ''}`;
+}
+
 /**
  * Fills the character details in the user interface based on the provided avatar.
  *
@@ -854,7 +862,7 @@ export async function fillDetails(avatar) {
     $('#ch_infos_date').text(`Created: ${formattedDateString}`);
     $('#ch_infos_lastchat').text(`Last chat: ${char.date_last_chat ? new Date(char.date_last_chat).toISOString().substring(0, 10) : " - "}`);
     $('#ch_infos_adddate').text(`Added: ${char.date_added ? new Date(char.date_added).toISOString().substring(0, 10) : " - "}`);
-    $('#ch_infos_link').html(char.data.extensions.chub?.full_path ? `Link: <a href="https://chub.ai/${char.data.extensions.chub.full_path}" target="_blank">Chub</a>` : "Link: -");
+    $('#ch_infos_link').html(getCharacterLinkHtml(char));
     const text = substituteParams(
         char.name +
         char.description +
@@ -991,21 +999,6 @@ function normalizeChatFileName(value) {
     return rawValue.replace(/\.jsonl$/i, '');
 }
 
-function getChatNameFromFileName(fileName, fallbackName) {
-    const baseName = normalizeChatFileName(fileName);
-    if (!baseName) {
-        return String(fallbackName || '');
-    }
-
-    const splitMarker = ' - ';
-    const markerIndex = baseName.indexOf(splitMarker);
-    if (markerIndex > 0) {
-        return baseName.slice(0, markerIndex);
-    }
-
-    return String(fallbackName || '');
-}
-
 async function fetchCharacterChatMessages(char, chatFileName) {
     const normalizedFileName = normalizeChatFileName(chatFileName);
     if (!normalizedFileName) {
@@ -1016,7 +1009,6 @@ async function fetchCharacterChatMessages(char, chatFileName) {
         method: 'POST',
         headers: getRequestHeaders(),
         body: JSON.stringify({
-            ch_name: getChatNameFromFileName(normalizedFileName, char.name),
             file_name: normalizedFileName,
             avatar_url: char.avatar,
         }),
@@ -1067,7 +1059,13 @@ export async function loadLastMessageForSelectedCharacter() {
         return;
     }
 
-    const charId = getIdByAvatar(selectedChar);
+    const rawCharId = getIdByAvatar(selectedChar);
+    const charId = Number.parseInt(String(rawCharId ?? ''), 10);
+    if (!Number.isInteger(charId) || charId < 0) {
+        renderLastMessage('', { noChats: true });
+        return;
+    }
+
     const char = characters[charId];
     if (!char) {
         return;
@@ -1078,23 +1076,16 @@ export async function loadLastMessageForSelectedCharacter() {
     $content.html('<div class="acm_tagline_loader"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>');
 
     try {
-        const chatCandidates = [];
-        const currentChat = normalizeChatFileName(char.chat);
-        if (currentChat) {
-            chatCandidates.push(currentChat);
-        }
-
-        const chats = await getPastCharacterChats(charId);
+        const chats = await getPastCharacterChats(Number(charId));
         if (selectedChar !== avatarKey) {
             return;
         }
 
-        if (Array.isArray(chats) && chats.length > 0) {
-            const latestFromHistory = normalizeChatFileName(chats[0]?.file_name);
-            if (latestFromHistory && !chatCandidates.includes(latestFromHistory)) {
-                chatCandidates.push(latestFromHistory);
-            }
-        }
+        const chatCandidates = Array.isArray(chats)
+            ? chats
+                .map((chatEntry) => normalizeChatFileName(chatEntry?.file_name))
+                .filter(Boolean)
+            : [];
 
         if (chatCandidates.length === 0) {
             renderLastMessage('', { noChats: true });

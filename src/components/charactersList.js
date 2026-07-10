@@ -1051,28 +1051,51 @@ export function updateDropdownPresetNames() {
 }
 
 /**
- * Toggles the visibility of the tag query list by manipulating CSS classes and styles.
- * Expands or collapses the list with a smooth animation and adjusts its height and overflow properties.
+ * Toggles the visibility of an expandable section by manipulating CSS classes and styles.
+ * Expands or collapses the section with a smooth animation and adjusts its height and overflow properties.
+ *
+ * @param {string} elementId - The id of the section element to toggle.
+ * @return {void} Does not return any value.
+ */
+function toggleExpandableSection(elementId) {
+    const section = document.getElementById(elementId);
+    if (!section) {
+        return;
+    }
+
+    if (section.classList.contains('open')) {
+        section.style.overflow = 'hidden';
+        section.style.minHeight = '0';
+        section.style.height = '0';
+    } else {
+        const calculatedHeight = (section.scrollHeight + 5) + 'px';
+        section.style.minHeight = calculatedHeight;
+        section.style.height = calculatedHeight;
+        setTimeout(() => {
+            if (section.classList.contains('open')) {
+                section.style.overflow = 'visible';
+            }
+        }, 300); // Match the transition duration (0.3s = 300ms)
+    }
+    section.classList.toggle('open');
+}
+
+/**
+ * Toggles the visibility of the tag query list.
  *
  * @return {void} Does not return any value.
  */
 export function toggleTagQueries() {
-    const tagsList = document.getElementById('acm_tagQuery');
-    if (tagsList.classList.contains('open')) {
-        tagsList.style.overflow = 'hidden';
-        tagsList.style.minHeight = '0';
-        tagsList.style.height = '0';
-    } else {
-        const calculatedHeight = (tagsList.scrollHeight + 5) + 'px';
-        tagsList.style.minHeight = calculatedHeight;
-        tagsList.style.height = calculatedHeight;
-        setTimeout(() => {
-            if (tagsList.classList.contains('open')) {
-                tagsList.style.overflow = 'visible';
-            }
-        }, 300); // Match the transition duration (0.3s = 300ms)
-    }
-    tagsList.classList.toggle('open');
+    toggleExpandableSection('acm_tagQuery');
+}
+
+/**
+ * Toggles the visibility of the generic filters panel (e.g. Source filter).
+ *
+ * @return {void} Does not return any value.
+ */
+export function toggleFiltersPanel() {
+    toggleExpandableSection('acm_filtersPanel');
 }
 
 /**
@@ -1128,7 +1151,9 @@ function hasActiveFilters() {
     const hasExcluded = $('#acm_excludedTags > span').length > 0;
     const hasMandatory = $('#acm_mandatoryTags > span').length > 0;
     const hasFacultative = $('#acm_facultativeTags > span').length > 0;
-    return hasSearch || hasFavOnly || hasChatsFilter || hasExcluded || hasMandatory || hasFacultative;
+    const sourceFilter = getSetting('sourceFilter') || {};
+    const hasSourceFilter = Number(sourceFilter.chub) !== 0 || Number(sourceFilter.botbooru) !== 0;
+    return hasSearch || hasFavOnly || hasChatsFilter || hasExcluded || hasMandatory || hasFacultative || hasSourceFilter;
 }
 
 function updateCharacterCount(visibleCount) {
@@ -1282,6 +1307,63 @@ export function toggleChatsFilter() {
     const nextState = (currentState + 1) % 3;
     updateSetting('chatsFilter', nextState);
     updateChatsFilterButtonState(nextState);
+    queueScrollTopOnNextRefresh();
+    refreshCharListDebounced();
+}
+
+const SOURCE_FILTER_STATE_NAMES = ['none', 'include', 'exclude'];
+const SOURCE_FILTER_STATE_HINTS = {
+    none: 'not filtering',
+    include: 'only characters with this source',
+    exclude: 'excluding characters with this source',
+};
+
+function normalizeSourceFilterState(state) {
+    const numericState = Number(state);
+    return Number.isNaN(numericState) ? 0 : ((numericState % 3) + 3) % 3;
+}
+
+/**
+ * Updates a source filter button's visual state based on its current tri-state value.
+ * @param {string} source - The source key ('chub' or 'botbooru').
+ * @param {number} state - 0 = not filtering, 1 = include only, 2 = exclude.
+ */
+export function updateSourceFilterButtonState(source, state) {
+    const button = document.getElementById(`acm_source_filter_${source}`);
+    if (!button) return;
+
+    const safeState = normalizeSourceFilterState(state);
+    const stateName = SOURCE_FILTER_STATE_NAMES[safeState];
+
+    button.classList.remove('source_filter_none', 'source_filter_include', 'source_filter_exclude');
+    button.classList.add(`source_filter_${stateName}`);
+
+    const label = source.charAt(0).toUpperCase() + source.slice(1);
+    const title = `Source: ${label} (${SOURCE_FILTER_STATE_HINTS[stateName]})`;
+    button.setAttribute('title', title);
+    button.setAttribute('data-i18n', `[title]${title}`);
+    button.setAttribute('aria-pressed', safeState === 0 ? 'false' : 'true');
+}
+
+/**
+ * Updates all source filter buttons from a sourceFilter settings object.
+ * @param {{chub?: number, botbooru?: number}} sourceFilter
+ */
+export function updateSourceFilterButtonsState(sourceFilter) {
+    updateSourceFilterButtonState('chub', sourceFilter?.chub || 0);
+    updateSourceFilterButtonState('botbooru', sourceFilter?.botbooru || 0);
+}
+
+/**
+ * Cycles a source's filter state through: not filtering -> include only -> exclude -> not filtering.
+ * @param {string} source - The source key ('chub' or 'botbooru').
+ */
+export function toggleSourceFilter(source) {
+    const sourceFilter = { chub: 0, botbooru: 0, ...(getSetting('sourceFilter') || {}) };
+    const nextState = normalizeSourceFilterState((Number(sourceFilter[source]) || 0) + 1);
+    sourceFilter[source] = nextState;
+    updateSetting('sourceFilter', sourceFilter);
+    updateSourceFilterButtonState(source, nextState);
     queueScrollTopOnNextRefresh();
     refreshCharListDebounced();
 }

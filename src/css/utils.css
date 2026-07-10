@@ -46,3 +46,21 @@
     opacity: 0.65;
     color: var(--SmartThemeBodyColor);
 }
+
+/* Source filter button states */
+.acm_source_filter_btn.source_filter_none {
+    opacity: 0.6;
+}
+
+.acm_source_filter_btn.source_filter_include {
+    opacity: 1;
+    color: var(--fullgreen);
+    border-color: var(--fullgreen);
+}
+
+.acm_source_filter_btn.source_filter_exclude {
+    opacity: 1;
+    color: var(--fullred);
+    border-color: var(--fullred);
+    text-decoration: line-through;
+}

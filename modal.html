@@ -10,6 +10,7 @@
                             <div id="acm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL"></div>
                             <div id="acm_tags_view" class="menu_button tags_view fa-solid fa-gear faSmallFontSquareFix" title="Manage tags"></div>
                             <div id="acm_tags_filter" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Show Tag List"></div>
+                            <div id="acm_filters_button" class="menu_button fa-solid fa-filter faSmallFontSquareFix" title="Show Filters" data-i18n="[title]Show Filters"></div>
                             <div class="sortText">Sorted by :</div>
                             <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
                                 <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
@@ -21,6 +22,7 @@
                                 <option data-field="date_added" data-order="desc">Oldest</option>
                                 <option data-field="data_size" data-order="asc">Least Tokens</option>
                                 <option data-field="data_size" data-order="desc">Most Tokens</option>
+                                <option data-field="random" data-order="asc">Random</option>
                             </select>
                             <label for="char_search_bar" title="Search for specific tags or characters.">
                                 <div class="search-with-dropdown">
@@ -63,6 +65,13 @@
                                 <input id="acm_excludedInput" class="text_pole acm_tagQuery_input margin0 padding0">
                             </label>
                             <div id="acm_excludedTags" class="tags"></div>
+                        </div>
+                    </div>
+                    <div id="acm_filtersPanel" class="acm_tagQuery_container">
+                        <div class="acm_tagQuery_row">
+                            <span class="acm_tagQuery_label">Source:</span>
+                            <div id="acm_source_filter_botbooru" class="menu_button acm_source_filter_btn" data-source="botbooru" title="Source: Botbooru (not filtering)">Botbooru</div>
+                            <div id="acm_source_filter_chub" class="menu_button acm_source_filter_btn" data-source="chub" title="Source: Chub (not filtering)">Chub</div>
                         </div>
                     </div>
                     <hr>

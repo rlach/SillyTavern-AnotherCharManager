@@ -8,7 +8,9 @@ import {
     openSelectedGroupChat,
     updateSearchModeButtonState,
     toggleFavoritesOnly,
+    toggleFiltersPanel,
     toggleGroupsFilter,
+    toggleSourceFilter,
     toggleTagQueries,
     updateSearchFilter,
     updateSortOrder
@@ -91,6 +93,11 @@ export function initializeCharactersListEvents() {
  */
 export function initializeToolbarEvents() {
     $(document).on('click', '#acm_tags_filter', toggleTagQueries);
+    $(document).on('click', '#acm_filters_button', toggleFiltersPanel);
+
+    $(document).on('click', '.acm_source_filter_btn', function () {
+        toggleSourceFilter($(this).data('source'));
+    });
 
     $(document).on('change', '#char_sort_order', function () {
         updateSortOrder($(this).find(':selected'));
