@@ -3,6 +3,7 @@ import { initializeCharactersEvents } from "./characters-events.js";
 import { initializePresetsEvents } from "./presets-events.js";
 import { initializeCharactersListEvents, initializeToolbarEvents } from "./charactersList-events.js";
 import { initializeCharacterCreationEvents } from "./characterCreation-events.js";
+import { initializeAiChatEvents } from "../components/ai-chat.js";
 
 
 /**
@@ -18,4 +19,5 @@ export function initializeEventHandlers() {
     initializeCharactersListEvents();
     initializeCharactersEvents();
     initializeCharacterCreationEvents();
+    initializeAiChatEvents();
 }

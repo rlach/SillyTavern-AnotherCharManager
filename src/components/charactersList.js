@@ -4,6 +4,7 @@ import { debounce, getIdByAvatar } from "../utils.js";
 import { characters, eventSource, getThumbnailUrl, tagList, tagMap } from "../constants/context.js";
 import { searchValue, selectedChar, selectedGroupId, setSearchValue, setSelectedChar, setSelectedGroupId } from "../constants/settings.js";
 import { fillAdvancedDefinitions, fillDetails } from "./characters.js";
+import { resetAiChat } from "./ai-chat.js";
 import { searchAndFilter, sortCharAR } from "../services/charactersList-service.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { getPreset } from "../services/presets-service.js";
@@ -671,6 +672,7 @@ export async function selectAndDisplay(avatar) {
     setMenuType('character_edit');
     setSelectedGroupId(undefined);
     setSelectedChar(avatar);
+    resetAiChat();
     // Keep global characterId unchanged while browsing details in ACM.
     // It is set only for actions that require it (e.g. delete).
     $('#acm_export_format_popup').hide();
@@ -723,6 +725,7 @@ export async function selectAndDisplayGroup(groupId, { scrollIntoView = true } =
     setSelectedChar(undefined);
     setSelectedGroupId(String(group.id));
     setDetailsMode(true);
+    resetAiChat();
 
     $('#acm_export_format_popup').hide();
     renderGroupDetails(group);

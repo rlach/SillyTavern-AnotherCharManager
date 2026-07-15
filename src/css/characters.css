@@ -360,16 +360,14 @@
     min-height: 0;
 }
 
-.list-character-wrapper.acm-side-panel-mode.acm-side-panel-left #acm_main_content {
-    flex-direction: row-reverse;
-}
-
 .list-character-wrapper.acm-side-panel-mode #character-list {
+    order: 2;
     flex: 1 1 auto;
     min-width: 0;
 }
 
 .list-character-wrapper.acm-side-panel-mode #acm_side_panel_container {
+    order: 3;
     width: 400px;
     min-width: 400px;
     max-width: 400px;
@@ -382,10 +380,175 @@
 }
 
 .list-character-wrapper.acm-side-panel-mode.acm-side-panel-left #acm_side_panel_container {
+    order: 1;
     border-left: none;
     border-right: 1px solid var(--SmartThemeBorderColor);
     padding-left: 0;
     padding-right: 8px;
+}
+
+/* Ask AI panel always sits on the side opposite the character details panel,
+   and matches the character details panel's width. */
+.list-character-wrapper.acm-side-panel-mode #acm_ai_chat_container {
+    display: none;
+    order: 1;
+    width: 400px;
+    min-width: 400px;
+    max-width: 400px;
+    flex: 0 0 400px;
+    min-height: 0;
+    flex-direction: column;
+    border-right: 1px solid var(--SmartThemeBorderColor);
+    padding-right: 8px;
+}
+
+.list-character-wrapper.acm-side-panel-mode.acm-side-panel-left #acm_ai_chat_container {
+    order: 3;
+    border-right: none;
+    border-left: 1px solid var(--SmartThemeBorderColor);
+    padding-right: 0;
+    padding-left: 8px;
+}
+
+.list-character-wrapper.acm-side-panel-mode.acm-ask-ai-enabled #acm_ai_chat_container {
+    display: flex;
+}
+
+.list-character-wrapper:not(.acm-side-panel-mode) #acm_ai_chat_container {
+    display: none !important;
+}
+
+.acm-ai-chat-empty {
+    display: none;
+    padding: 16px;
+    opacity: 0.8;
+    text-align: left;
+}
+
+#acm_ai_chat_container.acm-ai-chat-unavailable .acm-ai-chat-empty {
+    display: block;
+}
+
+#acm_ai_chat_container.acm-ai-chat-unavailable .acm-ai-chat-body {
+    display: none;
+}
+
+.acm-ai-chat-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+    gap: 8px;
+}
+
+.acm-ai-chat-messages {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 4px;
+}
+
+.acm-ai-chat-message.acm-ai-chat-message-user {
+    border-radius: var(--acm-border-radius-sm);
+    padding: 6px 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-width: 100%;
+    background-color: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    align-self: flex-end;
+}
+
+/* Assistant replies reuse the same .mes/.mes_block/.mes_text structure (and thus the
+   same markdown/formatting) as the Greetings preview in character details. */
+.mes.acm-ai-chat-message-assistant {
+    max-width: 100%;
+    align-self: flex-start;
+    margin: 0;
+}
+
+.mes.acm-ai-chat-message-assistant.acm-ai-chat-streaming .mes_text::after {
+    content: '\258c';
+    animation: acm-ai-chat-cursor-blink 1s step-start infinite;
+    opacity: 0.7;
+}
+
+@keyframes acm-ai-chat-cursor-blink {
+    50% { opacity: 0; }
+}
+
+.acm-ai-chat-recent-empty {
+    padding: 16px;
+    opacity: 0.7;
+    text-align: left;
+}
+
+.acm-ai-chat-recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.acm-ai-chat-recent-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* .menu_button already supplies the correct theme background/border/color/hover -
+   these just add the layout tweaks specific to this row. */
+.acm-ai-chat-recent-pin {
+    flex: 0 0 auto;
+    margin: 0;
+    opacity: 0.5;
+}
+
+.acm-ai-chat-recent-pin.pinned {
+    opacity: 1;
+    color: var(--SmartThemeHighlightColor);
+}
+
+.acm-ai-chat-recent-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    justify-content: flex-start;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.acm-ai-chat-input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+
+.acm-ai-chat-input {
+    flex: 1 1 auto;
+    resize: vertical;
+    min-height: 38px;
+    max-height: 140px;
+}
+
+.acm-ai-chat-send-btn {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.acm-ai-chat-send-btn.acm-ai-chat-stop {
+    color: var(--fullred);
+}
+
+.acm-ai-chat-input:disabled,
+.acm-ai-chat-send-btn.disabled {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 .list-character-wrapper.acm-side-panel-mode #char-sep {

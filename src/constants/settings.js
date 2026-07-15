@@ -37,6 +37,8 @@ export const defaultSettings = {
     popupWidth: 50,
     sidePanel: false,
     sidePanelPosition: 'right',
+    askAiPanelEnabled: false,
+    askAiRecentQuestions: [], // {id, text, pinned, updatedAt}[], max 5 entries, shared across all characters
     disableOriginalCharManager: false,
     descriptionEditMode: true,
     greetingsEditMode: true,

@@ -19,6 +19,7 @@ import { getIdByAvatar } from "../utils.js";
 import { setCharacterId, setMenuType } from '/script.js';
 import { refreshClassicVirtualLayout, updateChatsFilterButtonState, updateDropdownPresetNames, updateFavFilterButtonState, updateGroupsFilterButtonState, updateSearchModeButtonState, updateSourceFilterButtonsState } from "./charactersList.js";
 import { updateLayout } from "./characterCreation.js";
+import { applyAskAiPanelMode, resetAiChat } from "./ai-chat.js";
 
 /**
  * Initializes the modal component
@@ -164,6 +165,7 @@ export function closeDetails( reset = true ) {
     document.querySelector('.list-character-wrapper')?.classList.add('acm-no-selection');
     setSelectedChar(undefined);
     setSelectedGroupId(undefined);
+    resetAiChat();
 }
 
 /**
@@ -195,6 +197,15 @@ export function applySidePanelMode(enabled) {
 
     const hasSelection = Boolean(selectedChar || selectedGroupId);
     wrapper.classList.toggle('acm-no-selection', !hasSelection);
+
+    // The Ask AI panel only makes sense alongside the side panel.
+    const askAiCheckbox = document.getElementById('acm_ask_ai_checkbox');
+    const askAiPanelEnabled = !!getSetting('askAiPanelEnabled');
+    if (askAiCheckbox instanceof HTMLInputElement) {
+        askAiCheckbox.checked = askAiPanelEnabled;
+        askAiCheckbox.disabled = !enabled;
+    }
+    applyAskAiPanelMode(!!enabled && askAiPanelEnabled);
 
     // Layout settles over multiple frames because mode switch changes flex structure.
     requestAnimationFrame(() => refreshClassicVirtualLayout({ invalidateColumns: true }));

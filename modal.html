@@ -207,6 +207,16 @@
                                 </div>
                             </div>
                         </div>
+                        <div id="acm_ai_chat_container" class="acm-ai-chat-container">
+                            <div id="acm_ai_chat_empty" class="acm-ai-chat-empty">Select a character to chat with the AI about them.</div>
+                            <div id="acm_ai_chat_body" class="acm-ai-chat-body">
+                                <div id="acm_ai_chat_messages" class="acm-ai-chat-messages"></div>
+                                <div class="acm-ai-chat-input-row">
+                                    <textarea id="acm_ai_chat_input" class="text_pole acm-ai-chat-input" aria-label="Ask AI message input" placeholder="Ask about this character... (Ctrl+Enter to send)" rows="2"></textarea>
+                                    <div id="acm_ai_chat_send" class="menu_button fa-solid fa-paper-plane acm-ai-chat-send-btn" title="Send message (Ctrl+Enter)"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <hr>
                 </div>
@@ -217,6 +227,10 @@
                     <label id="acm_side_panel_switch" class="acm_side_panel_switch">
                         <input id="acm_side_panel_checkbox" type="checkbox">
                         <span>Side panel</span>
+                    </label>
+                    <label id="acm_ask_ai_switch" class="acm_side_panel_switch" title="Show an AI chat panel about the selected character (requires Side panel)">
+                        <input id="acm_ask_ai_checkbox" type="checkbox">
+                        <span>Ask AI</span>
                     </label>
                     <label id="acm_disable_original_char_manager_switch" class="acm_side_panel_switch" title="Disable original character manager rendering hooks for performance testing">
                         <input id="acm_disable_original_char_manager_checkbox" type="checkbox">

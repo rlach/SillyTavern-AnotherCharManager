@@ -910,15 +910,14 @@ export async function fillDetails(avatar) {
     // ===== TABS SYSTEM: Initialize greetings dropdown =====
     const altGreetings = char.data.alternate_greetings || [];
     $('#acm_greeting_selector').html(buildGreetingsDropdownOptions(altGreetings));
-    
-    // Select current greeting (default or previously selected)
+
+    // Select current greeting (default or previously selected), then resync the
+    // textarea/preview so they always match whatever the dropdown ends up showing.
     if (currentSelectedGreeting === 'default' || !altGreetings[parseInt(currentSelectedGreeting, 10)]) {
-        $('#acm_greeting_selector').val('default');
         currentSelectedGreeting = 'default';
-    } else {
-        $('#acm_greeting_selector').val(currentSelectedGreeting);
     }
-    updateGreetingDeleteButtonState(currentSelectedGreeting);
+    $('#acm_greeting_selector').val(currentSelectedGreeting);
+    handleGreetingSelectionChange();
     
     // ===== TABS SYSTEM: Check if character has chats for Last message tab =====
     const hasChats = Boolean(char.date_last_chat);

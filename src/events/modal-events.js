@@ -7,6 +7,7 @@ import {
     openModal,
     toggleDropdownMenus
 } from "../components/modal.js";
+import { applyAskAiPanelMode } from "../components/ai-chat.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { refreshCharListDebounced, refreshClassicVirtualLayout } from "../components/charactersList.js";
 import { manageCustomCategories, printCategoriesList } from "../components/presets.js";
@@ -84,6 +85,12 @@ export function initializeModalEvents() {
         const enabled = $(this).is(':checked');
         updateSetting('sidePanel', enabled);
         applySidePanelMode(enabled);
+    });
+
+    $('#acm_ask_ai_checkbox').on('change', function () {
+        const enabled = $(this).is(':checked');
+        updateSetting('askAiPanelEnabled', enabled);
+        applyAskAiPanelMode(enabled && !!getSetting('sidePanel'));
     });
 
     $('#acm_side_panel_pos_toggle').on('click', function () {

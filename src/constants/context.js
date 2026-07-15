@@ -20,3 +20,4 @@ export const getRequestHeaders = getContext().getRequestHeaders;
 export const getCharacters = getContext().getCharacters;
 export const renderExtensionTemplateAsync = getContext().renderExtensionTemplateAsync;
 export const t = getContext().t;
+export const generateRaw = getContext().generateRaw;
