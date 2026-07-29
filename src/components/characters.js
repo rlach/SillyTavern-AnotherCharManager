@@ -183,6 +183,10 @@ function getSelectedCharacterName() {
     return String(char?.name || '');
 }
 
+function getFullAvatarImageUrl(avatar) {
+    return `/characters/${encodeURIComponent(String(avatar || ''))}`;
+}
+
 function clampImagesInContainer(container) {
     if (!container) {
         return;
@@ -881,10 +885,10 @@ export async function fillDetails(avatar, { resetGreeting = false } = {}) {
     if (resetGreeting) {
         currentSelectedGreeting = 'default';
     }
-    const avatarThumb = getThumbnailUrl('avatar', char.avatar);
+    const avatarFull = getFullAvatarImageUrl(char.avatar);
 
     $('#avatar_title').attr('title', char.avatar);
-    $('#avatar_img').attr('src', avatarThumb);
+    $('#avatar_img').attr('src', avatarFull);
     $('#ch_name_details').text(char.name);
     $('#ch_infos_creator').text(`Creator: ${char.data.creator ? char.data.creator : (char.data.extensions.chub?.full_path?.split('/')[0] ?? " - ")}`);
     $('#ch_infos_version').text(`Version: ${char.data.character_version ?? " - "}`);
@@ -1590,7 +1594,7 @@ export async function update_avatar(input){
                 // Replace the avatar with the cropped image
                 await replaceAvatar(file, getIdByAvatar(selectedChar), crop_data);
                 // Update the avatar image in the UI with a cache-busting timestamp
-                const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
+                const newImageUrl = `${getFullAvatarImageUrl(selectedChar)}?t=${Date.now()}`;
                 $('#avatar_img').attr('src', newImageUrl);
                 $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
             } catch {
@@ -1601,7 +1605,7 @@ export async function update_avatar(input){
                 // Replace the avatar without cropping
                 await replaceAvatar(file, getIdByAvatar(selectedChar));
                 // Update the avatar image in the UI with a cache-busting timestamp
-                const newImageUrl = getThumbnailUrl('avatar', selectedChar) + '&t=' + new Date().getTime();
+                const newImageUrl = `${getFullAvatarImageUrl(selectedChar)}?t=${Date.now()}`;
                 $('#avatar_img').attr('src', newImageUrl);
                 $(`[data-avatar="${selectedChar}"]`).attr('src', newImageUrl);
             } catch {
