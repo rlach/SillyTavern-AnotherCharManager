@@ -1,6 +1,7 @@
 import { messageFormatting } from '/script.js';
 import { createGenerationParameters, getChatCompletionModel, getStreamingReply, oai_settings } from '/scripts/openai.js';
 import { getEventSourceStream } from '/scripts/sse-stream.js';
+import { uuidv4 } from '/scripts/utils.js';
 import { characters, generateRaw, getRequestHeaders, tagList, tagMap } from "../constants/context.js";
 import { DEFAULT_ASK_AI_PROMPT, selectedChar, selectedGroupId } from "../constants/settings.js";
 import { getIdByAvatar } from "../utils.js";
@@ -86,10 +87,6 @@ function buildCharacterSummary(char) {
     };
 }
 
-function generateQuestionId() {
-    return crypto.randomUUID();
-}
-
 function getRecentQuestions() {
     return Array.isArray(getSetting('askAiRecentQuestions')) ? getSetting('askAiRecentQuestions') : [];
 }
@@ -155,7 +152,7 @@ function recordOrBumpRecentQuestion(text) {
             }
             questions.splice(evictIndex, 1);
         }
-        questions.push({ id: generateQuestionId(), text: normalized, pinned: false, updatedAt: Date.now() });
+        questions.push({ id: uuidv4(), text: normalized, pinned: false, updatedAt: Date.now() });
     }
 
     questions.sort((a, b) => b.updatedAt - a.updatedAt);
@@ -319,7 +316,7 @@ function saveAiChatSettings() {
         const text = String($(this).find('.acm-ai-chat-settings-question-text').val() || '').trim();
         if (!text) return;
 
-        const id = String($(this).attr('data-question-id') || generateQuestionId());
+        const id = String($(this).attr('data-question-id') || uuidv4());
         const original = originalQuestions.find(question => String(question.id) === id);
         questions.push({
             id,
