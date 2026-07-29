@@ -77,3 +77,65 @@
     color: var(--SmartThemeBodyColor);
     border: 1px solid var(--SmartThemeBorderColor);
 }
+
+.acm_filters_grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.8fr) minmax(360px, 1.2fr);
+    gap: 20px;
+    padding: 8px 4px 4px;
+}
+
+.acm_filters_column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.acm_filter_controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.acm_filter_text_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    min-width: 180px;
+}
+
+.acm_tag_filters_column {
+    border-left: 1px solid var(--SmartThemeBorderColor);
+    padding-left: 20px;
+}
+
+.acm_tag_filters_heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 28px;
+    font-weight: 600;
+}
+
+.acm_filter_tags {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .acm_filters_grid {
+        grid-template-columns: 1fr;
+    }
+
+    .acm_tag_filters_column {
+        border-top: 1px solid var(--SmartThemeBorderColor);
+        border-left: 0;
+        padding-top: 12px;
+        padding-left: 0;
+    }
+}

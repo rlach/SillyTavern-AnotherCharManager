@@ -6,7 +6,8 @@ import {
     saveSettingsDebounced
 } from "../constants/context.js";
 import { createTagInput } from '/scripts/tags.js';
-import { acmCreateTagInput } from "../components/tags.js";
+import { acmCreateTagInput, displayTag } from "../components/tags.js";
+import { getSetting } from "./settings-service.js";
 
 const MAX_EMPTY_TERM_RESULTS = 50;
 const MAX_FILTERED_RESULTS = 150;
@@ -34,6 +35,13 @@ export function initializeTagInput() {
     ];
 
     acmCreateTagInput(multiInputs, multiLists, { tagOptions: { removable: true } }, 'multiple');
+
+    const savedFilters = getSetting('tagFilters') || {};
+    const savedLists = [savedFilters.mandatory, savedFilters.facultative, savedFilters.excluded];
+    multiLists.forEach((selector, index) => {
+        const tagIds = Array.isArray(savedLists[index]) ? savedLists[index] : [];
+        $(selector).html(tagIds.map(tagId => displayTag(tagId)).join(''));
+    });
 }
 
 /**

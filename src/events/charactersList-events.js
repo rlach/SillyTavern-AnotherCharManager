@@ -6,17 +6,16 @@ import {
     selectRandomCharacter,
     toggleChatsFilter,
     openSelectedGroupChat,
+    persistTagFilters,
     updateSearchModeButtonState,
     toggleFavoritesOnly,
     toggleFiltersPanel,
     toggleGroupsFilter,
     toggleSourceFilter,
-    toggleTagQueries,
     updateSearchFilter,
     updateSortOrder
 } from "../components/charactersList.js";
 import { openCharacterChat } from "../components/characters.js";
-import { deleteUnlinkedUntaggedCharacters } from "../services/characters-service.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 import { toggleCharacterCreationPopup } from "../components/characterCreation.js";
 import { selectedChar } from "../constants/settings.js";
@@ -92,7 +91,6 @@ export function initializeCharactersListEvents() {
  * @return {void} This function does not return any value.
  */
 export function initializeToolbarEvents() {
-    $(document).on('click', '#acm_tags_filter', toggleTagQueries);
     $(document).on('click', '#acm_filters_button', toggleFiltersPanel);
 
     $(document).on('click', '.acm_source_filter_btn', function () {
@@ -132,11 +130,11 @@ export function initializeToolbarEvents() {
         toggleFavoritesOnly(!getSetting('favOnly'));
     });
 
-    $('#acm_groups_filter_button').on("click", function () {
+    $('#acm_groups_filter_button, #acm_groups_filter_panel_button').on("click", function () {
         toggleGroupsFilter();
     });
 
-    $('#acm_chats_filter_button').on("click", function () {
+    $('#acm_chats_filter_button, #acm_chats_filter_panel_button').on("click", function () {
         toggleChatsFilter();
     });
 
@@ -154,10 +152,6 @@ export function initializeToolbarEvents() {
             isRandomSelectionInProgress = false;
             setRandomButtonBusyState(false);
         }
-    });
-
-    $('#acm_trash_button').on("click", function () {
-        deleteUnlinkedUntaggedCharacters();
     });
 
     $('#acm_character_import_button').on("click", function () {
@@ -199,6 +193,7 @@ export function initializeToolbarEvents() {
         event.stopImmediatePropagation();
 
         $(this).closest('.tag').remove();
+        persistTagFilters();
         queueScrollTopOnNextRefresh();
         refreshCharListDebounced();
     });

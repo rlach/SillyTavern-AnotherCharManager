@@ -1118,15 +1118,6 @@ function toggleExpandableSection(elementId) {
  *
  * @return {void} Does not return any value.
  */
-export function toggleTagQueries() {
-    toggleExpandableSection('acm_tagQuery');
-}
-
-/**
- * Toggles the visibility of the generic filters panel (e.g. Source filter).
- *
- * @return {void} Does not return any value.
- */
 export function toggleFiltersPanel() {
     toggleExpandableSection('acm_filtersPanel');
 }
@@ -1189,6 +1180,36 @@ function hasActiveFilters() {
     return hasSearch || hasFavOnly || hasChatsFilter || hasExcluded || hasMandatory || hasFacultative || hasSourceFilter;
 }
 
+function getTagFilterIds(selector) {
+    return $(selector).children('.tag').map((_, element) => String($(element).data('tagid') || '')).get().filter(Boolean);
+}
+
+export function persistTagFilters() {
+    updateSetting('tagFilters', {
+        mandatory: getTagFilterIds('#acm_mandatoryTags'),
+        facultative: getTagFilterIds('#acm_facultativeTags'),
+        excluded: getTagFilterIds('#acm_excludedTags'),
+    });
+    updateFiltersButtonState();
+}
+
+export function updateFiltersButtonState() {
+    const sourceFilter = getSetting('sourceFilter') || {};
+    const activeCount = [sourceFilter.chub, sourceFilter.botbooru]
+        .filter(state => Number(state) !== 0).length
+        + (Number(getSetting('chatsFilter') || 0) !== 0 ? 1 : 0)
+        + (Number(getSetting('groupsFilter')) !== 1 ? 1 : 0)
+        + $('#acm_mandatoryTags > .tag, #acm_facultativeTags > .tag, #acm_excludedTags > .tag').length;
+    const button = document.getElementById('acm_filters_button');
+    const badge = document.getElementById('acm_filters_badge');
+
+    button?.classList.toggle('has-active-filters', activeCount > 0);
+    if (badge) {
+        badge.textContent = activeCount > 0 ? String(activeCount) : '';
+        badge.classList.toggle('visible', activeCount > 0);
+    }
+}
+
 function updateCharacterCount(visibleCount) {
     const groupsFilter = getSetting('groupsFilter');
     const totalCharsCount = characters.length;
@@ -1226,18 +1247,30 @@ export function updateFavFilterButtonState(isEnabled) {
  */
 export function updateGroupsFilterButtonState(filterState) {
     const button = document.getElementById('acm_groups_filter_button');
-    if (!button) return;
+    const panelButton = document.getElementById('acm_groups_filter_panel_button');
+    if (!button && !panelButton) return;
+
+    const state = Number.isNaN(Number(filterState)) ? 1 : ((Number(filterState) % 3) + 3) % 3;
     
-    button.classList.remove('groups_none', 'groups_show', 'groups_only');
-    button.classList.add(`groups_${['none', 'show', 'only'][filterState]}`);
+    button?.classList.remove('groups_none', 'groups_show', 'groups_only');
+    button?.classList.add(`groups_${['none', 'show', 'only'][state]}`);
     
     const titles = [
-        'No groups',
-        'Show groups',
+        'Only chats',
+        'Groups and chats',
         'Only groups'
     ];
-    button.setAttribute('title', titles[filterState]);
-    button.setAttribute('data-i18n', `[title]${titles[filterState]}`);
+    button?.setAttribute('title', titles[state]);
+    button?.setAttribute('data-i18n', `[title]${titles[state]}`);
+    button?.setAttribute('aria-pressed', state === 1 ? 'false' : 'true');
+    if (panelButton) {
+        panelButton.classList.remove('groups_none', 'groups_show', 'groups_only');
+        panelButton.classList.add(`groups_${['none', 'show', 'only'][state]}`);
+        panelButton.querySelector('span').textContent = titles[state];
+        panelButton.setAttribute('title', titles[state]);
+        panelButton.setAttribute('aria-pressed', state === 1 ? 'false' : 'true');
+    }
+    updateFiltersButtonState();
 }
 
 /**
@@ -1246,31 +1279,43 @@ export function updateGroupsFilterButtonState(filterState) {
  */
 export function updateChatsFilterButtonState(filterState) {
     const button = document.getElementById('acm_chats_filter_button');
-    if (!button) return;
+    const panelButton = document.getElementById('acm_chats_filter_panel_button');
+    if (!button && !panelButton) return;
 
     const normalizedState = Number(filterState);
     const state = Number.isNaN(normalizedState) ? 0 : ((normalizedState % 3) + 3) % 3;
 
-    button.classList.remove('chats_all', 'chats_with', 'chats_without');
+    button?.classList.remove('chats_all', 'chats_with', 'chats_without');
 
     const classByState = ['chats_all', 'chats_with', 'chats_without'];
-    const titleByState = ['All chats', 'With chats only', 'Without chats only'];
+    const titleByState = ['Any chat status', 'With chats', 'Without chats'];
 
-    button.classList.remove('fa-solid', 'fa-regular', 'fa-comment', 'fa-comment-dots', 'fa-comments');
+    button?.classList.remove('fa-solid', 'fa-regular', 'fa-comment', 'fa-comment-dots', 'fa-comments');
 
-    button.classList.add(classByState[state]);
+    button?.classList.add(classByState[state]);
 
     if (state === 0) {
-        button.classList.add('fa-solid', 'fa-comment');
+        button?.classList.add('fa-solid', 'fa-comment');
     } else if (state === 1) {
-        button.classList.add('fa-regular', 'fa-comment-dots');
+        button?.classList.add('fa-regular', 'fa-comment-dots');
     } else {
-        button.classList.add('fa-regular', 'fa-comment');
+        button?.classList.add('fa-regular', 'fa-comment');
     }
 
-    button.setAttribute('title', titleByState[state]);
-    button.setAttribute('data-i18n', `[title]${titleByState[state]}`);
-    button.setAttribute('aria-pressed', state === 0 ? 'false' : 'true');
+    button?.setAttribute('title', titleByState[state]);
+    button?.setAttribute('data-i18n', `[title]${titleByState[state]}`);
+    button?.setAttribute('aria-pressed', state === 0 ? 'false' : 'true');
+    if (panelButton) {
+        const panelIcon = panelButton.querySelector('i');
+        const panelIconClasses = ['fa-solid fa-comment', 'fa-regular fa-comment-dots', 'fa-regular fa-comment'];
+        panelButton.classList.remove('chats_all', 'chats_with', 'chats_without');
+        panelButton.classList.add(classByState[state]);
+        panelIcon.className = panelIconClasses[state];
+        panelButton.querySelector('span').textContent = titleByState[state];
+        panelButton.setAttribute('title', titleByState[state]);
+        panelButton.setAttribute('aria-pressed', state === 0 ? 'false' : 'true');
+    }
+    updateFiltersButtonState();
 }
 
 /**
@@ -1376,6 +1421,7 @@ export function updateSourceFilterButtonState(source, state) {
     button.setAttribute('title', title);
     button.setAttribute('data-i18n', `[title]${title}`);
     button.setAttribute('aria-pressed', safeState === 0 ? 'false' : 'true');
+    updateFiltersButtonState();
 }
 
 /**

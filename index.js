@@ -1,11 +1,10 @@
 // An extension that allows you to manage characters.
 import { initializeTagInput} from './src/services/tags-service.js';
-import { initializeSettings, migrateDropdownPresets } from "./src/services/settings-service.js";
+import { getSetting, initializeSettings, migrateDropdownPresets } from "./src/services/settings-service.js";
 import { initializeModal, openModal } from "./src/components/modal.js";
 import { initializeEventHandlers } from "./src/events/global-events.js";
 import { initializeCharacterModule } from "./src/services/imageLoader.js";
-import { refreshCharListDebounced } from "./src/components/charactersList.js";
-import { getSetting } from './src/services/settings-service.js';
+import { refreshCharListDebounced, updateFiltersButtonState } from "./src/components/charactersList.js";
 import { applyOriginalCharManagerToggle } from './src/services/original-char-manager-service.js';
 import { SlashCommand } from '../../../slash-commands/SlashCommand.js';
 import { SlashCommandParser } from '../../../slash-commands/SlashCommandParser.js';
@@ -16,6 +15,7 @@ jQuery(async () => {
     await initializeModal();
     initializeEventHandlers();
     initializeTagInput();
+    updateFiltersButtonState();
     initializeCharacterModule();
     applyOriginalCharManagerToggle(!!getSetting('disableOriginalCharManager'));
 

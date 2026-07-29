@@ -1,5 +1,5 @@
 import { tagList } from "../constants/context.js";
-import { queueScrollTopOnNextRefresh, refreshCharListDebounced } from "./charactersList.js";
+import { persistTagFilters, queueScrollTopOnNextRefresh, refreshCharListDebounced } from "./charactersList.js";
 import { acmFindTagMulti, findTag } from "../services/tags-service.js";
 import { equalsIgnoreCaseAndAccents } from "../utils.js";
 import { addTagToCategory } from "../services/presets-service.js";
@@ -148,6 +148,7 @@ function acmSelectTag(event, ui, listSelector, { tagListOptions = {}, mode = 'cl
             if (!isDuplicate) {
                 // Append ONLY to the list associated with the current input
                 $(listSelector).append(displayTag(tag.id));
+                persistTagFilters();
                 queueScrollTopOnNextRefresh();
                 refreshCharListDebounced();
             } else {

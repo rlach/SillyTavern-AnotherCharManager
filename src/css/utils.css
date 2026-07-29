@@ -18,31 +18,37 @@
 }
 
 /* Groups filter button states */
-#acm_groups_filter_button.groups_none {
+#acm_groups_filter_button.groups_none,
+#acm_groups_filter_panel_button.groups_none {
     opacity: 0.5;
 }
 
-#acm_groups_filter_button.groups_show {
+#acm_groups_filter_button.groups_show,
+#acm_groups_filter_panel_button.groups_show {
     opacity: 1;
     color: var(--SmartThemeHighlightColor);
 }
 
-#acm_groups_filter_button.groups_only {
+#acm_groups_filter_button.groups_only,
+#acm_groups_filter_panel_button.groups_only {
     opacity: 1;
     color: var(--fullgreen);
 }
 
 /* Chats filter button states */
-#acm_chats_filter_button.chats_all {
+#acm_chats_filter_button.chats_all,
+#acm_chats_filter_panel_button.chats_all {
     opacity: 1;
 }
 
-#acm_chats_filter_button.chats_with {
+#acm_chats_filter_button.chats_with,
+#acm_chats_filter_panel_button.chats_with {
     opacity: 1;
     color: var(--SmartThemeHighlightColor);
 }
 
-#acm_chats_filter_button.chats_without {
+#acm_chats_filter_button.chats_without,
+#acm_chats_filter_panel_button.chats_without {
     opacity: 0.65;
     color: var(--SmartThemeBodyColor);
 }
@@ -63,4 +69,42 @@
     color: var(--fullred);
     border-color: var(--fullred);
     text-decoration: line-through;
+}
+
+#acm_filters_button {
+    position: relative;
+}
+
+#acm_filters_button.has-active-filters {
+    color: var(--fullgreen);
+    border-color: var(--fullgreen);
+    filter: drop-shadow(0 0 5px var(--fullgreen));
+}
+
+.acm_filters_badge {
+    display: none;
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    z-index: 2;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    box-sizing: border-box;
+    padding: 0 4px;
+    border: 1px solid var(--SmartThemeBodyColor);
+    border-radius: 9px;
+    color: #fff;
+    background-color: #16833f;
+    box-shadow: 0 1px 4px #000;
+    font-family: var(--mainFontFamily);
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 0 1px 1px #000;
+}
+
+.acm_filters_badge.visible {
+    display: inline-flex;
 }

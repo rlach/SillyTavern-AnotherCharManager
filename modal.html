@@ -9,8 +9,9 @@
                             <div id="acm_character_import_button" class="menu_button fa-solid fa-file-import faSmallFontSquareFix" title="Import Character from File"></div>
                             <div id="acm_external_import_button" class="menu_button fa-solid fa-cloud-arrow-down faSmallFontSquareFix" title="Import content from external URL"></div>
                             <div id="acm_tags_view" class="menu_button tags_view fa-solid fa-gear faSmallFontSquareFix" title="Manage tags"></div>
-                            <div id="acm_tags_filter" class="menu_button fa-solid fa-tags faSmallFontSquareFix" title="Show Tag List"></div>
-                            <div id="acm_filters_button" class="menu_button fa-solid fa-filter faSmallFontSquareFix" title="Show Filters" data-i18n="[title]Show Filters"></div>
+                            <div id="acm_filters_button" class="menu_button fa-solid fa-filter faSmallFontSquareFix" title="Show Filters" data-i18n="[title]Show Filters">
+                                <span id="acm_filters_badge" class="acm_filters_badge" aria-hidden="true"></span>
+                            </div>
                             <div class="sortText">Sorted by :</div>
                             <select id="char_sort_order" title="Characters sorting order" data-i18n="[title]Characters sorting order">
                                 <option data-field="name" data-order="asc" data-i18n="A-Z">A-Z</option>
@@ -40,38 +41,56 @@
                             <div id="acm_groups_filter_button" class="menu_button fa-solid fa-users faSmallFontSquareFix acm_toolbar_button" title="Show groups" data-i18n="[title]Show groups" aria-pressed="false"></div>
                             <div id="acm_chats_filter_button" class="menu_button fa-solid fa-comment faSmallFontSquareFix acm_toolbar_button" title="All chats" data-i18n="[title]All chats" aria-pressed="false"></div>
                             <div id="acm_random_button" class="menu_button fa-solid fa-dice faSmallFontSquareFix acm_toolbar_button" title="Random character" data-i18n="[title]Random character"></div>
-                            <div id="acm_trash_button" class="menu_button fa-solid fa-trash faSmallFontSquareFix acm_toolbar_button" title="Delete unlinked & untagged" data-i18n="[title]Delete unlinked & untagged"></div>
                         </form>
                         <span id="charNumber"></span>
                     </div>
-                    <div id="acm_tagQuery" class="acm_tagQuery_container">
-                        <div class="acm_tagQuery_row">
-                            <span class="acm_tagQuery_label">Mandatory tags:</span>
-                            <label for="acm_mandatoryInput" title="Mandatory Tags">
-                                <input id="acm_mandatoryInput" class="text_pole acm_tagQuery_input margin0 padding0">
-                            </label>
-                            <div id="acm_mandatoryTags" class="tags"></div>
-                        </div>
-                        <div class="acm_tagQuery_row">
-                            <span class="acm_tagQuery_label">At least one tag:</span>
-                            <label for="acm_facultativeInput" title="Facultative Tags">
-                                <input id="acm_facultativeInput" class="text_pole acm_tagQuery_input margin0 padding0">
-                            </label>
-                            <div id="acm_facultativeTags" class="tags"></div>
-                        </div>
-                        <div class="acm_tagQuery_row">
-                            <span class="acm_tagQuery_label">Excluded tags:</span>
-                            <label for="acm_excludedInput" title="Excluded Tags">
-                                <input id="acm_excludedInput" class="text_pole acm_tagQuery_input margin0 padding0">
-                            </label>
-                            <div id="acm_excludedTags" class="tags"></div>
-                        </div>
-                    </div>
                     <div id="acm_filtersPanel" class="acm_tagQuery_container">
-                        <div class="acm_tagQuery_row">
-                            <span class="acm_tagQuery_label">Source:</span>
-                            <div id="acm_source_filter_botbooru" class="menu_button acm_source_filter_btn" data-source="botbooru" title="Source: Botbooru (not filtering)">Botbooru</div>
-                            <div id="acm_source_filter_chub" class="menu_button acm_source_filter_btn" data-source="chub" title="Source: Chub (not filtering)">Chub</div>
+                        <div class="acm_filters_grid">
+                            <div class="acm_filters_column">
+                                <div class="acm_tagQuery_row">
+                                    <span class="acm_tagQuery_label">Source:</span>
+                                    <div class="acm_filter_controls">
+                                        <div id="acm_source_filter_botbooru" class="menu_button acm_source_filter_btn" data-source="botbooru" title="Source: Botbooru (not filtering)">Botbooru</div>
+                                        <div id="acm_source_filter_chub" class="menu_button acm_source_filter_btn" data-source="chub" title="Source: Chub (not filtering)">Chub</div>
+                                    </div>
+                                </div>
+                                <div class="acm_tagQuery_row">
+                                    <span class="acm_tagQuery_label">Chat status:</span>
+                                    <div id="acm_chats_filter_panel_button" class="menu_button acm_filter_text_button" title="Any chat status" aria-pressed="false">
+                                        <i class="fa-solid fa-comment"></i><span>Any chat status</span>
+                                    </div>
+                                </div>
+                                <div class="acm_tagQuery_row">
+                                    <span class="acm_tagQuery_label">Group:</span>
+                                    <div id="acm_groups_filter_panel_button" class="menu_button acm_filter_text_button" title="Groups and chats" aria-pressed="false">
+                                        <i class="fa-solid fa-users"></i><span>Groups and chats</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="acm_filters_column acm_tag_filters_column">
+                                <div class="acm_tag_filters_heading"><i class="fa-solid fa-tags"></i><span>Tags:</span></div>
+                                <div class="acm_tagQuery_row">
+                                    <span class="acm_tagQuery_label">Mandatory:</span>
+                                    <label for="acm_mandatoryInput" title="Mandatory Tags">
+                                        <input id="acm_mandatoryInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                                    </label>
+                                    <div id="acm_mandatoryTags" class="tags acm_filter_tags"></div>
+                                </div>
+                                <div class="acm_tagQuery_row">
+                                    <span class="acm_tagQuery_label">At least one:</span>
+                                    <label for="acm_facultativeInput" title="At least One Tag">
+                                        <input id="acm_facultativeInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                                    </label>
+                                    <div id="acm_facultativeTags" class="tags acm_filter_tags"></div>
+                                </div>
+                                <div class="acm_tagQuery_row">
+                                    <span class="acm_tagQuery_label">Excluded:</span>
+                                    <label for="acm_excludedInput" title="Excluded Tags">
+                                        <input id="acm_excludedInput" class="text_pole acm_tagQuery_input margin0 padding0">
+                                    </label>
+                                    <div id="acm_excludedTags" class="tags acm_filter_tags"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <hr>
