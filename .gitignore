@@ -398,3 +398,5 @@ FodyWeavers.xsd
 # JetBRains Ide
 .idea/
 .junie/
+
+.DS_Store

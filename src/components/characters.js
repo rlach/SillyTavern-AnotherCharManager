@@ -328,7 +328,11 @@ function renderMessageLikeChat(rawText, $container, emptyText = 'No data') {
         return;
     }
 
-    const formatted = messageFormatting(text, getSelectedCharacterName(), false, false, 0);
+    const charName = getSelectedCharacterName();
+    const previewText = substituteParams(text, { name2Override: charName });
+    // The preview is not part of the active chat. Avoid message ID 0 because
+    // messageFormatting may otherwise read from or update the open chat's greeting.
+    const formatted = messageFormatting(previewText, charName, false, false, -1);
     $container.html(`
         <div class="mes acm-chat-preview-message">
             <div class="mes_block">
@@ -342,7 +346,8 @@ function renderMessageLikeChat(rawText, $container, emptyText = 'No data') {
 function renderDescriptionPreview() {
     const text = String($('#acm_description').val() || '');
     const $preview = $('#acm_description_preview');
-    renderFormattedNotes(text, $preview, selectedChar || '');
+    const previewText = substituteParams(text, { name2Override: getSelectedCharacterName() });
+    renderFormattedNotes(previewText, $preview, selectedChar || '');
     clampImagesInContainer($preview[0]);
 }
 
