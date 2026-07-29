@@ -821,12 +821,46 @@
     pointer-events: none;
 }
 
-#acm_greeting_selector {
+.acm-greeting-navigation {
+    display: flex;
     flex: 1 1 auto;
     min-width: 0;
-    font-size: 13px;
-    padding: 3px 6px;
+    align-items: center;
+    gap: 4px;
+}
+
+.acm-greeting-navigation-button {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: 28px;
+    min-width: 28px;
     height: 26px;
+    padding: 1px;
+}
+
+.acm-greeting-counter {
+    min-width: 46px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.acm-greeting-jump {
+    flex: 0 0 30px;
+    box-sizing: border-box;
+    width: 30px;
+    min-width: 30px;
+    max-width: 30px;
+    font-size: 13px;
+    padding: 2px;
+    height: 26px;
+    text-align: center;
+}
+
+.acm-greeting-jump::placeholder {
+    opacity: 0.8;
+    text-align: center;
 }
 
 .acm-greetings-management .acm-token-count {

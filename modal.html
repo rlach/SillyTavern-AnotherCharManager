@@ -166,9 +166,16 @@
                                                 <i class="fa-solid fa-edit"></i>
                                             </button>
                                             <div class="acm-greetings-controls" style="display: none;">
-                                                <select id="acm_greeting_selector" class="text_pole">
-                                                    <option value="default">Default Greeting</option>
-                                                </select>
+                                                <div id="acm_greeting_navigation" class="acm-greeting-navigation" style="display: none;">
+                                                    <button id="acm_greeting_previous" class="menu_button acm-greeting-navigation-button" type="button" title="Previous greeting" aria-label="Previous greeting">
+                                                        <i class="fa-solid fa-arrow-left"></i>
+                                                    </button>
+                                                    <span id="acm_greeting_counter" class="acm-greeting-counter" aria-live="polite">1 / 1</span>
+                                                    <button id="acm_greeting_next" class="menu_button acm-greeting-navigation-button" type="button" title="Next greeting" aria-label="Next greeting">
+                                                        <i class="fa-solid fa-arrow-right"></i>
+                                                    </button>
+                                                    <input id="acm_greeting_jump" class="text_pole acm-greeting-jump" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="#" title="Enter a greeting number and press Enter" aria-label="Jump to greeting number">
+                                                </div>
                                                 <button id="acm_greeting_add" class="menu_button acm-greeting-add-button" type="button" title="Add new greeting">
                                                     <i class="fa-solid fa-plus"></i>
                                                 </button>

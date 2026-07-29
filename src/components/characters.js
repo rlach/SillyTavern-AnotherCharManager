@@ -238,9 +238,61 @@ function getGreetingEntriesForSelectedCharacter() {
 
 function syncGreetingSelection(value) {
     const normalized = value === 'default' ? 'default' : String(value);
-    $('#acm_greeting_selector').val(normalized);
     currentSelectedGreeting = normalized;
     handleGreetingSelectionChange();
+}
+
+function getCurrentGreetingIndex(entries = getGreetingEntriesForSelectedCharacter()) {
+    const selectedValue = String(currentSelectedGreeting || 'default');
+    const selectedIndex = entries.findIndex(entry => entry.value === selectedValue);
+    return Math.max(selectedIndex, 0);
+}
+
+function updateGreetingNavigationUi() {
+    const entries = getGreetingEntriesForSelectedCharacter();
+    const currentIndex = getCurrentGreetingIndex(entries);
+    const hasAlternates = entries.length > 1;
+
+    $('#acm_greeting_counter').text(`${currentIndex + 1} / ${entries.length}`);
+    $('#acm_greeting_navigation').toggle(hasAlternates);
+}
+
+function selectGreetingByIndex(index) {
+    const entries = getGreetingEntriesForSelectedCharacter();
+    if (!Number.isInteger(index) || index < 0 || index >= entries.length) {
+        return false;
+    }
+
+    syncGreetingSelection(entries[index].value);
+    return true;
+}
+
+function stepGreeting(direction) {
+    const entries = getGreetingEntriesForSelectedCharacter();
+    if (entries.length <= 1) {
+        return;
+    }
+
+    const currentIndex = getCurrentGreetingIndex(entries);
+    const nextIndex = (currentIndex + direction + entries.length) % entries.length;
+    selectGreetingByIndex(nextIndex);
+}
+
+function handleGreetingJump(event) {
+    if (event.key !== 'Enter') {
+        return;
+    }
+
+    event.preventDefault();
+    const rawValue = String(event.currentTarget.value || '').trim();
+    if (!/^\d+$/.test(rawValue)) {
+        return;
+    }
+
+    const requestedNumber = Number(rawValue);
+    if (selectGreetingByIndex(requestedNumber - 1)) {
+        event.currentTarget.value = '';
+    }
 }
 
 function bindFullscreenGreetingNavigation({ prevButtonId, nextButtonId, titleId, bodyId }) {
@@ -541,28 +593,10 @@ function switchTab(tabName) {
 }
 
 /**
- * Builds greeting options for the dropdown selector.
- * @param {Array} altGreetings - Array of alternate greetings
- * @returns {string} HTML string with option elements
- */
-function buildGreetingsDropdownOptions(altGreetings) {
-    let options = '<option value="default">Default Greeting</option>';
-    
-    if (Array.isArray(altGreetings)) {
-        altGreetings.forEach((greeting, index) => {
-            options += `<option value="${index}">Alt Greeting #${index + 1}</option>`;
-        });
-    }
-    
-    return options;
-}
-
-/**
- * Handles greeting selection change from the dropdown.
+ * Loads the currently selected greeting into the editor and preview.
  */
 function handleGreetingSelectionChange() {
-    const selectedValue = String($('#acm_greeting_selector').val());
-    currentSelectedGreeting = selectedValue;
+    const selectedValue = String(currentSelectedGreeting || 'default');
     
     const char = characters[getIdByAvatar(selectedChar)];
     if (!char) return;
@@ -571,13 +605,14 @@ function handleGreetingSelectionChange() {
     if (selectedValue === 'default') {
         $('#acm_firstMess').val(char.first_mes || '');
     } else {
-        const greetingIndex = parseInt(selectedValue, 10);
+        const greetingIndex = Number.parseInt(selectedValue, 10);
         const altGreetings = char.data.alternate_greetings || [];
         $('#acm_firstMess').val(altGreetings[greetingIndex] || '');
     }
 
     // Update delete button state
     updateGreetingDeleteButtonState(selectedValue);
+    updateGreetingNavigationUi();
 
     // Auto-resize textarea
     setTimeout(() => autoResizeTextarea($('#acm_firstMess')[0]), 0);
@@ -613,17 +648,8 @@ async function handleGreetingAdd() {
     // Save the changes
     await saveAltGreetings(char.avatar, char.name);
 
-    // Update dropdown
     const newIndex = char.data.alternate_greetings.length - 1;
-    $('#acm_greeting_selector').html(buildGreetingsDropdownOptions(char.data.alternate_greetings));
-    $('#acm_greeting_selector').val(newIndex.toString());
-    
-    // Load the new greeting
-    currentSelectedGreeting = newIndex.toString();
-    $('#acm_firstMess').val(newGreetingText);
-    updateGreetingDeleteButtonState(currentSelectedGreeting);
-    setTimeout(() => autoResizeTextarea($('#acm_firstMess')[0]), 0);
-    updateTopBarTokenCount('greetings');
+    syncGreetingSelection(newIndex.toString());
 
     // Update the greeting number display (legacy support for alt greetings drawer)
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings.length}`);
@@ -638,7 +664,7 @@ async function handleGreetingAdd() {
  * Handles deleting the currently selected greeting.
  */
 async function handleGreetingDelete() {
-    const selectedValue = String($('#acm_greeting_selector').val());
+    const selectedValue = String(currentSelectedGreeting || 'default');
     
     // Can't delete default greeting
     if (selectedValue === 'default') return;
@@ -646,7 +672,7 @@ async function handleGreetingDelete() {
     const char = characters[getIdByAvatar(selectedChar)];
     if (!char) return;
 
-    const greetingIndex = parseInt(selectedValue, 10);
+    const greetingIndex = Number.parseInt(selectedValue, 10);
     const altGreetings = char.data.alternate_greetings || [];
 
     if (greetingIndex < 0 || greetingIndex >= altGreetings.length) return;
@@ -662,20 +688,14 @@ async function handleGreetingDelete() {
     // Save the changes
     await saveAltGreetings(char.avatar, char.name);
 
-    // Update dropdown
-    $('#acm_greeting_selector').html(buildGreetingsDropdownOptions(char.data.alternate_greetings));
-
     // Select previous greeting or default
     let newSelection = 'default';
     if (greetingIndex > 0) {
         newSelection = (greetingIndex - 1).toString();
     }
-    
-    $('#acm_greeting_selector').val(newSelection);
-    currentSelectedGreeting = newSelection;
 
     // Load the selected greeting
-    handleGreetingSelectionChange();
+    syncGreetingSelection(newSelection);
 
     // Update the greeting number display
     $('#altGreetings_number').text(`Numbers: ${char.data.alternate_greetings.length}`);
@@ -721,7 +741,7 @@ async function handleGreetingStartNewChat() {
         return;
     }
 
-    const selectedValue = String($('#acm_greeting_selector').val() ?? currentSelectedGreeting ?? 'default');
+    const selectedValue = String(currentSelectedGreeting ?? 'default');
     const selectedAltIndex = selectedValue === 'default' ? -1 : Number.parseInt(selectedValue, 10);
     const targetSwipeId = selectedAltIndex >= 0 ? selectedAltIndex + 1 : 0;
 
@@ -766,8 +786,10 @@ export function initializeTabs() {
         switchTab(tabName);
     });
 
-    // Greeting dropdown change
-    $(document).on('change', '#acm_greeting_selector', handleGreetingSelectionChange);
+    // Greeting navigation
+    $(document).on('click', '#acm_greeting_previous', () => stepGreeting(-1));
+    $(document).on('click', '#acm_greeting_next', () => stepGreeting(1));
+    $(document).on('keydown', '#acm_greeting_jump', handleGreetingJump);
 
     // Greeting add button
     $(document).on('click', '#acm_greeting_add', handleGreetingAdd);
@@ -847,13 +869,18 @@ function getCharacterLinkHtml(char) {
  * Fills the character details in the user interface based on the provided avatar.
  *
  * @param {string} avatar - The avatar identifier of the character for which details are to be filled.
+ * @param {object} [options] - Detail rendering options.
+ * @param {boolean} [options.resetGreeting=false] - Whether to select the default greeting before rendering.
  * @return {Promise<void>} A promise that resolves when all character details have been successfully populated and updates are complete.
  */
-export async function fillDetails(avatar) {
+export async function fillDetails(avatar, { resetGreeting = false } = {}) {
     if (typeof characters[getIdByAvatar(avatar)].data.alternate_greetings === 'undefined') {
         await unshallowCharacter(getIdByAvatar(avatar));
     }
     const char = characters[getIdByAvatar(avatar)];
+    if (resetGreeting) {
+        currentSelectedGreeting = 'default';
+    }
     const avatarThumb = getThumbnailUrl('avatar', char.avatar);
 
     $('#avatar_title').attr('title', char.avatar);
@@ -912,16 +939,14 @@ export async function fillDetails(avatar) {
         $('#altGreetings_content').html(html);
     });
     
-    // ===== TABS SYSTEM: Initialize greetings dropdown =====
+    // ===== TABS SYSTEM: Initialize greeting navigation =====
     const altGreetings = char.data.alternate_greetings || [];
-    $('#acm_greeting_selector').html(buildGreetingsDropdownOptions(altGreetings));
 
-    // Select current greeting (default or previously selected), then resync the
-    // textarea/preview so they always match whatever the dropdown ends up showing.
-    if (currentSelectedGreeting === 'default' || !altGreetings[parseInt(currentSelectedGreeting, 10)]) {
+    // Keep the previous selection only when the new character has that index.
+    const selectedAltIndex = Number.parseInt(currentSelectedGreeting, 10);
+    if (currentSelectedGreeting !== 'default' && (!Number.isInteger(selectedAltIndex) || selectedAltIndex < 0 || selectedAltIndex >= altGreetings.length)) {
         currentSelectedGreeting = 'default';
     }
-    $('#acm_greeting_selector').val(currentSelectedGreeting);
     handleGreetingSelectionChange();
     
     // ===== TABS SYSTEM: Check if character has chats for Last message tab =====

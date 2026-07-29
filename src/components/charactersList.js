@@ -707,7 +707,7 @@ export async function selectAndDisplay(avatar) {
     // It is set only for actions that require it (e.g. delete).
     $('#acm_export_format_popup').hide();
     window.acmIsUpdatingDetails = true;
-    await fillDetails(avatar);
+    await fillDetails(avatar, { resetGreeting: true });
     await fillAdvancedDefinitions(avatar);
     window.acmIsUpdatingDetails = false;
 
