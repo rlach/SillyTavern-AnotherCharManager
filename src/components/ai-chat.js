@@ -43,6 +43,29 @@ function getSelectedCharacterObject() {
     return index !== undefined ? characters[index] : null;
 }
 
+function getCharacterImageUrl(avatar) {
+    return `/characters/${encodeURIComponent(String(avatar || ''))}`;
+}
+
+function buildCharacterImageTurn() {
+    const char = getSelectedCharacterObject();
+    if (!char?.avatar) {
+        return null;
+    }
+
+    return {
+        type: 'character-image',
+        role: 'assistant',
+        text: '',
+        imageUrl: getCharacterImageUrl(char.avatar),
+        imageAlt: `${String(char.name || 'Character')} avatar`,
+    };
+}
+
+function getConversationContentTurns() {
+    return conversation.filter(turn => turn?.type !== 'character-image');
+}
+
 function buildCharacterSummary(char) {
     const tags = (tagMap[char.avatar] || [])
         .map(tagId => tagList.find(tag => String(tag?.id) === String(tagId))?.name)
@@ -174,7 +197,7 @@ function buildRequestMessages(char) {
     const systemPrompt = promptTemplate.split('{{characterData}}').join(jsonData);
 
     const messages = [{ role: 'system', content: systemPrompt }];
-    for (const turn of conversation) {
+    for (const turn of getConversationContentTurns()) {
         if (!turn.text) continue; // skips the empty in-progress assistant placeholder
         messages.push({ role: turn.role, content: turn.text });
     }
@@ -185,17 +208,30 @@ function renderMessages({ scrollToBottom = false } = {}) {
     const $messages = $('#acm_ai_chat_messages');
     if (!$messages.length) return;
 
-    // Quick-access "recent questions" buttons only make sense before this mini-chat has
-    // any messages yet - once a question is sent they give way to the actual conversation.
-    if (conversation.length === 0) {
-        $messages.html(renderRecentQuestionsHtml());
-        return;
-    }
+    const contentTurns = getConversationContentTurns();
+    const showRecentQuestions = contentTurns.length === 0;
 
     const char = getSelectedCharacterObject();
     const charName = char?.name || '';
 
     const html = conversation.map(turn => {
+        if (turn?.type === 'character-image') {
+            const src = escapeHtml(turn.imageUrl || '');
+            const alt = escapeHtml(turn.imageAlt || 'Character avatar');
+            return `
+                <div class="mes acm-ai-chat-message-assistant acm-ai-chat-image-message">
+                    <div class="mes_block">
+                        <div class="mes_text">
+                            <div class="mes_media_wrapper">
+                                <div class="mes_img_container">
+                                    <img class="mes_img acm-ai-chat-image" src="${src}" alt="${alt}" loading="eager">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
         if (turn.role === 'assistant') {
             const streamingClass = turn.streaming ? ' acm-ai-chat-streaming' : '';
             // Same rendering path as the Greetings preview in character details.
@@ -205,7 +241,8 @@ function renderMessages({ scrollToBottom = false } = {}) {
         return `<div class="acm-ai-chat-message acm-ai-chat-message-user">${escapeHtml(turn.text)}</div>`;
     }).join('');
 
-    $messages.html(html);
+    const recentHtml = showRecentQuestions ? renderRecentQuestionsHtml() : '';
+    $messages.html(`${html}${recentHtml}`);
 
     if (scrollToBottom) {
         $messages.scrollTop($messages[0].scrollHeight);
@@ -332,6 +369,14 @@ export function resetAiChat() {
     abortActiveGeneration();
     isGenerating = false;
     conversation = [];
+
+    if (Boolean(getSetting('askAiPanelEnabled')) && isAiChatAvailable()) {
+        const imageTurn = buildCharacterImageTurn();
+        if (imageTurn) {
+            conversation.push(imageTurn);
+        }
+    }
+
     renderMessages();
     updateAvailabilityUi();
 }
@@ -398,7 +443,7 @@ async function sendAiChatMessage(presetText) {
     const userText = String(presetText ?? $input.val() ?? '').trim();
     if (!userText) return;
 
-    const isFirstQuestion = conversation.length === 0;
+    const isFirstQuestion = getConversationContentTurns().length === 0;
 
     $input.val('');
     autoResizeChatInput();
@@ -475,7 +520,7 @@ function stopAiChatGeneration() {
     generationToken++; // invalidate any in-flight promise chain immediately
     isGenerating = false;
 
-    const lastTurn = conversation[conversation.length - 1];
+    const lastTurn = conversation.at(-1);
     if (lastTurn?.role === 'assistant') {
         lastTurn.streaming = false;
         if (!lastTurn.text) {
@@ -541,14 +586,22 @@ export function initializeAiChatEvents() {
         toggleRecentQuestionPinned($(this).data('question-id'));
     });
 
-    // Bound directly on the textarea so Ctrl/Cmd+Enter can stop core's document-level
-    // shortcut while retaining the textarea's native newline behavior.
+    // Bound directly on the textarea so Enter sends while Ctrl/Cmd+Enter inserts a newline
+    // without triggering core document-level shortcuts.
     const inputEl = document.getElementById('acm_ai_chat_input');
     inputEl?.addEventListener('keydown', function (event) {
         if (event.key !== 'Enter') return;
 
         event.stopPropagation();
-        if (event.ctrlKey || event.metaKey) return;
+        if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+
+            const start = this.selectionStart ?? this.value.length;
+            const end = this.selectionEnd ?? this.value.length;
+            this.setRangeText('\n', start, end, 'end');
+            this.dispatchEvent(new Event('input', { bubbles: true }));
+            return;
+        }
 
         event.preventDefault();
         handleSendOrStop();
