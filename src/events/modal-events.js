@@ -91,6 +91,13 @@ export function initializeModalEvents() {
         const enabled = $(this).is(':checked');
         updateSetting('askAiPanelEnabled', enabled);
         applyAskAiPanelMode(enabled && !!getSetting('sidePanel'));
+
+        // The character-list's available width just changed (a panel appeared/disappeared) -
+        // the virtual scroller's cached column measurements must be invalidated and re-measured
+        // once the flex layout settles, same as the side panel toggle already does.
+        requestAnimationFrame(() => refreshClassicVirtualLayout({ invalidateColumns: true }));
+        setTimeout(() => refreshClassicVirtualLayout({ invalidateColumns: true }), 90);
+        setTimeout(() => refreshClassicVirtualLayout({ invalidateColumns: true }), 220);
     });
 
     $('#acm_side_panel_pos_toggle').on('click', function () {

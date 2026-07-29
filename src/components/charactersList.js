@@ -343,6 +343,34 @@ export function refreshClassicVirtualLayout({ invalidateColumns = false } = {}) 
     classicVirtualScroller.refreshLayout();
 }
 
+let virtualLayoutResizeObserver = null;
+const debouncedInvalidateVirtualLayout = debounce(() => {
+    refreshClassicVirtualLayout({ invalidateColumns: true });
+}, 60);
+
+/**
+ * Watches the character list's container width so any layout change that isn't driven by one
+ * of our own toggles (a plain browser window resize, in particular) also invalidates the
+ * virtual scroller's cached column-count measurements instead of leaving them stale.
+ */
+function ensureVirtualLayoutResizeObserver(container) {
+    if (virtualLayoutResizeObserver || !container || typeof ResizeObserver === 'undefined') {
+        return;
+    }
+
+    let lastWidth = container.clientWidth;
+    virtualLayoutResizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+            const newWidth = entry.contentRect?.width || container.clientWidth;
+            if (Math.abs(newWidth - lastWidth) > 1) {
+                lastWidth = newWidth;
+                debouncedInvalidateVirtualLayout();
+            }
+        }
+    });
+    virtualLayoutResizeObserver.observe(container);
+}
+
 function measureClassicCardMetrics(container, sampleItem) {
     if (!container || !sampleItem) {
         return {
@@ -389,6 +417,8 @@ function renderCharactersListVirtual(sortedList, preserveScroll = true) {
     if (!container) {
         return;
     }
+
+    ensureVirtualLayoutResizeObserver(container);
 
     // Virtual scroller shouldn't measure while popup is hidden, otherwise it may capture 0-height items.
     if (container.offsetWidth <= 0 || container.offsetHeight <= 0 || container.getClientRects().length === 0) {
