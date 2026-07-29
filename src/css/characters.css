@@ -536,6 +536,14 @@
     max-height: 140px;
 }
 
+.acm-ai-chat-controls {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.acm-ai-chat-settings-btn,
 .acm-ai-chat-send-btn {
     flex: 0 0 auto;
     margin: 0;
@@ -549,6 +557,113 @@
 .acm-ai-chat-send-btn.disabled {
     opacity: 0.5;
     pointer-events: none;
+}
+
+.acm-ai-chat-settings-modal {
+    display: none;
+    position: fixed;
+    z-index: 10020;
+    inset: 0;
+    width: 100vw;
+    max-width: none;
+    height: 100vh;
+    max-height: none;
+    margin: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    border: 0;
+    background: rgb(0 0 0 / 65%);
+}
+
+.acm-ai-chat-settings-modal.visible {
+    display: flex;
+}
+
+.acm-ai-chat-settings-dialog {
+    display: flex;
+    flex-direction: column;
+    width: min(720px, 95vw);
+    max-height: min(820px, 90vh);
+    overflow: hidden;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: var(--acm-border-radius-md);
+    background: var(--SmartThemeBlurTintColor);
+    box-shadow: 0 8px 30px rgb(0 0 0 / 55%);
+    backdrop-filter: blur(var(--SmartThemeBlurStrength));
+}
+
+.acm-ai-chat-settings-header,
+.acm-ai-chat-settings-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+}
+
+.acm-ai-chat-settings-header {
+    justify-content: space-between;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+}
+
+.acm-ai-chat-settings-header h3 {
+    margin: 0;
+}
+
+.acm-ai-chat-settings-footer {
+    justify-content: flex-end;
+    border-top: 1px solid var(--SmartThemeBorderColor);
+}
+
+.acm-ai-chat-settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    overflow-y: auto;
+}
+
+.acm-ai-chat-settings-prompt {
+    min-height: 180px;
+    resize: vertical;
+}
+
+.acm-ai-chat-settings-limit {
+    width: 100px;
+}
+
+.acm-ai-chat-settings-subheading {
+    margin-top: 8px;
+    font-weight: 700;
+}
+
+.acm-ai-chat-settings-questions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.acm-ai-chat-settings-question {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.acm-ai-chat-settings-question-text {
+    width: 100%;
+}
+
+.acm-ai-chat-settings-question-pin {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.acm-ai-chat-settings-empty {
+    padding: 10px 0;
+    opacity: 0.7;
 }
 
 .list-character-wrapper.acm-side-panel-mode #char-sep {

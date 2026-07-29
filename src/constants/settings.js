@@ -33,12 +33,23 @@ export const setCrop_data = (value) => {
     acm_crop_data = value;
 };
 
+export const DEFAULT_ASK_AI_PROMPT = [
+    'You are a helpful assistant that answers questions about a specific character from the user\'s character card collection.',
+    'Answer only using the character data provided below (as JSON), which describes the character being asked about. Speak about the character in the third person, as an assistant describing them - do not roleplay as the character and do not speak as the user.',
+    'If the answer cannot be found in the provided data, say so honestly instead of inventing details.',
+    '',
+    'Character data (JSON):',
+    '{{characterData}}',
+].join('\n');
+
 export const defaultSettings = {
     popupWidth: 50,
     sidePanel: false,
     sidePanelPosition: 'right',
     askAiPanelEnabled: false,
-    askAiRecentQuestions: [], // {id, text, pinned, updatedAt}[], max 5 entries, shared across all characters
+    askAiPrompt: DEFAULT_ASK_AI_PROMPT,
+    askAiRecentQuestions: [], // {id, text, pinned, updatedAt}[], shared across all characters
+    askAiRecentQuestionsLimit: 5,
     disableOriginalCharManager: false,
     descriptionEditMode: true,
     greetingsEditMode: true,

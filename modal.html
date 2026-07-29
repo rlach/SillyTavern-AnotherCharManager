@@ -231,11 +231,35 @@
                             <div id="acm_ai_chat_body" class="acm-ai-chat-body">
                                 <div id="acm_ai_chat_messages" class="acm-ai-chat-messages"></div>
                                 <div class="acm-ai-chat-input-row">
-                                    <textarea id="acm_ai_chat_input" class="text_pole acm-ai-chat-input" aria-label="Ask AI message input" placeholder="Ask about this character... (Ctrl+Enter to send)" rows="2"></textarea>
-                                    <div id="acm_ai_chat_send" class="menu_button fa-solid fa-paper-plane acm-ai-chat-send-btn" title="Send message (Ctrl+Enter)"></div>
+                                    <textarea id="acm_ai_chat_input" class="text_pole acm-ai-chat-input" aria-label="Ask AI message input" placeholder="Ask about this character... (Enter to send, Ctrl+Enter for a new line)" rows="2"></textarea>
+                                    <div class="acm-ai-chat-controls">
+                                        <div id="acm_ai_chat_settings" class="menu_button fa-solid fa-gear acm-ai-chat-settings-btn" title="Ask AI settings"></div>
+                                        <div id="acm_ai_chat_send" class="menu_button fa-solid fa-paper-plane acm-ai-chat-send-btn" title="Send message (Enter)"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <dialog id="acm_ai_chat_settings_modal" class="acm-ai-chat-settings-modal" aria-labelledby="acm_ai_chat_settings_title">
+                            <div class="acm-ai-chat-settings-dialog">
+                                <div class="acm-ai-chat-settings-header">
+                                    <h3 id="acm_ai_chat_settings_title">Ask AI settings</h3>
+                                    <div id="acm_ai_chat_settings_close" class="menu_button fa-solid fa-xmark" title="Close"></div>
+                                </div>
+                                <div class="acm-ai-chat-settings-content">
+                                    <label for="acm_ai_chat_prompt">Prompt</label>
+                                    <textarea id="acm_ai_chat_prompt" class="text_pole acm-ai-chat-settings-prompt" rows="10"></textarea>
+                                    <small>Use <code>{{characterData}}</code> where the selected character's JSON data should be inserted.</small>
+                                    <label for="acm_ai_chat_recent_limit">Number of remembered starting messages</label>
+                                    <input id="acm_ai_chat_recent_limit" class="text_pole acm-ai-chat-settings-limit" type="number" min="0" max="50" step="1">
+                                    <div class="acm-ai-chat-settings-subheading">Remembered starting messages</div>
+                                    <div id="acm_ai_chat_settings_questions" class="acm-ai-chat-settings-questions"></div>
+                                </div>
+                                <div class="acm-ai-chat-settings-footer">
+                                    <div id="acm_ai_chat_settings_cancel" class="menu_button">Cancel</div>
+                                    <div id="acm_ai_chat_settings_save" class="menu_button popup-button-ok">Save</div>
+                                </div>
+                            </div>
+                        </dialog>
                     </div>
                     <hr>
                 </div>

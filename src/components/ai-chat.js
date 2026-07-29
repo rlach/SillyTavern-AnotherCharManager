@@ -2,13 +2,14 @@ import { messageFormatting } from '/script.js';
 import { createGenerationParameters, getChatCompletionModel, getStreamingReply, oai_settings } from '/scripts/openai.js';
 import { getEventSourceStream } from '/scripts/sse-stream.js';
 import { characters, generateRaw, getRequestHeaders, tagList, tagMap } from "../constants/context.js";
-import { selectedChar, selectedGroupId } from "../constants/settings.js";
+import { DEFAULT_ASK_AI_PROMPT, selectedChar, selectedGroupId } from "../constants/settings.js";
 import { getIdByAvatar } from "../utils.js";
 import { getSetting, updateSetting } from "../services/settings-service.js";
 
 const getContext = SillyTavern.getContext;
 
-const MAX_RECENT_QUESTIONS = 5;
+const DEFAULT_RECENT_QUESTIONS_LIMIT = 5;
+const MAX_CONFIGURABLE_RECENT_QUESTIONS = 50;
 
 // ===== ASK AI MINI-CHAT STATE =====
 // Not persisted anywhere: cleared whenever the selected character changes or is deselected.
@@ -63,11 +64,40 @@ function buildCharacterSummary(char) {
 }
 
 function generateQuestionId() {
-    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    return crypto.randomUUID();
 }
 
 function getRecentQuestions() {
     return Array.isArray(getSetting('askAiRecentQuestions')) ? getSetting('askAiRecentQuestions') : [];
+}
+
+function getRecentQuestionsLimit() {
+    const configuredLimit = Number.parseInt(getSetting('askAiRecentQuestionsLimit'), 10);
+    if (!Number.isFinite(configuredLimit)) {
+        return DEFAULT_RECENT_QUESTIONS_LIMIT;
+    }
+    return Math.max(0, Math.min(MAX_CONFIGURABLE_RECENT_QUESTIONS, configuredLimit));
+}
+
+function findOldestUnpinnedQuestionIndex(questions) {
+    let oldestIndex = -1;
+    for (let i = 0; i < questions.length; i++) {
+        if (questions[i].pinned) continue;
+        if (oldestIndex === -1 || Number(questions[i].updatedAt || 0) < Number(questions[oldestIndex].updatedAt || 0)) {
+            oldestIndex = i;
+        }
+    }
+    return oldestIndex;
+}
+
+function pruneRecentQuestions(questions, limit) {
+    const pruned = [...questions];
+    while (pruned.length > limit) {
+        const oldestIndex = findOldestUnpinnedQuestionIndex(pruned);
+        if (oldestIndex === -1) break;
+        pruned.splice(oldestIndex, 1);
+    }
+    return pruned;
 }
 
 /**
@@ -75,12 +105,19 @@ function getRecentQuestions() {
  * questions" quick-access list (shown as buttons in an empty chat), or bumps it to most
  * recent if an identical question (case-insensitive) is already stored.
  *
- * At most MAX_RECENT_QUESTIONS entries are kept. When full, the oldest non-pinned entry is
+ * At most the configured number of entries are kept. When full, the oldest non-pinned entry is
  * evicted to make room; if all entries are pinned, the new question is simply not recorded.
  */
 function recordOrBumpRecentQuestion(text) {
     const normalized = String(text || '').trim();
-    if (!normalized) return;
+    if (!normalized) {
+        return;
+    }
+
+    const limit = getRecentQuestionsLimit();
+    if (limit === 0) {
+        return;
+    }
 
     const questions = [...getRecentQuestions()];
     const matchIndex = questions.findIndex(q => String(q.text || '').trim().toLowerCase() === normalized.toLowerCase());
@@ -88,14 +125,8 @@ function recordOrBumpRecentQuestion(text) {
     if (matchIndex !== -1) {
         questions[matchIndex] = { ...questions[matchIndex], updatedAt: Date.now() };
     } else {
-        if (questions.length >= MAX_RECENT_QUESTIONS) {
-            let evictIndex = -1;
-            for (let i = 0; i < questions.length; i++) {
-                if (questions[i].pinned) continue;
-                if (evictIndex === -1 || questions[i].updatedAt < questions[evictIndex].updatedAt) {
-                    evictIndex = i;
-                }
-            }
+        while (questions.length >= limit) {
+            const evictIndex = findOldestUnpinnedQuestionIndex(questions);
             if (evictIndex === -1) {
                 return; // every slot is pinned - no room for a new question
             }
@@ -139,14 +170,8 @@ function renderRecentQuestionsHtml() {
  */
 function buildRequestMessages(char) {
     const jsonData = JSON.stringify(buildCharacterSummary(char));
-    const systemPrompt = [
-        'You are a helpful assistant that answers questions about a specific character from the user\'s character card collection.',
-        'Answer only using the character data provided below (as JSON), which describes the character being asked about. Speak about the character in the third person, as an assistant describing them - do not roleplay as the character and do not speak as the user.',
-        'If the answer cannot be found in the provided data, say so honestly instead of inventing details.',
-        '',
-        'Character data (JSON):',
-        jsonData,
-    ].join('\n');
+    const promptTemplate = typeof getSetting('askAiPrompt') === 'string' ? getSetting('askAiPrompt') : DEFAULT_ASK_AI_PROMPT;
+    const systemPrompt = promptTemplate.split('{{characterData}}').join(jsonData);
 
     const messages = [{ role: 'system', content: systemPrompt }];
     for (const turn of conversation) {
@@ -192,7 +217,87 @@ function updateSendButtonUi() {
     $send.toggleClass('acm-ai-chat-stop', isGenerating);
     $send.toggleClass('fa-paper-plane', !isGenerating);
     $send.toggleClass('fa-stop', isGenerating);
-    $send.attr('title', isGenerating ? 'Stop generating' : 'Send message (Ctrl+Enter)');
+    $send.attr('title', isGenerating ? 'Stop generating' : 'Send message (Enter)');
+}
+
+function renderSettingsQuestions() {
+    const $container = $('#acm_ai_chat_settings_questions').empty();
+    const questions = getRecentQuestions();
+
+    if (!questions.length) {
+        $container.append($('<div>').addClass('acm-ai-chat-settings-empty').text('No remembered starting messages.'));
+        return;
+    }
+
+    questions.forEach((question) => {
+        const $row = $('<div>')
+            .addClass('acm-ai-chat-settings-question')
+            .attr('data-question-id', String(question.id || ''))
+            .attr('data-updated-at', Number(question.updatedAt || 0));
+        const $pinLabel = $('<label>').addClass('acm-ai-chat-settings-question-pin');
+        const $pin = $('<input>')
+            .addClass('acm-ai-chat-settings-question-pinned')
+            .attr('type', 'checkbox')
+            .prop('checked', Boolean(question.pinned));
+        const $text = $('<input>')
+            .addClass('text_pole acm-ai-chat-settings-question-text')
+            .attr('type', 'text')
+            .attr('aria-label', 'Remembered starting message')
+            .val(String(question.text || ''));
+        const $remove = $('<div>')
+            .addClass('menu_button fa-solid fa-trash acm-ai-chat-settings-question-remove')
+            .attr('title', 'Remove remembered message');
+
+        $pinLabel.append($pin, $('<span>').text('Pinned'));
+        $row.append($pinLabel, $text, $remove);
+        $container.append($row);
+    });
+}
+
+function openAiChatSettings() {
+    $('#acm_ai_chat_prompt').val(typeof getSetting('askAiPrompt') === 'string' ? getSetting('askAiPrompt') : DEFAULT_ASK_AI_PROMPT);
+    $('#acm_ai_chat_recent_limit').val(getRecentQuestionsLimit());
+    renderSettingsQuestions();
+    const modal = document.getElementById('acm_ai_chat_settings_modal');
+    modal?.showModal();
+    $(modal).addClass('visible');
+    $('#acm_ai_chat_prompt').trigger('focus');
+}
+
+function closeAiChatSettings() {
+    const modal = document.getElementById('acm_ai_chat_settings_modal');
+    $(modal).removeClass('visible');
+    modal?.close();
+}
+
+function saveAiChatSettings() {
+    const requestedLimit = Number.parseInt($('#acm_ai_chat_recent_limit').val(), 10);
+    const limit = Number.isFinite(requestedLimit)
+        ? Math.max(0, Math.min(MAX_CONFIGURABLE_RECENT_QUESTIONS, requestedLimit))
+        : DEFAULT_RECENT_QUESTIONS_LIMIT;
+    const originalQuestions = getRecentQuestions();
+    const questions = [];
+
+    $('#acm_ai_chat_settings_questions .acm-ai-chat-settings-question').each(function () {
+        const text = String($(this).find('.acm-ai-chat-settings-question-text').val() || '').trim();
+        if (!text) return;
+
+        const id = String($(this).attr('data-question-id') || generateQuestionId());
+        const original = originalQuestions.find(question => String(question.id) === id);
+        questions.push({
+            id,
+            text,
+            pinned: $(this).find('.acm-ai-chat-settings-question-pinned').prop('checked'),
+            updatedAt: Number($(this).attr('data-updated-at')) || Number(original?.updatedAt) || Date.now(),
+        });
+    });
+
+    const prunedQuestions = pruneRecentQuestions(questions, limit).sort((a, b) => b.updatedAt - a.updatedAt);
+    updateSetting('askAiPrompt', String($('#acm_ai_chat_prompt').val() ?? ''));
+    updateSetting('askAiRecentQuestionsLimit', limit);
+    updateSetting('askAiRecentQuestions', prunedQuestions);
+    closeAiChatSettings();
+    renderMessages();
 }
 
 function updateAvailabilityUi() {
@@ -405,6 +510,22 @@ export function applyAskAiPanelMode(askAiEnabled) {
  */
 export function initializeAiChatEvents() {
     $(document).on('click', '#acm_ai_chat_send', handleSendOrStop);
+    $(document).on('click', '#acm_ai_chat_settings', openAiChatSettings);
+    $(document).on('click', '#acm_ai_chat_settings_close, #acm_ai_chat_settings_cancel', closeAiChatSettings);
+    $(document).on('click', '#acm_ai_chat_settings_save', saveAiChatSettings);
+    $(document).on('click', '.acm-ai-chat-settings-question-remove', function () {
+        $(this).closest('.acm-ai-chat-settings-question').remove();
+        if (!$('#acm_ai_chat_settings_questions .acm-ai-chat-settings-question').length) {
+            $('#acm_ai_chat_settings_questions').append($('<div>').addClass('acm-ai-chat-settings-empty').text('No remembered starting messages.'));
+        }
+    });
+    $(document).on('click', '#acm_ai_chat_settings_modal', function (event) {
+        if (event.target === this) closeAiChatSettings();
+    });
+    $(document).on('cancel', '#acm_ai_chat_settings_modal', function (event) {
+        event.preventDefault();
+        closeAiChatSettings();
+    });
     $(document).on('input', '#acm_ai_chat_input', autoResizeChatInput);
 
     $(document).on('click', '.acm-ai-chat-recent-btn', function () {
@@ -420,14 +541,24 @@ export function initializeAiChatEvents() {
         toggleRecentQuestionPinned($(this).data('question-id'));
     });
 
-    // Bound directly on the textarea (not delegated on document) so stopPropagation()
-    // reliably runs before core's document-level Ctrl+Enter "regenerate message" handler.
+    // Bound directly on the textarea so Ctrl/Cmd+Enter can stop core's document-level
+    // shortcut while retaining the textarea's native newline behavior.
     const inputEl = document.getElementById('acm_ai_chat_input');
     inputEl?.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        if (event.key !== 'Enter') return;
+
+        event.stopPropagation();
+        if (event.ctrlKey || event.metaKey) return;
+
+        event.preventDefault();
+        handleSendOrStop();
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && $('#acm_ai_chat_settings_modal').hasClass('visible')) {
             event.preventDefault();
             event.stopPropagation();
-            handleSendOrStop();
+            closeAiChatSettings();
         }
     });
 
